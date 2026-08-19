@@ -20,7 +20,12 @@ export default function AdminSidebar() {
     setOpenMenus(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => {
+    if (path === '/admin') {
+      return location.pathname === '/admin' || location.pathname === '/admin/';
+    }
+    return location.pathname === path;
+  };
 
   return (
     <aside className="w-72 bg-gray-900 text-gray-300 flex flex-col h-screen sticky top-0 border-r border-gray-800 select-none overflow-y-auto">
@@ -88,7 +93,7 @@ export default function AdminSidebar() {
           )}
         </div>
 
-        {/* RESTAURANT MANAGEMENT (Without bulk import/export & joining requests) */}
+        {/* RESTAURANT MANAGEMENT */}
         <div className="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
           Restaurant Management
         </div>
@@ -208,7 +213,7 @@ export default function AdminSidebar() {
           )}
         </div>
 
-        {/* CUSTOMER MANAGEMENT (Only Customers) */}
+        {/* CUSTOMER MANAGEMENT */}
         <div className="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
           Customer Management
         </div>
@@ -238,7 +243,7 @@ export default function AdminSidebar() {
           <span>Contact Messages</span>
         </Link>
 
-        {/* SYSTEM SETTINGS */}
+        {/* SYSTEM SETUP */}
         <div className="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
           System Setup
         </div>
@@ -256,4 +261,4 @@ export default function AdminSidebar() {
       </div>
     </aside>
   );
-}
+} 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Utensils, Bike, ShieldCheck, Clock, CreditCard, Phone, Mail, MapPin, ArrowRight, MessageSquare, Users, Sparkles, Star } from 'lucide-react';
 import Navbar from '../../components/Navbar';
+import API from '../../services/api';
 
 const HERO_PHOTO = '/m1.jpg';
 const DELIVERY_IMAGE = '/m8.jpg';
@@ -54,23 +55,60 @@ const MARQUEE_ITEMS = [
 ];
 
 export default function LandingPage() {
-  const [activeCategory, setActiveCategory] = useState('Burger');
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [popularFoods, setPopularFoods] = useState([]);
+  const [restaurants, setRestaurants] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const foodCategories = ['Burger', 'Chicken', 'Pizza', 'Dresserts', 'Sandwich'];
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const popularFoods = [
-    { id: 1, name: 'Special Enjera Firfir', image: '/m1.jpg', rating: 5, reviews: 14, price: '$120', oldPrice: '$200' },
-    { id: 2, name: 'Daria Shevtsova', image: '/m7.jpg', rating: 0, reviews: 0, price: '$120', oldPrice: '$200' },
-    { id: 3, name: 'Spicy Burger', image: '/m2.jpg', rating: 5, reviews: 1, price: '$40', oldPrice: '$80' },
-    { id: 4, name: 'Crispy Chicken', image: '/m8.jpg', rating: 4, reviews: 8, price: '$90', oldPrice: '$150' },
-    { id: 5, name: 'Italian Pizza', image: '/m7.jpg', rating: 5, reviews: 21, price: '$150', oldPrice: '$220' },
-  ];
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch categories
+      const categoriesRes = await API.get('/foods/categories');
+      setCategories(categoriesRes.data);
+      if (categoriesRes.data.length > 0) {
+        setActiveCategory(categoriesRes.data[0].id);
+      }
+
+      // Fetch popular foods
+      const popularRes = await API.get('/foods?popular=true');
+      setPopularFoods(popularRes.data);
+
+      // Fetch restaurants
+      const restaurantsRes = await API.get('/restaurants');
+      setRestaurants(restaurantsRes.data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      // Set fallback data for demo
+      setCategories([
+        { id: '1', name: 'Traditional', image: '/m1.jpg', _count: { foods: 12 } },
+        { id: '2', name: 'Burgers', image: '/m7.jpg', _count: { foods: 8 } },
+        { id: '3', name: 'Pizza', image: '/m8.jpg', _count: { foods: 6 } },
+      ]);
+      setPopularFoods([
+        { id: 1, name: 'Special Enjera Firfir', image: '/m1.jpg', rating: 5, reviews: [{id:1}], price: 120, restaurant: { name: 'Bole Restaurant' } },
+        { id: 2, name: 'Doro Wat', image: '/m7.jpg', rating: 5, reviews: [], price: 150, restaurant: { name: 'Traditional House' } },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const discount = useCallback((price, oldPrice) => {
-    const p = parseFloat(price.replace('$', ''));
-    const o = parseFloat(oldPrice.replace('$', ''));
-    return Math.round(((o - p) / o) * 100);
+    return Math.round(((oldPrice - price) / oldPrice) * 100);
   }, []);
+
+  const calculateRating = (reviews) => {
+    if (!reviews || reviews.length === 0) return 0;
+    const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
+    return Math.round(sum / reviews.length);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#FFF5EE] via-[#FFF8F3] to-[#FFEDDF] text-gray-800 font-sans selection:bg-orange-500 selection:text-white relative overflow-hidden">
@@ -192,7 +230,7 @@ export default function LandingPage() {
 
             <div className="pt-4 flex flex-col sm:flex-row justify-center lg:justify-start gap-4 animate-slide-up" style={{ animationDelay: '0.55s', opacity: 0 }}>
               <Link
-                to="/login"
+                to="/categories"
                 className="group inline-flex items-center justify-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white text-base font-bold px-8 py-4 rounded-2xl shadow-lg shadow-orange-600/30 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-xl hover:shadow-orange-600/40"
               >
                 <span>Order Now</span>
@@ -231,7 +269,7 @@ export default function LandingPage() {
             </p>
             <div className="pt-2">
               <Link
-                to="/login"
+                to="/restaurants"
                 className="group inline-flex items-center space-x-2 text-orange-600 font-bold hover:text-orange-700 transition"
               >
                 <span>Discover Our Kitchen</span>
@@ -248,45 +286,6 @@ export default function LandingPage() {
                 alt="Ma'ad Restaurant ambiance and dishes"
                 className="relative w-full h-[320px] sm:h-[380px] object-cover rounded-[2rem] shadow-lg border-4 border-white transition-transform duration-500 group-hover:scale-[1.02]"
               />
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* --- AVAILABLE DELIVERY AREAS / ZONE SECTION --- */}
-      <section className="py-16 bg-white/50">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <Reveal className="flex justify-center">
-            <div className="relative w-full max-w-[450px] group">
-              <div className="absolute -inset-2 bg-gradient-to-r from-orange-500 to-amber-500 rounded-[2.5rem] blur opacity-20 group-hover:opacity-35 transition duration-300"></div>
-              <div className="relative w-full h-[280px] sm:h-[320px] rounded-[2rem] overflow-hidden shadow-xl border-4 border-white">
-                <img
-                  src={DELIVERY_IMAGE}
-                  alt="Delivery service and zones"
-                  className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-            </div>
-          </Reveal>
-
-          <Reveal delay={150} className="space-y-5 text-center lg:text-left">
-            <div className="space-y-2">
-              <span className="text-orange-600 font-bold uppercase tracking-wider text-xs">Fast & Reliable</span>
-              <h2 className="font-display text-3xl sm:text-4xl font-black text-gray-900 tracking-tight leading-tight">
-                Available Delivery Areas / Zone
-              </h2>
-            </div>
-            <p className="text-gray-600 leading-relaxed text-base font-medium">
-              We offer delivery services across a wide range of regions. To see if we deliver to your area, check our list of available delivery zones or use our delivery app tracker.
-            </p>
-            <div className="pt-2">
-              <Link
-                to="/login"
-                className="group inline-flex items-center justify-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white text-base font-bold px-8 py-4 rounded-2xl shadow-lg shadow-orange-600/30 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-xl"
-              >
-                <span>Check Delivery Zone</span>
-                <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
-              </Link>
             </div>
           </Reveal>
         </div>
@@ -364,7 +363,7 @@ export default function LandingPage() {
               { img: '/m1.jpg', title: 'Find your daily meal' },
               { img: '/m7.jpg', title: 'Easy to food ordering system' },
               { img: DELIVERY_IMAGE, title: 'Fastest food delivery service' },
-              { img: '/m2.jpg', title: 'Track your food order' },
+              { img: '/m1.jpg', title: 'Track your food order' },
             ].map((card, idx) => (
               <Reveal key={idx} delay={idx * 100}>
                 <div className="group relative rounded-[2rem] overflow-hidden shadow-xl border-4 border-white h-[200px] sm:h-[240px] bg-gray-900 cursor-pointer">
@@ -385,7 +384,97 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* --- POPULAR DELICIOUS FOODS SECTION --- */}
+      {/* --- POPULAR RESTAURANTS SECTION --- */}
+      <section className="py-20 bg-gradient-to-b from-white to-orange-50/30">
+        <div className="max-w-7xl mx-auto px-6 space-y-10">
+          <Reveal className="text-center max-w-2xl mx-auto space-y-3">
+            <div className="flex items-center justify-center space-x-2">
+              <span className="text-orange-600 font-extrabold uppercase tracking-widest text-xs">Featured</span>
+              <span className="text-orange-500 text-lg">⭐</span>
+            </div>
+            <h2 className="font-display text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">
+              Popular Restaurants
+            </h2>
+            <p className="text-gray-600 text-sm sm:text-base font-medium">
+              Discover the best restaurants near you
+            </p>
+          </Reveal>
+
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {restaurants.slice(0, 6).map((restaurant, idx) => (
+                <Reveal key={restaurant.id} delay={idx * 100}>
+                  <Link
+                    to={`/restaurants/${restaurant.id}`}
+                    className="group bg-white rounded-2xl overflow-hidden shadow-lg shadow-orange-950/[0.03] border border-orange-100 hover:shadow-2xl hover:shadow-orange-600/10 transition-all duration-300 hover:-translate-y-2"
+                  >
+                    <div className="relative h-48 overflow-hidden bg-gray-100">
+                      <img
+                        src={restaurant.coverImage || restaurant.logo || '/m7.jpg'}
+                        alt={restaurant.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold flex items-center space-x-1">
+                        <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                        <span>{restaurant.rating.toFixed(1)}</span>
+                      </div>
+                      {restaurant.isOpen ? (
+                        <div className="absolute top-3 left-3 bg-green-500 text-white px-2.5 py-1 rounded-full text-xs font-bold">
+                          Open Now
+                        </div>
+                      ) : (
+                        <div className="absolute top-3 left-3 bg-red-500 text-white px-2.5 py-1 rounded-full text-xs font-bold">
+                          Closed
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-5 space-y-3">
+                      <h3 className="text-lg font-black text-gray-900 group-hover:text-orange-600 transition-colors">
+                        {restaurant.name}
+                      </h3>
+                      
+                      <div className="flex items-start space-x-2 text-xs text-gray-600">
+                        <MapPin className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+                        <span className="line-clamp-2">{restaurant.address}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center space-x-2">
+                          <Clock className="w-4 h-4 text-orange-500" />
+                          <span className="font-bold text-gray-700">
+                            {restaurant.openingHours} - {restaurant.closingHours}
+                          </span>
+                        </div>
+                        {restaurant.isDelivery && (
+                          <div className="flex items-center space-x-1 text-green-600 font-bold">
+                            <Bike className="w-4 h-4" />
+                            <span>Delivery</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pt-2 flex items-center justify-between">
+                        <span className="text-xs text-gray-500 font-medium">
+                          {restaurant.foods?.length || 0} menu items
+                        </span>
+                        <button className="bg-orange-50 hover:bg-orange-600 text-orange-600 hover:text-white font-extrabold text-xs px-4 py-2 rounded-lg transition-all duration-300 flex items-center space-x-1">
+                          <span>View Menu</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </Link>
+                </Reveal>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
       <section className="py-20 bg-gradient-to-b from-[#FFF5EE] to-white">
         <div className="max-w-7xl mx-auto px-6 space-y-10">
           <Reveal className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-orange-200/50 pb-6">
@@ -400,17 +489,17 @@ export default function LandingPage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {foodCategories.map((category) => (
+              {categories.map((category) => (
                 <button
-                  key={category}
-                  onClick={() => setActiveCategory(category)}
+                  key={category.id}
+                  onClick={() => setActiveCategory(category.id)}
                   className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 border ${
-                    activeCategory === category
+                    activeCategory === category.id
                       ? 'bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/20 scale-105'
                       : 'bg-white text-gray-700 border-orange-200/80 hover:border-orange-500 hover:text-orange-600'
                   }`}
                 >
-                  {category}
+                  {category.name}
                 </button>
               ))}
             </div>
@@ -448,7 +537,7 @@ export default function LandingPage() {
                         />
                       ))}
                       <span className="text-[10px] font-bold text-gray-500 ml-1.5">
-                        ({food.reviews})
+                        ({food.reviews?.length || 0})
                       </span>
                     </div>
 
@@ -463,7 +552,7 @@ export default function LandingPage() {
                       </div>
 
                       <Link
-                        to="/login"
+                        to={`/food/${food.id}`}
                         className="bg-orange-50 hover:bg-orange-600 text-orange-600 hover:text-white font-extrabold text-[11px] px-3 py-1.5 rounded-lg transition-all duration-300 flex items-center space-x-1"
                       >
                         <span>Order</span>

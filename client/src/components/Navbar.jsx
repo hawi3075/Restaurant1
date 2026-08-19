@@ -3,18 +3,103 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Utensils, Globe, LogOut, User as UserIcon, Menu, X, 
   ShoppingBag, MapPin, HelpCircle, MessageSquare, LogIn,
-  Store, Info, LayoutGrid, ShieldCheck, Mail, Lock, User, Phone, ArrowRight, ArrowLeft
+  Store, Info, LayoutGrid, ShieldCheck, Mail, Lock, User, Phone, ArrowRight, ArrowLeft, Check, Eye, EyeOff
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
+import NotificationBell from './NotificationBell';
+import GlobalSearch from './GlobalSearch';
+
+// --- Language Selection Modal Component ---
+function LanguageModal({ isOpen, onClose }) {
+  const { language, changeLanguage } = useLanguage();
+
+  const languages = [
+    { code: 'en', name: 'English', native: 'English', flag: '🇬🇧' },
+    { code: 'am', name: 'Amharic', native: 'አማርኛ', flag: '🇪🇹' },
+    { code: 'om', name: 'Afaan Oromoo', native: 'Afaan Oromoo', flag: '🇪🇹' },
+  ];
+
+  if (!isOpen) return null;
+
+  const handleLanguageSelect = (code) => {
+    changeLanguage(code);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-orange-100 overflow-hidden">
+        {/* Top Orange Accent Bar */}
+        <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-orange-500 to-amber-500 z-10" />
+
+        {/* Close Button */}
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 z-20 p-2 rounded-full bg-gray-100 hover:bg-orange-100 text-gray-500 hover:text-orange-600 transition cursor-pointer"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="p-6 pt-8">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="bg-orange-100 text-orange-600 p-3 rounded-2xl">
+              <Globe className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-black text-gray-900">Choose Language</h2>
+              <p className="text-xs text-gray-500">Select your preferred language</p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {languages.map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => handleLanguageSelect(lang.code)}
+                className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
+                  language === lang.code
+                    ? 'border-orange-600 bg-orange-50 text-orange-900 shadow-md'
+                    : 'border-gray-200 bg-white hover:border-orange-300 text-gray-800'
+                }`}
+              >
+                <div className="flex items-center space-x-3 text-left">
+                  <span className="text-3xl">{lang.flag}</span>
+                  <div>
+                    <p className="font-bold text-base">{lang.name}</p>
+                    <p className="text-sm text-gray-600">{lang.native}</p>
+                  </div>
+                </div>
+                {language === lang.code && (
+                  <div className="bg-orange-600 text-white p-2 rounded-xl shadow-md">
+                    <Check className="w-4 h-4" />
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // --- Integrated Auth Modal Component with Back Icon ---
 function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
+  const { login, register } = useAuth();
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(initialMode === 'login');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
     emailOrPhone: '',
     password: '',
+    confirmPassword: '',
     phone: '',
     address: ''
   });
@@ -23,17 +108,79 @@ function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError(''); // Clear error when user types
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isLogin) {
-      alert("Logged in successfully!");
-    } else {
-      alert("Account created successfully!");
+    setError('');
+    setSuccess('');
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        // Login logic
+        const result = await login(formData.emailOrPhone, formData.password);
+        
+        if (result.success) {
+          setSuccess('Login successful! Redirecting...');
+          setTimeout(() => {
+            onClose();
+            
+            // Redirect based on role
+            if (result.role === 'ADMIN') {
+              navigate('/admin');
+            } else if (result.role === 'CHEF') {
+              navigate('/chef');
+            } else if (result.role === 'WAITER') {
+              navigate('/waiter');
+            } else if (result.role === 'DRIVER') {
+              navigate('/driver');
+            } else {
+              navigate('/');
+            }
+          }, 1500);
+        } else {
+          setError(result.error || 'Login failed. Please try again.');
+        }
+      } else {
+        // Signup logic - validate passwords match
+        if (formData.password !== formData.confirmPassword) {
+          setError('Passwords do not match!');
+          setLoading(false);
+          return;
+        }
+
+        if (formData.password.length < 6) {
+          setError('Password must be at least 6 characters long');
+          setLoading(false);
+          return;
+        }
+
+        const result = await register({
+          name: formData.name,
+          email: formData.emailOrPhone,
+          password: formData.password,
+          phone: formData.phone,
+          address: formData.address
+        });
+        
+        if (result.success) {
+          setSuccess('Account created successfully! Welcome aboard!');
+          setTimeout(() => {
+            onClose();
+            // User is already logged in after registration, just redirect
+            navigate('/');
+          }, 1500);
+        } else {
+          setError(result.error || 'Registration failed. Please try again.');
+        }
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    // Keeps you on the current page instead of redirecting away
-    onClose(); 
   };
 
   return (
@@ -83,6 +230,22 @@ function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3.5">
+            
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-xs font-medium flex items-center space-x-2">
+                <X className="w-4 h-4 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Success Message */}
+            {success && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-xs font-medium flex items-center space-x-2">
+                <Check className="w-4 h-4 flex-shrink-0" />
+                <span>{success}</span>
+              </div>
+            )}
             
             {!isLogin && (
               <div className="space-y-1">
@@ -169,16 +332,50 @@ function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
                   <Lock className="w-4 h-4" />
                 </div>
                 <input 
-                  type="password" 
+                  type={showPassword ? "text" : "password"}
                   name="password" 
                   required 
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none text-xs font-medium"
+                  className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none text-xs font-medium"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
+
+            {!isLogin && (
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Confirm Password</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                  <input 
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword" 
+                    required 
+                    placeholder="••••••••"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none text-xs font-medium"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {isLogin && (
               <div className="flex items-center justify-between text-xs pt-1">
@@ -194,10 +391,20 @@ function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
 
             <button 
               type="submit"
-              className="w-full mt-2 flex items-center justify-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-orange-600/25 transition text-xs uppercase tracking-wider cursor-pointer"
+              disabled={loading}
+              className="w-full mt-2 flex items-center justify-center space-x-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-orange-600/25 transition text-xs uppercase tracking-wider cursor-pointer"
             >
-              <span>{isLogin ? 'Sign In' : 'Create Account'}</span>
-              <ArrowRight className="w-4 h-4" />
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                  <span>{isLogin ? 'Signing In...' : 'Creating Account...'}</span>
+                </>
+              ) : (
+                <>
+                  <span>{isLogin ? 'Sign In' : 'Create Account'}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </form>
 
@@ -252,6 +459,7 @@ function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
 // --- Main Navbar Component ---
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const { language, t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -259,6 +467,7 @@ export default function Navbar() {
   // Modal State Management
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState('login');
+  const [languageModalOpen, setLanguageModalOpen] = useState(false);
 
   const openLogin = () => {
     setAuthMode('login');
@@ -269,6 +478,16 @@ export default function Navbar() {
     logout();
     setMenuOpen(false);
     navigate('/login');
+  };
+
+  // Get language display text
+  const getLanguageDisplay = () => {
+    const langMap = {
+      'en': 'En',
+      'am': 'አማ',
+      'om': 'Af'
+    };
+    return langMap[language] || 'En';
   };
 
   return (
@@ -295,7 +514,7 @@ export default function Navbar() {
               }`}
             >
               <Utensils className={`w-4 h-4 ${location.pathname === '/' ? 'text-orange-600' : ''}`} />
-              <span>Home</span>
+              <span>{t('home')}</span>
             </Link>
             
             <Link 
@@ -304,7 +523,7 @@ export default function Navbar() {
                 location.pathname === '/categories' ? 'text-orange-600 font-bold' : 'hover:text-orange-600 text-gray-600'
               }`}
             >
-              Category
+              {t('categories')}
             </Link>
 
             <Link 
@@ -313,7 +532,7 @@ export default function Navbar() {
                 location.pathname === '/restaurants' ? 'text-orange-600 font-bold' : 'hover:text-orange-600 text-gray-600'
               }`}
             >
-              Restaurants
+              {t('restaurants')}
             </Link>
 
             <Link 
@@ -322,7 +541,7 @@ export default function Navbar() {
                 location.pathname === '/about' ? 'text-orange-600 font-bold' : 'hover:text-orange-600 text-gray-600'
               }`}
             >
-              About Us
+              {t('about')}
             </Link>
 
             <Link 
@@ -331,16 +550,25 @@ export default function Navbar() {
                 location.pathname === '/contact' ? 'text-orange-600 font-bold' : 'hover:text-orange-600 text-gray-600'
               }`}
             >
-              Contact
+              {t('contact')}
             </Link>
           </nav>
 
           {/* Right Header Actions */}
           <div className="flex items-center space-x-4">
-            <button className="hidden sm:flex items-center space-x-1.5 text-gray-700 hover:text-orange-600 font-medium text-sm px-3 py-1.5 rounded-lg transition">
+            {/* Global Search - Only show on categories page */}
+            {location.pathname.startsWith('/categories') && <GlobalSearch />}
+
+            <button 
+              onClick={() => setLanguageModalOpen(true)}
+              className="hidden sm:flex items-center space-x-1.5 text-gray-700 hover:text-orange-600 font-medium text-sm px-3 py-1.5 rounded-lg transition cursor-pointer"
+            >
               <Globe className="w-4 h-4 text-gray-500" />
-              <span>En</span>
+              <span>{getLanguageDisplay()}</span>
             </button>
+
+            {/* Notification Bell */}
+            {user && <NotificationBell />}
 
             {!user && (
               <button 
@@ -412,7 +640,7 @@ export default function Navbar() {
             <div className="bg-orange-600 text-white p-2.5 rounded-xl shadow-md group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300">
               <UserIcon className="w-5 h-5" />
             </div>
-            <span className="font-bold text-gray-800 group-hover:text-orange-600 text-sm">Profile</span>
+            <span className="font-bold text-gray-800 group-hover:text-orange-600 text-sm">{t('profile')}</span>
           </Link>
 
           {/* My Address */}
@@ -424,7 +652,7 @@ export default function Navbar() {
             <div className="bg-orange-600 text-white p-2.5 rounded-xl shadow-md group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300">
               <MapPin className="w-5 h-5" />
             </div>
-            <span className="font-bold text-gray-800 group-hover:text-orange-600 text-sm">My Address</span>
+            <span className="font-bold text-gray-800 group-hover:text-orange-600 text-sm">{t('myAddress')}</span>
           </Link>
 
           {/* My Orders */}
@@ -436,7 +664,7 @@ export default function Navbar() {
             <div className="bg-orange-600 text-white p-2.5 rounded-xl shadow-md group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300">
               <ShoppingBag className="w-5 h-5" />
             </div>
-            <span className="font-bold text-gray-800 group-hover:text-orange-600 text-sm">My Orders</span>
+            <span className="font-bold text-gray-800 group-hover:text-orange-600 text-sm">{t('myOrders')}</span>
           </Link>
 
           {/* Language */}
@@ -448,7 +676,7 @@ export default function Navbar() {
             <div className="bg-orange-600 text-white p-2.5 rounded-xl shadow-md group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300">
               <Globe className="w-5 h-5" />
             </div>
-            <span className="font-bold text-gray-800 group-hover:text-orange-600 text-sm">Language</span>
+            <span className="font-bold text-gray-800 group-hover:text-orange-600 text-sm">{t('language')}</span>
           </Link>
 
           {/* Help & Support */}
@@ -460,7 +688,7 @@ export default function Navbar() {
             <div className="bg-orange-600 text-white p-2.5 rounded-xl shadow-md group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300">
               <HelpCircle className="w-5 h-5" />
             </div>
-            <span className="font-bold text-gray-800 group-hover:text-orange-600 text-sm">Help & Support</span>
+            <span className="font-bold text-gray-800 group-hover:text-orange-600 text-sm">{t('helpSupport')}</span>
           </Link>
 
           {/* Live Chat */}
@@ -472,7 +700,7 @@ export default function Navbar() {
             <div className="bg-orange-600 text-white p-2.5 rounded-xl shadow-md group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300">
               <MessageSquare className="w-5 h-5" />
             </div>
-            <span className="font-bold text-gray-800 group-hover:text-orange-600 text-sm">Live Chat</span>
+            <span className="font-bold text-gray-800 group-hover:text-orange-600 text-sm">{t('liveChat')}</span>
           </Link>
 
           {/* General Site Links */}
@@ -483,7 +711,7 @@ export default function Navbar() {
               className="flex items-center space-x-3 p-2.5 rounded-xl text-xs font-bold text-gray-600 hover:text-orange-600 hover:bg-orange-50 hover:translate-x-1 transition-all duration-300"
             >
               <LayoutGrid className="w-4 h-4 text-orange-600" />
-              <span>Categories</span>
+              <span>{t('categories')}</span>
             </Link>
             <Link 
               to="/restaurants" 
@@ -491,7 +719,7 @@ export default function Navbar() {
               className="flex items-center space-x-3 p-2.5 rounded-xl text-xs font-bold text-gray-600 hover:text-orange-600 hover:bg-orange-50 hover:translate-x-1 transition-all duration-300"
             >
               <Store className="w-4 h-4 text-orange-600" />
-              <span>Restaurants</span>
+              <span>{t('restaurants')}</span>
             </Link>
             <Link 
               to="/about" 
@@ -499,7 +727,7 @@ export default function Navbar() {
               className="flex items-center space-x-3 p-2.5 rounded-xl text-xs font-bold text-gray-600 hover:text-orange-600 hover:bg-orange-50 hover:translate-x-1 transition-all duration-300"
             >
               <Info className="w-4 h-4 text-orange-600" />
-              <span>About Us</span>
+              <span>{t('about')}</span>
             </Link>
           </div>
 
@@ -513,7 +741,7 @@ export default function Navbar() {
               className="w-full flex items-center justify-center space-x-2 bg-red-50 text-red-600 hover:bg-red-100 font-bold py-3 rounded-xl transition text-sm shadow-sm cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
-              <span>Sign Out</span>
+              <span>{t('logout')}</span>
             </button>
           ) : (
             <button 
@@ -533,6 +761,12 @@ export default function Navbar() {
         isOpen={authModalOpen} 
         onClose={() => setAuthModalOpen(false)} 
         initialMode={authMode} 
+      />
+
+      {/* Render the language selection modal */}
+      <LanguageModal
+        isOpen={languageModalOpen}
+        onClose={() => setLanguageModalOpen(false)}
       />
     </>
   );

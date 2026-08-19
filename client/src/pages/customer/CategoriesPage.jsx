@@ -1,38 +1,51 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, Utensils, Heart, Phone, Mail, MapPin, Star, Plus, ShoppingBag } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { Search, Utensils, Heart, Phone, Mail, MapPin, Star, Plus } from 'lucide-react';
 import Navbar from '../../components/Navbar';
+import API from '../../services/api';
 
 export default function CategoriesPage() {
+  const { id: categoryId } = useParams();
   const [searchTerm, setSearchTerm] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [foods, setFoods] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const categories = [
-    { id: 1, name: 'Bengali', image: '/m1.jpg', count: '12+ Items' },
-    { id: 2, name: 'Caribbean', image: '/m2.jpg', count: '8+ Items' },
-    { id: 3, name: 'Sea Food', image: '/m7.jpg', count: '15+ Items' },
-    { id: 4, name: 'French', image: '/m8.jpg', count: '10+ Items' },
-    { id: 5, name: 'Spanish', image: '/m1.jpg', count: '6+ Items' },
-    { id: 6, name: 'Chinese', image: '/m2.jpg', count: '20+ Items' },
-    { id: 7, name: 'Fast Food', image: '/m7.jpg', count: '25+ Items' },
-    { id: 8, name: 'Kabab & More', image: '/m8.jpg', count: '14+ Items' },
-    { id: 9, name: 'Indian', image: '/m1.jpg', count: '18+ Items' },
-    { id: 10, name: 'Noodles', image: '/m2.jpg', count: '9+ Items' },
-    { id: 11, name: 'Mexican Food', image: '/m7.jpg', count: '11+ Items' },
-    { id: 12, name: 'Pasta', image: '/m8.jpg', count: '16+ Items' },
-  ];
+  useEffect(() => {
+    fetchData();
+  }, [categoryId]);
 
-  // Sample food items to display below categories
-  const featuredFoods = [
-    { id: 1, name: 'Meat Pizza', restaurant: 'Hungry Puppets', price: '$370.00', oldPrice: '$400.00', rating: 4.8, reviews: 5, image: '/m1.jpg', discount: '30% OFF' },
-    { id: 2, name: 'MAPO TOFU', restaurant: 'Frying Nemo', price: '$310.00', oldPrice: '$340.00', rating: 4.0, reviews: 2, image: '/m2.jpg', discount: '30% OFF' },
-    { id: 3, name: 'Mutton Biriyani', restaurant: 'Café Monarch', price: '$225.00', oldPrice: '$250.00', rating: 5.0, reviews: 1, image: '/m7.jpg', discount: '10% OFF' },
-    { id: 4, name: 'CROISSANTS', restaurant: 'Café Monarch', price: '$47.50', oldPrice: '$50.00', rating: 4.0, reviews: 1, image: '/m8.jpg', discount: '5% OFF' },
-    { id: 5, name: 'Cheese Pizza', restaurant: 'Hungry Puppets', price: '$232.50', oldPrice: '$250.00', rating: 4.0, reviews: 1, image: '/m1.jpg', discount: '7% OFF' },
-    { id: 6, name: 'Meat Chili Taco', restaurant: 'Frying Nemo', price: '$25.50', oldPrice: '$27.00', rating: 5.0, reviews: 1, image: '/m2.jpg', discount: '5% OFF' },
-  ];
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch categories
+      const categoriesRes = await API.get('/foods/categories');
+      setCategories(categoriesRes.data);
+
+      // Fetch foods (filtered by category if categoryId exists)
+      const foodsUrl = categoryId ? `/foods?categoryId=${categoryId}` : '/foods?popular=true';
+      const foodsRes = await API.get(foodsUrl);
+      setFoods(foodsRes.data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateRating = (reviews) => {
+    if (!reviews || reviews.length === 0) return 0;
+    const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
+    return (sum / reviews.length).toFixed(1);
+  };
 
   const filteredCategories = categories.filter((cat) =>
     cat.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredFoods = foods.filter((food) =>
+    food.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -73,9 +86,14 @@ export default function CategoriesPage() {
           </div>
         </div>
 
-        {/* --- CATEGORIES GRID (12 Items, 2 Rows on Desktop) --- */}
+        {/* --- CATEGORIES GRID --- */}
         <main className="max-w-7xl mx-auto px-6 py-12">
-          {filteredCategories.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-12 space-y-3">
+              <Utensils className="w-12 h-12 text-orange-400 mx-auto animate-spin" />
+              <h3 className="text-xl font-bold text-gray-700">Loading categories...</h3>
+            </div>
+          ) : filteredCategories.length === 0 ? (
             <div className="text-center py-12 space-y-3">
               <Utensils className="w-12 h-12 text-orange-400 mx-auto animate-bounce" />
               <h3 className="text-xl font-bold text-gray-700">No categories found</h3>
@@ -86,15 +104,22 @@ export default function CategoriesPage() {
               {filteredCategories.map((category) => (
                 <Link
                   key={category.id}
-                  to={`/login`}
+                  to={`/categories/${category.id}`}
                   className="group bg-white rounded-2xl p-5 shadow-sm border border-orange-100 hover:border-orange-400 hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center transform hover:-translate-y-1.5"
                 >
                   <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-md mb-4 bg-orange-50 relative group-hover:scale-110 transition-transform duration-500">
-                    <img
-                      src={category.image}
-                      alt={category.name}
-                      className="w-full h-full object-cover"
-                    />
+                    {category.image ? (
+                      <img
+                        src={category.image}
+                        alt={category.name}
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                      />
+                    ) : null}
+                    <div className={`w-full h-full flex items-center justify-center ${category.image ? 'hidden' : ''}`}>
+                      <Utensils className="w-10 h-10 text-orange-500" />
+                    </div>
                     <div className="absolute inset-0 bg-orange-950/10 group-hover:bg-transparent transition-colors"></div>
                   </div>
 
@@ -102,7 +127,7 @@ export default function CategoriesPage() {
                     {category.name}
                   </h3>
                   <span className="text-[11px] font-semibold text-gray-400">
-                    {category.count}
+                    {category._count?.foods || 0} Items
                   </span>
                 </Link>
               ))}
@@ -121,62 +146,63 @@ export default function CategoriesPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-              {featuredFoods.map((food) => (
-                <Link
-                  key={food.id}
-                  to="/login"
-                  className="group bg-white rounded-2xl overflow-hidden shadow-sm border border-orange-100 hover:border-orange-400 hover:shadow-xl transition-all duration-300 flex flex-col relative"
-                >
-                  {/* Discount Badge */}
-                  <span className="absolute top-3 left-3 z-10 bg-red-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded shadow">
-                    {food.discount}
-                  </span>
+              {filteredFoods.map((food) => {
+                const rating = calculateRating(food.reviews);
+                const reviewCount = food.reviews?.length || 0;
 
-                  {/* Favorite Icon */}
-                  <span className="absolute top-3 right-3 z-10 bg-white/80 backdrop-blur-sm p-1.5 rounded-full text-gray-400 group-hover:text-red-500 transition-colors shadow">
-                    <Heart className="w-3.5 h-3.5" />
-                  </span>
+                return (
+                  <Link
+                    key={food.id}
+                    to={`/foods/${food.id}`}
+                    className="group bg-white rounded-2xl overflow-hidden shadow-sm border border-orange-100 hover:border-orange-400 hover:shadow-xl transition-all duration-300 flex flex-col relative"
+                  >
+                    {/* Favorite Icon */}
+                    <span className="absolute top-3 right-3 z-10 bg-white/80 backdrop-blur-sm p-1.5 rounded-full text-gray-400 group-hover:text-red-500 transition-colors shadow">
+                      <Heart className="w-3.5 h-3.5" />
+                    </span>
 
-                  {/* Image container */}
-                  <div className="h-40 w-full overflow-hidden relative bg-orange-50">
-                    <img
-                      src={food.image}
-                      alt={food.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-4 flex flex-col flex-grow justify-between">
-                    <div>
-                      <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">
-                        {food.restaurant}
-                      </span>
-                      <h3 className="font-bold text-sm text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-1">
-                        {food.name}
-                      </h3>
-
-                      {/* Rating */}
-                      <div className="flex items-center space-x-1 mt-1.5 text-xs text-gray-600">
-                        <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                        <span className="font-bold">{food.rating}</span>
-                        <span className="text-gray-400">({food.reviews})</span>
-                      </div>
+                    {/* Image container */}
+                    <div className="h-40 w-full overflow-hidden relative bg-orange-50">
+                      <img
+                        src={food.image || '/m1.jpg'}
+                        alt={food.name}
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => { e.target.src = '/m1.jpg'; }}
+                      />
                     </div>
 
-                    {/* Pricing & Add button */}
-                    <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                    {/* Content */}
+                    <div className="p-4 flex flex-col flex-grow justify-between">
                       <div>
-                        <span className="text-xs text-gray-400 line-through block">{food.oldPrice}</span>
-                        <span className="text-sm font-black text-orange-600">{food.price}</span>
+                        <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">
+                          {food.restaurant?.name || 'Restaurant'}
+                        </span>
+                        <h3 className="font-bold text-sm text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-1">
+                          {food.name}
+                        </h3>
+
+                        {/* Rating */}
+                        <div className="flex items-center space-x-1 mt-1.5 text-xs text-gray-600">
+                          <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                          <span className="font-bold">{rating}</span>
+                          <span className="text-gray-400">({reviewCount})</span>
+                        </div>
                       </div>
-                      <div className="w-8 h-8 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center group-hover:bg-orange-600 group-hover:text-white transition-colors shadow-sm">
-                        <Plus className="w-4 h-4" />
+
+                      {/* Pricing & Add button */}
+                      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                        <div>
+                          <span className="text-sm font-black text-orange-600">${food.price}</span>
+                        </div>
+                        <div className="w-8 h-8 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center group-hover:bg-orange-600 group-hover:text-white transition-colors shadow-sm">
+                          <Plus className="w-4 h-4" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </main>

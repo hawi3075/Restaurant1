@@ -1,26 +1,39 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, Phone, MapPin, ArrowRight, ShieldCheck } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Signup() {
   const navigate = useNavigate();
+  const { register } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    address: '',
     password: ''
   });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError(''); // Clear error when user types
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add your sign-up logic or API integration here
-    alert("Account created successfully!");
-    navigate('/login');
+    setLoading(true);
+    setError('');
+
+    const result = await register(formData);
+    setLoading(false);
+
+    if (result.success) {
+      // New users are always CUSTOMER role, redirect to home
+      navigate('/');
+    } else {
+      setError(result.error);
+    }
   };
 
   return (
@@ -38,6 +51,12 @@ export default function Signup() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-xs">
+              {error}
+            </div>
+          )}
+
           {/* Full Name */}
           <div className="space-y-1">
             <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Full Name</label>
@@ -52,7 +71,8 @@ export default function Signup() {
                 placeholder="Hawi Girma"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none font-medium text-sm transition"
+                disabled={loading}
+                className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none font-medium text-sm transition disabled:opacity-50"
               />
             </div>
           </div>
@@ -71,7 +91,8 @@ export default function Signup() {
                 placeholder="hawig3521@gmail.com"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none font-medium text-sm transition"
+                disabled={loading}
+                className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none font-medium text-sm transition disabled:opacity-50"
               />
             </div>
           </div>
@@ -89,25 +110,8 @@ export default function Signup() {
                 placeholder="+251 91 234 5678"
                 value={formData.phone}
                 onChange={handleChange}
-                className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none font-medium text-sm transition"
-              />
-            </div>
-          </div>
-
-          {/* Address */}
-          <div className="space-y-1">
-            <label className="text-xs font-bold uppercase tracking-wider text-gray-500">Address / Location</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-                <MapPin className="w-4 h-4" />
-              </div>
-              <input 
-                type="text" 
-                name="address" 
-                placeholder="Adama, Ethiopia"
-                value={formData.address}
-                onChange={handleChange}
-                className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none font-medium text-sm transition"
+                disabled={loading}
+                className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none font-medium text-sm transition disabled:opacity-50"
               />
             </div>
           </div>
@@ -126,7 +130,8 @@ export default function Signup() {
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none font-medium text-sm transition"
+                disabled={loading}
+                className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none font-medium text-sm transition disabled:opacity-50"
               />
             </div>
           </div>
@@ -134,10 +139,11 @@ export default function Signup() {
           {/* Submit Button */}
           <button 
             type="submit"
-            className="w-full mt-2 flex items-center justify-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-orange-600/25 transition-all duration-300 group text-sm"
+            disabled={loading}
+            className="w-full mt-2 flex items-center justify-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-orange-600/25 transition-all duration-300 group text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span>Sign Up</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <span>{loading ? 'Creating Account...' : 'Sign Up'}</span>
+            {!loading && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
           </button>
 
         </form>

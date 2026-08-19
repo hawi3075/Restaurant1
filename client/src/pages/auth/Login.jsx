@@ -1,22 +1,63 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, ArrowLeft, Utensils } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError(''); // Clear error when user types
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("Logged in successfully!");
-    navigate('/');
+    setLoading(true);
+    setError('');
+
+    console.log('Starting login with:', formData.email);
+    const result = await login(formData.email, formData.password);
+    console.log('Login result:', result);
+    setLoading(false);
+
+    if (result.success) {
+      console.log('Login successful! Role:', result.role);
+      // Redirect based on user role
+      switch (result.role) {
+        case 'ADMIN':
+          console.log('Redirecting to admin dashboard');
+          navigate('/admin/dashboard');
+          break;
+        case 'CHEF':
+          console.log('Redirecting to chef dashboard');
+          navigate('/chef/dashboard');
+          break;
+        case 'WAITER':
+          console.log('Redirecting to waiter dashboard');
+          navigate('/waiter/dashboard');
+          break;
+        case 'DRIVER':
+          console.log('Redirecting to driver dashboard');
+          navigate('/driver/dashboard');
+          break;
+        case 'CUSTOMER':
+        default:
+          console.log('Redirecting to home');
+          navigate('/');
+          break;
+      }
+    } else {
+      console.error('Login failed:', result.error);
+      setError(result.error);
+    }
   };
 
   return (
@@ -78,6 +119,12 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-xs">
+                {error}
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Email Address</label>
               <div className="relative">
@@ -88,10 +135,11 @@ export default function Login() {
                   type="email" 
                   name="email" 
                   required 
-                  placeholder="hawig3521@gmail.com"
+                  placeholder="admin@maad.com"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none text-xs font-medium transition"
+                  disabled={loading}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none text-xs font-medium transition disabled:opacity-50"
                 />
               </div>
             </div>
@@ -114,17 +162,19 @@ export default function Login() {
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none text-xs font-medium transition"
+                  disabled={loading}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 outline-none text-xs font-medium transition disabled:opacity-50"
                 />
               </div>
             </div>
 
             <button 
               type="submit"
-              className="w-full mt-2 flex items-center justify-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-orange-600/25 transition text-xs uppercase tracking-wider cursor-pointer"
+              disabled={loading}
+              className="w-full mt-2 flex items-center justify-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-orange-600/25 transition text-xs uppercase tracking-wider cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>Sign In</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>{loading ? 'Signing In...' : 'Sign In'}</span>
+              {!loading && <ArrowRight className="w-4 h-4" />}
             </button>
 
           </form>
