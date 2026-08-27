@@ -115,7 +115,7 @@ export default function CartPage() {
                 <div className="flex flex-col sm:flex-row gap-6">
                   {/* Food Image */}
                   <img
-                    src={item.food.image || '/m1.jpg'}
+                    src={item.food.image || '/m1.webp'}
                     alt={item.food.name}
                     className="w-full sm:w-32 h-32 rounded-xl object-cover flex-shrink-0"
                   />

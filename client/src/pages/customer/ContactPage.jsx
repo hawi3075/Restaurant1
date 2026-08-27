@@ -211,7 +211,7 @@ export default function ContactPage() {
             {/* Right: Support Illustration Image */}
             <div className="flex justify-center bg-orange-50/50 p-8 rounded-2xl border border-orange-100">
               <img 
-                src="/m8.jpg" 
+                src="/m8.webp" 
                 alt="Support Customer Representative" 
                 className="w-full max-w-md h-[380px] object-cover rounded-2xl shadow-md"
               />

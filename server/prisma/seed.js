@@ -62,8 +62,8 @@ async function main() {
   const restaurant1 = await prisma.restaurant.create({
     data: {
       name: 'Yod Abyssinia Restaurant',
-      logo: '/m7.jpg',
-      coverImage: '/m8.jpg',
+      logo: '/m7.webp',
+      coverImage: '/m8.webp',
       description: 'Traditional Ethiopian cuisine with live cultural shows',
       address: 'Bole Road, Addis Ababa',
       latitude: 9.0320,
@@ -81,8 +81,8 @@ async function main() {
   const restaurant2 = await prisma.restaurant.create({
     data: {
       name: 'Tomoca Coffee',
-      logo: '/m1.jpg',
-      coverImage: '/m7.jpg',
+      logo: '/m1.webp',
+      coverImage: '/m7.webp',
       description: 'Iconic Ethiopian coffee house since 1953',
       address: 'Wawel Street, Piazza, Addis Ababa',
       latitude: 9.0340,
@@ -100,8 +100,8 @@ async function main() {
   const restaurant3 = await prisma.restaurant.create({
     data: {
       name: 'Habesha 2000 Restaurant',
-      logo: '/m8.jpg',
-      coverImage: '/m1.jpg',
+      logo: '/m8.webp',
+      coverImage: '/m1.webp',
       description: 'Modern Ethiopian dining experience',
       address: 'Kazanchis, Addis Ababa',
       latitude: 9.0250,
@@ -154,28 +154,28 @@ async function main() {
   const categoryEthiopian = await prisma.foodCategory.create({
     data: {
       name: 'Ethiopian Food',
-      image: '/m7.jpg',
+      image: '/m7.webp',
     },
   });
 
   const categoryCoffee = await prisma.foodCategory.create({
     data: {
       name: 'Coffee & Beverages',
-      image: '/m1.jpg',
+      image: '/m1.webp',
     },
   });
 
   const categoryFastFood = await prisma.foodCategory.create({
     data: {
       name: 'Fast Food',
-      image: '/m8.jpg',
+      image: '/m8.webp',
     },
   });
 
   const categoryDessert = await prisma.foodCategory.create({
     data: {
       name: 'Desserts',
-      image: '/m1.jpg',
+      image: '/m1.webp',
     },
   });
 
@@ -186,7 +186,7 @@ async function main() {
       name: 'Doro Wot with Injera',
       description: 'Traditional Ethiopian chicken stew with hard-boiled eggs',
       price: 250.00,
-      image: '/m7.jpg',
+      image: '/m7.webp',
       isPopular: true,
       isAvailable: true,
       categoryId: categoryEthiopian.id,
@@ -199,7 +199,7 @@ async function main() {
       name: 'Kitfo',
       description: 'Ethiopian minced raw beef marinated in mitmita and butter',
       price: 300.00,
-      image: '/m8.jpg',
+      image: '/m8.webp',
       isPopular: true,
       isAvailable: true,
       categoryId: categoryEthiopian.id,
@@ -212,7 +212,7 @@ async function main() {
       name: 'Ethiopian Coffee Ceremony',
       description: 'Traditional coffee ceremony with popcorn',
       price: 80.00,
-      image: '/m1.jpg',
+      image: '/m1.webp',
       isPopular: true,
       isAvailable: true,
       categoryId: categoryCoffee.id,
@@ -225,7 +225,7 @@ async function main() {
       name: 'Macchiato',
       description: 'Ethiopian style macchiato with thick foam',
       price: 50.00,
-      image: '/m7.jpg',
+      image: '/m7.webp',
       isPopular: true,
       isAvailable: true,
       categoryId: categoryCoffee.id,
@@ -238,7 +238,7 @@ async function main() {
       name: 'Tibs',
       description: 'Sautéed meat with vegetables and spices',
       price: 280.00,
-      image: '/m1.jpg',
+      image: '/m1.webp',
       isPopular: false,
       isAvailable: true,
       categoryId: categoryEthiopian.id,
@@ -251,7 +251,7 @@ async function main() {
       name: 'Shiro Wot',
       description: 'Chickpea stew with berbere spice',
       price: 120.00,
-      image: '/m8.jpg',
+      image: '/m8.webp',
       isPopular: false,
       isAvailable: true,
       categoryId: categoryEthiopian.id,

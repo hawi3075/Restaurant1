@@ -73,12 +73,12 @@ export default function RestaurantListPage() {
     <div className="app-page min-h-screen bg-[#FFFBF7]">
       <Navbar />
 
-      {/* Minimized Header with mg3.jpg Background */}
+      {/* Minimized Header with mg3.webp Background */}
       <section className="relative bg-gray-900 text-white py-10 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-orange-500/20">
         {/* Background Image with a subtle overlay for text readability */}
         <div className="absolute inset-0 z-0">
           <img
-            src="/mg3.jpg"
+            src="/mg3.webp"
             alt="Restaurant Background"
             className="w-full h-full object-cover"
           />
@@ -180,7 +180,7 @@ export default function RestaurantListPage() {
                   {/* Restaurant Image */}
                   <div className="relative h-48 overflow-hidden bg-gray-100">
                     <img
-                      src={restaurant.coverImage || restaurant.logo || '/m7.jpg'}
+                      src={restaurant.coverImage || restaurant.logo || '/m7.webp'}
                       alt={restaurant.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />

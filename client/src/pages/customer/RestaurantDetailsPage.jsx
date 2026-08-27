@@ -105,7 +105,7 @@ export default function RestaurantDetailsPage() {
       {/* Hero Section */}
       <section className="relative h-80 overflow-hidden">
         <img
-          src={restaurant.coverImage || restaurant.logo || '/m7.jpg'}
+          src={restaurant.coverImage || restaurant.logo || '/m7.webp'}
           alt={restaurant.name}
           className="w-full h-full object-cover"
         />
@@ -238,7 +238,7 @@ export default function RestaurantDetailsPage() {
                     {/* Food Image */}
                     <div className="relative h-48 overflow-hidden bg-gray-100">
                       <img
-                        src={food.image || '/m1.jpg'}
+                        src={food.image || '/m1.webp'}
                         alt={food.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />

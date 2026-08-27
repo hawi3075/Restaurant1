@@ -252,7 +252,7 @@ export default function OrdersPage() {
                   <div className="bg-gray-50 rounded-xl p-4 mb-4">
                     <div className="flex items-center space-x-3">
                       <img
-                        src={order.restaurant.logo || '/m7.jpg'}
+                        src={order.restaurant.logo || '/m7.webp'}
                         alt={order.restaurant.name}
                         className="w-12 h-12 rounded-xl object-cover"
                       />
@@ -270,7 +270,7 @@ export default function OrdersPage() {
                     <div key={idx} className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <img
-                          src={item.food?.image || '/m1.jpg'}
+                          src={item.food?.image || '/m1.webp'}
                           alt={item.food?.name}
                           className="w-16 h-16 rounded-xl object-cover"
                         />

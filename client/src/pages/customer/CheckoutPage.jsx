@@ -949,7 +949,7 @@ export default function CheckoutPage() {
                 <h2 className="text-xl font-black text-gray-900 mb-4">{t('restaurant')}</h2>
                 <div className="flex items-center space-x-4">
                   <img
-                    src={restaurant.logo || '/m7.jpg'}
+                    src={restaurant.logo || '/m7.webp'}
                     alt={restaurant.name}
                     className="w-16 h-16 rounded-xl object-cover"
                   />

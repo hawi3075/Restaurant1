@@ -187,7 +187,7 @@ export default function AdminFoodsPage() {
             >
               <div className="relative h-48 bg-gray-100">
                 <img
-                  src={food.image || '/m1.jpg'}
+                  src={food.image || '/m1.webp'}
                   alt={food.name}
                   className="w-full h-full object-cover"
                 />
@@ -295,7 +295,7 @@ export default function AdminFoodsPage() {
                   type="text"
                   value={form.image}
                   onChange={e => setForm({ ...form, image: e.target.value })}
-                  placeholder="e.g. /uploads/dish.jpg"
+                  placeholder="e.g. /uploads/dish.webp"
                   className="mt-1 w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-orange-500 transition"
                 />
               </div>

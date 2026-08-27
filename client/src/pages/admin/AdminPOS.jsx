@@ -94,8 +94,8 @@ export default function AdminPOS() {
     } catch (err) {
       console.error('Error fetching foods:', err);
       setFoods([
-        { id: 1, name: 'Special Enjera Firfir', price: 120, image: '/m1.jpg' },
-        { id: 2, name: 'Doro Wat', price: 150, image: '/m7.jpg' }
+        { id: 1, name: 'Special Enjera Firfir', price: 120, image: '/m1.webp' },
+        { id: 2, name: 'Doro Wat', price: 150, image: '/m7.webp' }
       ]);
     } finally {
       setLoading(false);
@@ -368,7 +368,7 @@ export default function AdminPOS() {
                       className="group bg-gray-50 border border-gray-200 rounded-xl p-3 cursor-pointer hover:border-orange-500 hover:shadow-md transition duration-200 flex flex-col justify-between"
                     >
                       <div className="h-28 rounded-lg overflow-hidden bg-gray-200 mb-2">
-                        <img src={food.image || '/m1.jpg'} alt={food.name} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                        <img src={food.image || '/m1.webp'} alt={food.name} className="w-full h-full object-cover group-hover:scale-105 transition" />
                       </div>
                       <div>
                         <h4 className="text-xs font-bold text-gray-900 truncate">{food.name}</h4>

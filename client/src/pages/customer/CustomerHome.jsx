@@ -5,8 +5,8 @@ import Navbar from '../../components/Navbar';
 import API from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
 
-const HERO_PHOTO = '/m1.jpg';
-const DELIVERY_IMAGE = '/m8.jpg';
+const HERO_PHOTO = '/m1.webp';
+const DELIVERY_IMAGE = '/m8.webp';
 
 /* ---------------------------------------------------------
    Small utility hooks: scroll-reveal + count-up, both used
@@ -374,13 +374,13 @@ export default function LandingPage() {
       console.error('Error fetching data:', error);
       // Set fallback data for demo
       setCategories([
-        { id: '1', name: 'Traditional', image: '/m1.jpg', _count: { foods: 12 } },
-        { id: '2', name: 'Burgers', image: '/m7.jpg', _count: { foods: 8 } },
-        { id: '3', name: 'Pizza', image: '/m8.jpg', _count: { foods: 6 } },
+        { id: '1', name: 'Traditional', image: '/m1.webp', _count: { foods: 12 } },
+        { id: '2', name: 'Burgers', image: '/m7.webp', _count: { foods: 8 } },
+        { id: '3', name: 'Pizza', image: '/m8.webp', _count: { foods: 6 } },
       ]);
       setPopularFoods([
-        { id: 1, name: 'Special Enjera Firfir', image: '/m1.jpg', rating: 5, reviews: [{id:1}], price: 120, restaurant: { name: 'Bole Restaurant' } },
-        { id: 2, name: 'Doro Wat', image: '/m7.jpg', rating: 5, reviews: [], price: 150, restaurant: { name: 'Traditional House' } },
+        { id: 1, name: 'Special Enjera Firfir', image: '/m1.webp', rating: 5, reviews: [{id:1}], price: 120, restaurant: { name: 'Bole Restaurant' } },
+        { id: 2, name: 'Doro Wat', image: '/m7.webp', rating: 5, reviews: [], price: 150, restaurant: { name: 'Traditional House' } },
       ]);
     } finally {
       setLoading(false);
@@ -676,7 +676,7 @@ export default function LandingPage() {
             <div className="relative w-full max-w-[500px] group animate-bob">
               <div className="absolute -inset-2 bg-gradient-to-r from-orange-500 to-amber-500 rounded-[2.5rem] blur opacity-25 group-hover:opacity-40 transition duration-300 animate-gradient-shift"></div>
               <img
-                src="/m7.jpg"
+                src="/m7.webp"
                 alt="Ma'ad Restaurant ambiance and dishes"
                 className="relative w-full h-[320px] sm:h-[380px] object-cover rounded-[2rem] shadow-lg border-4 border-white dark:border-gray-900 transition-transform duration-500 group-hover:scale-[1.02]"
               />
@@ -754,10 +754,10 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
             {[
-              { img: '/m1.jpg', title: 'Find your daily meal' },
-              { img: '/mg1.jpg', title: 'Easy food ordering system' },
-              { img: '/m8.jpg', title: 'Fastest food delivery service' },
-              { img: '/mg2.jpg', title: 'Track your food order' },
+              { img: '/m1.webp', title: 'Find your daily meal' },
+              { img: '/mg1.webp', title: 'Easy food ordering system' },
+              { img: '/m8.webp', title: 'Fastest food delivery service' },
+              { img: '/mg2.webp', title: 'Track your food order' },
             ].map((card, idx) => (
               <Reveal key={idx} delay={idx * 100}>
                 <div className="group relative rounded-[2rem] overflow-hidden shadow-xl border-4 border-white dark:border-gray-900 aspect-[16/10] sm:aspect-[16/9] w-full cursor-pointer">
@@ -808,7 +808,7 @@ export default function LandingPage() {
                   >
                     <div className="relative h-48 overflow-hidden bg-gray-100 dark:bg-gray-800">
                       <img
-                        src={restaurant.coverImage || restaurant.logo || '/m7.jpg'}
+                        src={restaurant.coverImage || restaurant.logo || '/m7.webp'}
                         alt={restaurant.name}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Search, Utensils, Heart, Phone, Mail, MapPin, Star, Plus, Eye, MessageCircle, ShoppingCart, CreditCard } from 'lucide-react';
 import Navbar from '../../components/Navbar';
@@ -181,11 +181,11 @@ export default function CategoriesPage() {
                     {/* Image container — click through to full detail page */}
                     <Link to={`/foods/${food.id}`} className="h-40 w-full overflow-hidden relative bg-orange-50 block">
                       <img
-                        src={food.image || '/m1.jpg'}
+                        src={food.image || '/m1.webp'}
                         alt={food.name}
                         loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        onError={(e) => { e.target.src = '/m1.jpg'; }}
+                        onError={(e) => { e.target.src = '/m1.webp'; }}
                       />
                     </Link>
 

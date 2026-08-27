@@ -549,7 +549,7 @@ export default function ChefAddFood() {
                         type="url"
                         value={formData.imageUrl}
                         onChange={handleImageUrlChange}
-                        placeholder="https://example.com/image.jpg"
+                        placeholder="https://example.com/image.webp"
                         className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none font-medium"
                       />
                       {imagePreview && (

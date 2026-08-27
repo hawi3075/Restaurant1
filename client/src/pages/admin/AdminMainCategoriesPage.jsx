@@ -200,7 +200,7 @@ export default function AdminMainCategoriesPage() {
                   type="text"
                   value={form.image}
                   onChange={e => setForm({ ...form, image: e.target.value })}
-                  placeholder="e.g. /uploads/traditional.jpg"
+                  placeholder="e.g. /uploads/traditional.webp"
                   className="mt-1 w-full px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs outline-none focus:border-orange-500 transition"
                 />
               </div>

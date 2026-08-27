@@ -99,7 +99,7 @@ export default function FoodDetailsPage() {
             {/* Main Product Image Container */}
             <div className="relative rounded-3xl overflow-hidden shadow-xl bg-white border border-gray-100 group">
               <img
-                src={food.image || '/m1.jpg'}
+                src={food.image || '/m1.webp'}
                 alt={food.name}
                 className="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-500"
               />
@@ -128,7 +128,7 @@ export default function FoodDetailsPage() {
                 className="flex items-center space-x-4 group/rest"
               >
                 <img
-                  src={food.restaurant.logo || '/m7.jpg'}
+                  src={food.restaurant.logo || '/m7.webp'}
                   alt={food.restaurant.name}
                   className="w-14 h-14 rounded-2xl object-cover shadow-inner"
                 />

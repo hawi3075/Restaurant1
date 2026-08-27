@@ -171,7 +171,7 @@ export default function AdminAddRestaurantPage() {
               name="coverImage"
               value={form.coverImage}
               onChange={handleChange}
-              placeholder="e.g. /uploads/cover.jpg or external link" 
+              placeholder="e.g. /uploads/cover.webp or external link" 
               className="w-full mt-1 px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-orange-500 transition" 
             />
           </div>
