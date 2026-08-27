@@ -1,12 +1,12 @@
 {
   "name": "roms-server",
   "version": "1.0.0",
-  "description": "Backend API for Restaurant Order Management System - Ready",
+  "description": "Backend API for Restaurant Order Management System",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "postinstall": "prisma generate",
+    "postinstall": "npx prisma generate",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js",
