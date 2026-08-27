@@ -1,7 +1,7 @@
 {
   "name": "roms-server",
   "version": "1.0.0",
-  "description": "Backend API for Restaurant Order Management System",
+  "description": "Backend API for Restaurant Order Management System - Ready",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
