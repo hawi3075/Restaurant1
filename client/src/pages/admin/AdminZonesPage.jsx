@@ -1,12 +1,99 @@
-import React, { useState } from 'react';
-import { MapPin, Plus, Edit2, Trash2, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { MapPin, Plus, Edit2, Trash2, Search, X } from 'lucide-react';
+import API from '../../services/api';
 
 export default function AdminZonesPage() {
-  const [zones] = useState([
-    { id: 1, name: 'Adama Central (Kebele 01 - 04)', restaurants: 14, deliveryMen: 28, status: 'Active' },
-    { id: 2, name: 'Bole Sub-City', restaurants: 8, deliveryMen: 15, status: 'Active' },
-    { id: 3, name: 'Qara Jiille Area', restaurants: 6, deliveryMen: 10, status: 'Active' },
-  ]);
+  const [zones, setZones] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [modalMode, setModalMode] = useState(null); // 'add' | 'edit' | null
+  const [editingZone, setEditingZone] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [form, setForm] = useState({ name: '', restaurants: '', deliveryMen: '', status: 'Active' });
+
+  useEffect(() => {
+    fetchZones();
+  }, []);
+
+  const fetchZones = async () => {
+    try {
+      setLoading(true);
+      const response = await API.get('/admin/zones');
+      setZones(response.data || []);
+    } catch (error) {
+      console.error('Error fetching zones:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredZones = zones.filter(z =>
+    z.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  function openAddModal() {
+    setForm({ name: '', restaurants: '', deliveryMen: '', status: 'Active' });
+    setModalMode('add');
+  }
+
+  function openEditModal(zone) {
+    setEditingZone(zone);
+    setForm({
+      name: zone.name,
+      restaurants: zone.restaurants.toString(),
+      deliveryMen: zone.deliveryMen.toString(),
+      status: zone.status,
+    });
+    setModalMode('edit');
+  }
+
+  function closeModal() {
+    setModalMode(null);
+    setEditingZone(null);
+  }
+
+  async function handleSave() {
+    if (!form.name.trim()) return;
+
+    try {
+      const payload = {
+        name: form.name.trim(),
+        restaurants: parseInt(form.restaurants) || 0,
+        deliveryMen: parseInt(form.deliveryMen) || 0,
+        status: form.status,
+      };
+
+      if (modalMode === 'add') {
+        const response = await API.post('/admin/zones', payload);
+        setZones(prev => [...prev, response.data]);
+      } else if (modalMode === 'edit' && editingZone) {
+        const response = await API.put(`/admin/zones/${editingZone.id}`, payload);
+        setZones(prev =>
+          prev.map(z => (z.id === editingZone.id ? response.data : z))
+        );
+      }
+      closeModal();
+    } catch (error) {
+      console.error('Error saving zone:', error);
+      alert('Failed to save zone. Please try again.');
+    }
+  }
+
+  function confirmDelete(zone) {
+    setDeleteTarget(zone);
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    try {
+      await API.delete(`/admin/zones/${deleteTarget.id}`);
+      setZones(prev => prev.filter(z => z.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch (error) {
+      console.error('Error deleting zone:', error);
+      alert('Failed to delete zone. Please try again.');
+    }
+  }
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
@@ -15,7 +102,10 @@ export default function AdminZonesPage() {
           <h1 className="text-2xl font-black text-gray-900 tracking-tight">Zone Management</h1>
           <p className="text-xs text-gray-500 mt-0.5">Configure and monitor coverage delivery areas.</p>
         </div>
-        <button className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-orange-600/20 transition cursor-pointer">
+        <button
+          onClick={openAddModal}
+          className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-orange-600/20 transition cursor-pointer"
+        >
           <Plus className="w-4 h-4" />
           <span>Add New Zone</span>
         </button>
@@ -25,7 +115,13 @@ export default function AdminZonesPage() {
         <div className="p-4 border-b border-gray-100 flex items-center justify-between">
           <div className="relative w-72">
             <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-            <input type="text" placeholder="Search zones..." className="w-full pl-9 pr-4 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs outline-none focus:border-orange-500 transition" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search zones..."
+              className="w-full pl-9 pr-4 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs outline-none focus:border-orange-500 transition"
+            />
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -40,7 +136,15 @@ export default function AdminZonesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 text-gray-700">
-              {zones.map(zone => (
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center">
+                    <div className="flex justify-center items-center py-4">
+                      <div className="animate-spin rounded-full h-8 w-8 border-4 border-orange-500 border-t-transparent"></div>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredZones.map(zone => (
                 <tr key={zone.id} className="hover:bg-gray-50/50 transition">
                   <td className="p-4 font-bold flex items-center space-x-2 text-gray-900">
                     <MapPin className="w-4 h-4 text-orange-500" />
@@ -49,18 +153,150 @@ export default function AdminZonesPage() {
                   <td className="p-4">{zone.restaurants} Restaurants</td>
                   <td className="p-4">{zone.deliveryMen} Drivers</td>
                   <td className="p-4">
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">{zone.status}</span>
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                        zone.status === 'Active'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-gray-200 text-gray-600'
+                      }`}
+                    >
+                      {zone.status}
+                    </span>
                   </td>
                   <td className="p-4 text-right space-x-2">
-                    <button className="p-2 bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition"><Edit2 className="w-3.5 h-3.5" /></button>
-                    <button className="p-2 bg-gray-100 hover:bg-rose-100 hover:text-rose-600 rounded-lg transition"><Trash2 className="w-3.5 h-3.5" /></button>
+                    <button
+                      onClick={() => openEditModal(zone)}
+                      className="p-2 bg-gray-100 hover:bg-orange-100 hover:text-orange-600 rounded-lg transition cursor-pointer"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => confirmDelete(zone)}
+                      className="p-2 bg-gray-100 hover:bg-rose-100 hover:text-rose-600 rounded-lg transition cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </td>
                 </tr>
               ))}
+              {!loading && filteredZones.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-gray-400">
+                    No zones match your search.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Add / Edit Modal */}
+      {modalMode && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-black text-gray-900">
+                {modalMode === 'add' ? 'Add New Zone' : 'Edit Zone'}
+              </h2>
+              <button onClick={closeModal} className="p-1.5 hover:bg-gray-100 rounded-lg transition cursor-pointer">
+                <X className="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Zone Name</label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={e => setForm({ ...form, name: e.target.value })}
+                  placeholder="e.g. Piassa Area"
+                  className="mt-1 w-full px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs outline-none focus:border-orange-500 transition"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Restaurants</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={form.restaurants}
+                    onChange={e => setForm({ ...form, restaurants: e.target.value })}
+                    className="mt-1 w-full px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs outline-none focus:border-orange-500 transition"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Drivers</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={form.deliveryMen}
+                    onChange={e => setForm({ ...form, deliveryMen: e.target.value })}
+                    className="mt-1 w-full px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs outline-none focus:border-orange-500 transition"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Status</label>
+                <select
+                  value={form.status}
+                  onChange={e => setForm({ ...form, status: e.target.value })}
+                  className="mt-1 w-full px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs outline-none focus:border-orange-500 transition"
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-2">
+              <button
+                onClick={closeModal}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={!form.name.trim()}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-orange-600/20 transition cursor-pointer"
+              >
+                {modalMode === 'add' ? 'Add Zone' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
+            <h2 className="text-base font-black text-gray-900">Delete Zone</h2>
+            <p className="text-xs text-gray-500">
+              Are you sure you want to delete <span className="font-bold text-gray-700">{deleteTarget.name}</span>?
+              This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-2 pt-2">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-lg shadow-rose-600/20 transition cursor-pointer"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

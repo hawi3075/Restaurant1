@@ -285,8 +285,7 @@ export default function GlobalSearch() {
                               <p className="font-bold text-gray-900 text-sm truncate">
                                 {food.name}
                               </p>
-                              <p className="text-xs text-gray-500 truncate">
-                                ${food.price?.toFixed(2)} • {food.restaurant?.name}
+                              <p className="text-xs text-gray-500 truncate">ETB {food.price?.toFixed(2)} • {food.restaurant?.name}
                               </p>
                             </div>
                           </button>

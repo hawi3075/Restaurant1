@@ -123,4 +123,200 @@ const createFood = async (req, res) => {
   }
 };
 
-module.exports = { getCategories, createCategory, getFoods, getFoodById, createFood };
+const updateCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, image } = req.body;
+    const category = await prisma.foodCategory.update({
+      where: { id },
+      data: {
+        ...(name && { name }),
+        ...(image !== undefined && { image })
+      }
+    });
+    res.json(category);
+  } catch (error) {
+    console.error('Error updating category:', error);
+    res.status(500).json({ error: 'Internal server error during category update.' });
+  }
+};
+
+const deleteCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.$transaction(async (tx) => {
+      const foods = await tx.food.findMany({
+        where: { categoryId: id },
+        select: { id: true }
+      });
+      const foodIds = foods.map(f => f.id);
+
+      if (foodIds.length > 0) {
+        await tx.orderItem.deleteMany({
+          where: { foodId: { in: foodIds } }
+        });
+        await tx.review.deleteMany({
+          where: { foodId: { in: foodIds } }
+        });
+        await tx.foodAddon.deleteMany({
+          where: { foodId: { in: foodIds } }
+        });
+        await tx.food.deleteMany({
+          where: { categoryId: id }
+        });
+      }
+      await tx.foodCategory.delete({
+        where: { id }
+      });
+    });
+    res.json({ message: 'Category and all associated foods deleted successfully.' });
+  } catch (error) {
+    console.error('Error deleting category:', error);
+    res.status(500).json({ error: 'Internal server error during category deletion.' });
+  }
+};
+
+const updateFood = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, price, image, categoryId, restaurantId, isPopular, isAvailable } = req.body;
+
+    const food = await prisma.food.update({
+      where: { id },
+      data: {
+        ...(name && { name }),
+        ...(description !== undefined && { description }),
+        ...(price !== undefined && { price: parseFloat(price) }),
+        ...(image !== undefined && { image }),
+        ...(categoryId && { categoryId }),
+        ...(restaurantId && { restaurantId }),
+        ...(isPopular !== undefined && { isPopular }),
+        ...(isAvailable !== undefined && { isAvailable })
+      }
+    });
+
+    res.json(food);
+  } catch (error) {
+    console.error('Error updating food:', error);
+    res.status(500).json({ error: 'Internal server error during food update.' });
+  }
+};
+
+const deleteFood = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.$transaction(async (tx) => {
+      await tx.orderItem.deleteMany({ where: { foodId: id } });
+      await tx.review.deleteMany({ where: { foodId: id } });
+      await tx.foodAddon.deleteMany({ where: { foodId: id } });
+      await tx.food.delete({ where: { id } });
+    });
+    res.json({ message: 'Food item deleted successfully.' });
+  } catch (error) {
+    console.error('Error deleting food:', error);
+    res.status(500).json({ error: 'Internal server error during food deletion.' });
+  }
+};
+
+const getAddons = async (req, res) => {
+  try {
+    const addons = await prisma.foodAddon.findMany({
+      include: {
+        food: {
+          select: {
+            name: true,
+            restaurant: { select: { name: true } }
+          }
+        }
+      }
+    });
+    res.json(addons);
+  } catch (error) {
+    console.error('Error fetching addons:', error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+};
+
+const createAddon = async (req, res) => {
+  try {
+    const { name, price, foodId } = req.body;
+    if (!name || !price || !foodId) {
+      return res.status(400).json({ error: 'Name, price, and foodId are required.' });
+    }
+    const addon = await prisma.foodAddon.create({
+      data: {
+        name,
+        price: parseFloat(price),
+        foodId
+      },
+      include: {
+        food: {
+          select: {
+            name: true,
+            restaurant: { select: { name: true } }
+          }
+        }
+      }
+    });
+    res.status(201).json(addon);
+  } catch (error) {
+    console.error('Error creating addon:', error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+};
+
+const updateAddon = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, price, foodId } = req.body;
+    const addon = await prisma.foodAddon.update({
+      where: { id },
+      data: {
+        ...(name && { name }),
+        ...(price !== undefined && { price: parseFloat(price) }),
+        ...(foodId && { foodId })
+      },
+      include: {
+        food: {
+          select: {
+            name: true,
+            restaurant: { select: { name: true } }
+          }
+        }
+      }
+    });
+    res.json(addon);
+  } catch (error) {
+    console.error('Error updating addon:', error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+};
+
+const deleteAddon = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.foodAddon.delete({
+      where: { id }
+    });
+    res.json({ message: 'Addon deleted successfully.' });
+  } catch (error) {
+    console.error('Error deleting addon:', error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+};
+
+module.exports = { 
+  getCategories, 
+  createCategory, 
+  getFoods, 
+  getFoodById, 
+  createFood,
+  updateCategory,
+  deleteCategory,
+  updateFood,
+  deleteFood,
+  getAddons,
+  createAddon,
+  updateAddon,
+  deleteAddon
+};

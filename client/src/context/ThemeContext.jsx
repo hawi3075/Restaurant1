@@ -2,52 +2,51 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 
 const ThemeContext = createContext(null);
 
-export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState('light');
+function getInitialTheme() {
+  if (typeof window === 'undefined') return 'light';
+  const saved = localStorage.getItem('theme');
+  if (saved === 'light' || saved === 'dark') return saved;
+  if (window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
+  return 'light';
+}
 
-  // Load theme from localStorage on mount
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      setTheme(savedTheme);
-      if (savedTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-      }
-    } else {
-      // Check system preference
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        setTheme('dark');
-        document.documentElement.classList.add('dark');
-      }
+function applyThemeToDocument(theme) {
+  const root = document.documentElement;
+  if (theme === 'dark') {
+    root.classList.add('dark');
+  } else {
+    root.classList.remove('dark');
+  }
+  root.style.colorScheme = theme;
+}
+
+export const ThemeProvider = ({ children }) => {
+  const [theme, setTheme] = useState(() => {
+    const initial = getInitialTheme();
+    // Apply immediately so first paint matches preference
+    if (typeof document !== 'undefined') {
+      applyThemeToDocument(initial);
     }
-  }, []);
+    return initial;
+  });
+
+  useEffect(() => {
+    applyThemeToDocument(theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
   const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  const setLightTheme = () => {
-    setTheme('light');
-    localStorage.setItem('theme', 'light');
-    document.documentElement.classList.remove('dark');
-  };
+  const setLightTheme = () => setTheme('light');
+  const setDarkTheme = () => setTheme('dark');
 
-  const setDarkTheme = () => {
-    setTheme('dark');
-    localStorage.setItem('theme', 'dark');
-    document.documentElement.classList.add('dark');
-  };
+  const darkMode = theme === 'dark';
+  const setDarkMode = (val) => setTheme(val ? 'dark' : 'light');
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setLightTheme, setDarkTheme }}>
+    <ThemeContext.Provider value={{ theme, darkMode, setDarkMode, toggleTheme, setLightTheme, setDarkTheme }}>
       {children}
     </ThemeContext.Provider>
   );

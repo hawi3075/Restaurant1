@@ -3,7 +3,7 @@ import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { 
   LayoutDashboard, ShoppingBag, Store, UtensilsCrossed, 
   MapPin, Users, Settings, MessageSquare, 
-  ShieldCheck, ChevronDown, ChevronRight, Bike, LogOut, Bell
+  ShieldCheck, ChevronDown, ChevronRight, Bike, LogOut, Bell, Headphones, Star
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import AdminDashboardHome from './AdminDashboardHome';
@@ -17,12 +17,14 @@ import AdminOrdersPage from './AdminOrdersPage';
 import AdminZonesPage from './AdminZonesPage';
 import AdminCuisinePage from './AdminCuisinePage';
 import AdminAddRestaurantPage from './AdminAddRestaurantPage';
-import AdminAddonsPage from './AdminAddonsPage';
 import AdminDeliverymanPage from './AdminDeliverymanPage';
 import AdminEmployeeRolePage from './AdminEmployeeRolePage';
 import AdminEmployeesPage from './AdminEmployeesPage';
 import AdminSupportPage from './AdminSupportPage';
 import AdminSettingsPage from './AdminSettingsPage';
+import AdminReviewsPage from './AdminReviewsPage';
+import AdminContactMessagesPage from './AdminContactMessagesPage';
+import AdminAiChatPage from './AdminAiChatPage';
 
 function AdminSidebar() {
   const location = useLocation();
@@ -105,8 +107,6 @@ function AdminSidebar() {
             <div className="pl-9 pr-2 py-1 space-y-1 bg-gray-950/40 rounded-xl my-1">
               <Link to="/admin/orders/all" className="block py-1.5 px-2 rounded-lg hover:text-orange-400 transition">All Orders</Link>
               <Link to="/admin/orders/pending" className="block py-1.5 px-2 rounded-lg hover:text-orange-400 transition">Pending Orders</Link>
-              <Link to="/admin/orders/delivering" className="block py-1.5 px-2 rounded-lg hover:text-orange-400 transition">Out for Delivery</Link>
-              <Link to="/admin/orders/refunds" className="block py-1.5 px-2 rounded-lg hover:text-orange-400 transition">Refund Requests</Link>
             </div>
           )}
         </div>
@@ -181,16 +181,6 @@ function AdminSidebar() {
           <span>Foods</span>
         </Link>
 
-        <Link 
-          to="/admin/food/addons" 
-          className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition ${
-            isActive('/admin/food/addons') ? 'bg-orange-600 text-white font-bold' : 'hover:bg-gray-800 hover:text-white'
-          }`}
-        >
-          <ShoppingBag className="w-4 h-4 text-orange-500" />
-          <span>Addons</span>
-        </Link>
-
         {/* DELIVERYMAN MANAGEMENT */}
         <div className="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
           Deliveryman Management
@@ -246,6 +236,16 @@ function AdminSidebar() {
           <span>Customers</span>
         </Link>
 
+        <Link 
+          to="/admin/reviews" 
+          className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition ${
+            isActive('/admin/reviews') ? 'bg-orange-600 text-white font-bold' : 'hover:bg-gray-800 hover:text-white'
+          }`}
+        >
+          <Star className="w-4 h-4 text-orange-500" />
+          <span>Review Management</span>
+        </Link>
+
         {/* HELP & SUPPORT */}
         <div className="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
           Help & Support
@@ -259,6 +259,16 @@ function AdminSidebar() {
         >
           <MessageSquare className="w-4 h-4 text-orange-500" />
           <span>Contact Messages</span>
+        </Link>
+
+        <Link 
+          to="/admin/support/chat" 
+          className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition ${
+            isActive('/admin/support/chat') ? 'bg-orange-600 text-white font-bold' : 'hover:bg-gray-800 hover:text-white'
+          }`}
+        >
+          <Headphones className="w-4 h-4 text-orange-500" />
+          <span>Live Support Chat</span>
         </Link>
 
         {/* SYSTEM SETUP */}
@@ -350,8 +360,6 @@ export default function AdminDashboard() {
             {/* Order Management */}
             <Route path="/orders/all" element={<AdminOrdersPage filter="all" />} />
             <Route path="/orders/pending" element={<AdminOrdersPage filter="pending" />} />
-            <Route path="/orders/delivering" element={<AdminOrdersPage filter="delivering" />} />
-            <Route path="/orders/refunds" element={<AdminOrdersPage filter="refunds" />} />
 
             {/* Restaurant Management */}
             <Route path="/zones" element={<AdminZonesPage />} />
@@ -362,7 +370,6 @@ export default function AdminDashboard() {
             {/* Food Management */}
             <Route path="/food/categories" element={<AdminMainCategoriesPage />} />
             <Route path="/food/items" element={<AdminFoodsPage />} />
-            <Route path="/food/addons" element={<AdminAddonsPage />} />
 
             {/* Deliveryman Management */}
             <Route path="/delivery/list" element={<AdminDeliverymanPage />} />
@@ -373,15 +380,18 @@ export default function AdminDashboard() {
 
             {/* Customer Management */}
             <Route path="/customers" element={<AdminCustomersPage />} />
+            <Route path="/reviews" element={<AdminReviewsPage />} />
 
             {/* Help & Support */}
-            <Route path="/support/messages" element={<AdminSupportPage />} />
+            <Route path="/support/messages" element={<AdminContactMessagesPage />} />
+            <Route path="/support/chat" element={<AdminAiChatPage />} />
+            <Route path="/support" element={<AdminContactMessagesPage />} />
+            <Route path="/chat" element={<AdminAiChatPage />} />
 
             {/* System Setup */}
             <Route path="/settings" element={<AdminSettingsPage />} />
 
-            {/* Fallback: unknown admin routes go back to the dashboard home
-                instead of silently rendering a blank page */}
+            {/* Fallback */}
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes>
         </main>

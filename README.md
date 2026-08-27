@@ -72,7 +72,25 @@ A comprehensive full-stack restaurant order management system built with React, 
 - PostgreSQL (v12 or higher)
 - npm or yarn
 
-## 🚀 Installation
+## 🚀 Deployment
+
+### Quick Deploy (15 minutes)
+See **[QUICK_DEPLOY.md](QUICK_DEPLOY.md)** for the fastest way to deploy to production.
+
+### Full Documentation
+- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Complete deployment guide with all options
+- **[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** - Pre-deployment checklist
+- **[PLATFORM_COMMANDS.md](PLATFORM_COMMANDS.md)** - CLI commands reference
+- **[DEPLOYMENT_SUMMARY.md](DEPLOYMENT_SUMMARY.md)** - Overview of all deployment docs
+
+### Recommended Platforms
+- **Frontend:** Vercel (free tier)
+- **Backend:** Render (free tier)
+- **Database:** Render PostgreSQL (free for 90 days)
+
+---
+
+## 🛠️ Local Development
 
 ### 1. Clone the repository
 

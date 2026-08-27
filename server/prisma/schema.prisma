@@ -34,19 +34,21 @@ enum OrderStatus {
 }
 
 model User {
-  id            String         @id @default(uuid())
-  name          String
-  email         String         @unique
-  password      String
-  phone         String?
-  role          Role           @default(CUSTOMER)
-  restaurantId  String?
-  restaurant    Restaurant?    @relation(fields: [restaurantId], references: [id])
-  orders        Order[]
-  reviews       Review[]
-  addresses     Address[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id                String         @id @default(uuid())
+  name              String
+  email             String         @unique
+  password          String
+  phone             String?
+  role              Role           @default(CUSTOMER)
+  restaurantId      String?
+  restaurant        Restaurant?    @relation(fields: [restaurantId], references: [id])
+  orders            Order[]
+  reviews           Review[]
+  addresses         Address[]
+  submittedFoods    Food[]         @relation("SubmittedFoods")
+  approvedFoods     Food[]         @relation("ApprovedFoods")
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 }
 
 model Restaurant {
@@ -81,20 +83,32 @@ model FoodCategory {
 }
 
 model Food {
-  id            String         @id @default(uuid())
-  name          String
-  description   String?
-  price         Float
-  image         String?
-  isPopular     Boolean        @default(false)
-  isAvailable   Boolean        @default(true)
-  categoryId    String
-  category      FoodCategory   @relation(fields: [categoryId], references: [id])
-  restaurantId  String
-  restaurant    Restaurant     @relation(fields: [restaurantId], references: [id])
-  orderItems    OrderItem[]
-  reviews       Review[]
-  addons        FoodAddon[]
+  id                String         @id @default(uuid())
+  name              String
+  description       String?
+  price             Float
+  image             String?
+  isPopular         Boolean        @default(false)
+  isAvailable       Boolean        @default(true)
+  preparationTime   Int            @default(15)
+  isVegetarian      Boolean        @default(false)
+  isVegan           Boolean        @default(false)
+  isGlutenFree      Boolean        @default(false)
+  spicyLevel        String         @default("NONE")
+  status            String         @default("APPROVED")
+  submittedBy       String?
+  submitter         User?          @relation("SubmittedFoods", fields: [submittedBy], references: [id])
+  approvedBy        String?
+  approver          User?          @relation("ApprovedFoods", fields: [approvedBy], references: [id])
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @default(now()) @updatedAt
+  categoryId        String
+  category          FoodCategory   @relation(fields: [categoryId], references: [id])
+  restaurantId      String
+  restaurant        Restaurant     @relation(fields: [restaurantId], references: [id])
+  orderItems        OrderItem[]
+  reviews           Review[]
+  addons            FoodAddon[]
 }
 
 model FoodAddon {
@@ -116,25 +130,30 @@ model Table {
 }
 
 model Order {
-  id            String         @id @default(uuid())
-  customerId    String
-  customer      User           @relation(fields: [customerId], references: [id])
-  restaurantId  String
-  restaurant    Restaurant     @relation(fields: [restaurantId], references: [id])
-  tableId       String?
-  table         Table?         @relation(fields: [tableId], references: [id])
-  driverId      String?        
-  orderType     OrderType
-  status        OrderStatus    @default(PENDING)
-  totalAmount   Float
-  deliveryFee   Float          @default(0.0)
-  discount      Float          @default(0.0)
+  id                  String         @id @default(uuid())
+  customerId          String
+  customer            User           @relation(fields: [customerId], references: [id])
+  restaurantId        String
+  restaurant          Restaurant     @relation(fields: [restaurantId], references: [id])
+  tableId             String?
+  table               Table?         @relation(fields: [tableId], references: [id])
+  addressId           String?
+  address             Address?       @relation(fields: [addressId], references: [id])
+  deliveryAddress     String?
+  latitude            Float?
+  longitude           Float?
+  driverId            String?        
+  orderType           OrderType
+  status              OrderStatus    @default(PENDING)
+  totalAmount         Float
+  deliveryFee         Float          @default(0.0)
+  discount            Float          @default(0.0)
   specialInstructions String?
-  items         OrderItem[]
-  statusHistory OrderStatusHistory[]
-  payment       Payment?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  items               OrderItem[]
+  statusHistory       OrderStatusHistory[]
+  payment             Payment?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 }
 
 model OrderItem {
@@ -197,4 +216,46 @@ model Address {
   longitude     Float?
   userId        String
   user          User           @relation(fields: [userId], references: [id])
+  orders        Order[]
+}
+
+model Zone {
+  id            String         @id @default(uuid())
+  name          String         @unique
+  restaurants   Int            @default(0)
+  deliveryMen   Int            @default(0)
+  status        String         @default("Active")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Cuisine {
+  id            String         @id @default(uuid())
+  name          String         @unique
+  restaurants   Int            @default(0)
+  status        String         @default("Active")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model BusinessSettings {
+  id              String       @id @default(uuid())
+  businessName    String       @default("ማእድ Food Delivery")
+  supportEmail    String       @default("support@maed.com")
+  supportPhone    String       @default("+251 900 000 000")
+  currency        String       @default("ETB")
+  deliveryFee     Float        @default(50)
+  commissionRate  Float        @default(15)
+  updatedAt       DateTime     @updatedAt
+}
+
+model SupportMessage {
+  id          String   @id @default(uuid())
+  senderId    String
+  senderName  String
+  senderRole  String   @default("CUSTOMER")
+  text        String
+  recipientId String?
+  isFromAdmin Boolean  @default(false)
+  createdAt   DateTime @default(now())
 }

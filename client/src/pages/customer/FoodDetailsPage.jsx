@@ -1,20 +1,21 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Star, Plus, Minus, ShoppingCart, MapPin, Clock } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import API from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function FoodDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addToCart } = useCart();
+  const { t } = useLanguage();
   const [food, setFood] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
-  const [selectedAddons, setSelectedAddons] = useState([]);
   const [specialInstructions, setSpecialInstructions] = useState('');
 
   useEffect(() => {
@@ -39,28 +40,19 @@ export default function FoodDetailsPage() {
     return sum / reviews.length;
   };
 
-  const toggleAddon = (addon) => {
-    if (selectedAddons.find((a) => a.id === addon.id)) {
-      setSelectedAddons(selectedAddons.filter((a) => a.id !== addon.id));
-    } else {
-      setSelectedAddons([...selectedAddons, addon]);
-    }
-  };
-
   const calculateTotal = () => {
-    const basePrice = food.price * quantity;
-    const addonsPrice = selectedAddons.reduce((sum, addon) => sum + addon.price, 0) * quantity;
-    return basePrice + addonsPrice;
+    if (!food) return 0;
+    return food.price * quantity;
   };
 
   const handleAddToCart = () => {
-    addToCart(food, quantity, selectedAddons, specialInstructions);
+    addToCart(food, quantity, [], specialInstructions);
     navigate('/cart');
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
+      <div className="min-h-screen bg-gray-50">
         <Navbar />
         <div className="flex justify-center items-center py-40">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-orange-500 border-t-transparent"></div>
@@ -71,12 +63,12 @@ export default function FoodDetailsPage() {
 
   if (!food) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
+      <div className="min-h-screen bg-gray-50">
         <Navbar />
         <div className="max-w-7xl mx-auto px-6 py-20 text-center">
-          <h2 className="text-3xl font-bold text-gray-700">Food Item Not Found</h2>
-          <Link to="/" className="text-orange-600 hover:underline mt-4 inline-block">
-            Back to Home
+          <h2 className="text-3xl font-bold text-gray-700">{t('foodNotFound')}</h2>
+          <Link to="/" className="text-orange-600 hover:underline mt-4 inline-block font-semibold">
+            {t('backToHome')}
           </Link>
         </div>
       </div>
@@ -87,36 +79,41 @@ export default function FoodDetailsPage() {
   const reviewCount = food.reviews?.length || 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
+    <div className="min-h-screen bg-gray-50/50 pb-24">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         {/* Back Button */}
         <Link
           to={`/restaurants/${food.restaurant.id}`}
-          className="inline-flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-8 transition-colors"
+          className="inline-flex items-center space-x-2 text-gray-600 hover:text-orange-600 mb-6 transition-colors font-medium group"
         >
-          <ArrowLeft className="w-5 h-5" />
-          <span className="font-medium">Back to {food.restaurant.name}</span>
+          <ArrowLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
+          <span>{t('backTo')} {food.restaurant.name}</span>
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Left Column - Image */}
-          <div className="space-y-6">
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+          
+          {/* Left Column - Image & Restaurant Card (5 Cols) */}
+          <div className="lg:col-span-5 space-y-6 sticky top-24">
+            {/* Main Product Image Container */}
+            <div className="relative rounded-3xl overflow-hidden shadow-xl bg-white border border-gray-100 group">
               <img
                 src={food.image || '/m1.jpg'}
                 alt={food.name}
-                className="w-full h-[500px] object-cover"
+                className="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-500"
               />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60"></div>
+              
               {food.isPopular && (
-                <span className="absolute top-6 left-6 bg-orange-600 text-white px-4 py-2 rounded-full font-bold shadow-lg">
+                <span className="absolute top-4 left-4 bg-orange-500/90 backdrop-blur-md text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-lg tracking-wide uppercase">
                   🔥 Popular Choice
                 </span>
               )}
+
               {!food.isAvailable && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                  <span className="bg-red-600 text-white px-6 py-3 rounded-2xl text-xl font-bold">
+                <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center">
+                  <span className="bg-red-600 text-white px-6 py-2.5 rounded-2xl text-lg font-bold shadow-xl">
                     Currently Unavailable
                   </span>
                 </div>
@@ -124,199 +121,166 @@ export default function FoodDetailsPage() {
             </div>
 
             {/* Restaurant Info Card */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Available at</h3>
+            <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 block">Available From</span>
               <Link
                 to={`/restaurants/${food.restaurant.id}`}
-                className="flex items-start space-x-4 hover:bg-orange-50 p-3 rounded-xl transition-colors"
+                className="flex items-center space-x-4 group/rest"
               >
                 <img
                   src={food.restaurant.logo || '/m7.jpg'}
                   alt={food.restaurant.name}
-                  className="w-16 h-16 rounded-xl object-cover"
+                  className="w-14 h-14 rounded-2xl object-cover shadow-inner"
                 />
-                <div className="flex-1">
-                  <h4 className="text-lg font-bold text-gray-900 hover:text-orange-600">
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-base font-bold text-gray-900 group-hover/rest:text-orange-600 truncate transition-colors">
                     {food.restaurant.name}
                   </h4>
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 mt-1">
-                    <MapPin className="w-4 h-4" />
-                    <span className="line-clamp-1">{food.restaurant.address}</span>
+                  <div className="flex items-center space-x-1.5 text-xs text-gray-500 mt-1">
+                    <MapPin className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+                    <span className="truncate">{food.restaurant.address}</span>
                   </div>
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 mt-1">
-                    <Clock className="w-4 h-4" />
-                    <span>
-                      {food.restaurant.openingHours} - {food.restaurant.closingHours}
-                    </span>
+                  <div className="flex items-center space-x-1.5 text-xs text-gray-500 mt-0.5">
+                    <Clock className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+                    <span>{food.restaurant.openingHours} - {food.restaurant.closingHours}</span>
                   </div>
                 </div>
               </Link>
             </div>
           </div>
 
-          {/* Right Column - Details */}
-          <div className="space-y-8">
-            {/* Header */}
-            <div>
-              <div className="flex items-center space-x-3 mb-3">
-                <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm font-bold">
-                  {food.category.name}
+          {/* Right Column - Details & Purchasing Controls (7 Cols) */}
+          <div className="lg:col-span-7 space-y-6">
+            
+            {/* Header Details */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between mb-3">
+                <span className="bg-orange-50 text-orange-600 px-3 py-1 rounded-full text-xs font-extrabold tracking-wide uppercase">
+                  {food.category?.name || 'Dish'}
                 </span>
+                
+                {/* Rating Badge */}
+                <div className="flex items-center space-x-1.5 bg-amber-50 px-3 py-1 rounded-full border border-amber-100">
+                  <Star className="w-4 h-4 text-amber-500 fill-amber-400" />
+                  <span className="text-sm font-bold text-amber-900">
+                    {rating.toFixed(1)} <span className="text-amber-600 font-normal">({reviewCount})</span>
+                  </span>
+                </div>
               </div>
-              <h1 className="text-4xl font-black text-gray-900 mb-4">{food.name}</h1>
+
+              <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight mb-3">{food.name}</h1>
               
-              {/* Rating */}
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="flex items-center space-x-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-5 h-5 ${
-                        i < Math.round(rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-300'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <span className="text-lg font-bold text-gray-700">
-                  {rating.toFixed(1)} ({reviewCount} reviews)
-                </span>
-              </div>
-
-              {/* Description */}
               {food.description && (
-                <p className="text-gray-700 leading-relaxed text-lg">{food.description}</p>
+                <p className="text-gray-600 text-base leading-relaxed mb-6">{food.description}</p>
               )}
-            </div>
 
-            {/* Price */}
-            <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-6">
-              <div className="text-sm text-gray-600 mb-1">Price</div>
-              <div className="text-4xl font-black text-orange-600">${food.price.toFixed(2)}</div>
-            </div>
-
-            {/* Add-ons */}
-            {food.addons && food.addons.length > 0 && (
-              <div className="bg-white rounded-2xl p-6 shadow-lg">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Add-ons (Optional)</h3>
-                <div className="space-y-3">
-                  {food.addons.map((addon) => (
-                    <label
-                      key={addon.id}
-                      className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedAddons.find((a) => a.id === addon.id)}
-                          onChange={() => toggleAddon(addon)}
-                          className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500"
-                        />
-                        <span className="font-bold text-gray-900">{addon.name}</span>
-                      </div>
-                      <span className="font-bold text-orange-600">+${addon.price.toFixed(2)}</span>
-                    </label>
-                  ))}
-                </div>
+              {/* Price Banner */}
+              <div className="flex items-baseline space-x-2 pt-4 border-t border-gray-100">
+                <span className="text-xs uppercase font-bold text-gray-400">Unit Price:</span>
+                <span className="text-3xl font-black text-orange-600">{food.price.toFixed(2)} Br</span>
               </div>
-            )}
+            </div>
 
             {/* Special Instructions */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Special Instructions</h3>
+            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900 mb-3">Special Instructions</h3>
               <textarea
                 value={specialInstructions}
                 onChange={(e) => setSpecialInstructions(e.target.value)}
                 placeholder="Any special requests? (e.g., less spicy, no onions)"
-                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:outline-none resize-none"
+                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none resize-none text-sm text-gray-800 transition-all"
                 rows="3"
               />
             </div>
 
-            {/* Quantity and Add to Cart */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg space-y-6">
-              {/* Quantity Selector */}
-              <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-3">Quantity</h3>
-                <div className="flex items-center space-x-4">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center transition-colors"
-                  >
-                    <Minus className="w-5 h-5 text-gray-700" />
-                  </button>
-                  <span className="text-2xl font-black text-gray-900 min-w-[3rem] text-center">
-                    {quantity}
+            {/* Quantity and Order Action Bar */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <span className="text-xs font-bold text-gray-400 uppercase block mb-1">Quantity</span>
+                  <div className="inline-flex items-center space-x-3 bg-gray-50 p-1.5 rounded-2xl border border-gray-200">
+                    <button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="w-10 h-10 bg-white hover:bg-gray-100 text-gray-700 rounded-xl flex items-center justify-center shadow-sm transition-colors"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="text-xl font-black text-gray-900 min-w-[2rem] text-center">
+                      {quantity}
+                    </span>
+                    <button
+                      onClick={() => setQuantity(quantity + 1)}
+                      className="w-10 h-10 bg-white hover:bg-gray-100 text-gray-700 rounded-xl flex items-center justify-center shadow-sm transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="sm:text-right">
+                  <span className="text-xs font-bold text-gray-400 uppercase block mb-1">Total Amount</span>
+                  <span className="text-3xl font-black text-orange-600">
+                    {calculateTotal().toFixed(2)} Br
                   </span>
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center transition-colors"
-                  >
-                    <Plus className="w-5 h-5 text-gray-700" />
-                  </button>
                 </div>
               </div>
 
-              {/* Total */}
-              <div className="flex items-center justify-between py-4 border-t-2 border-gray-100">
-                <span className="text-lg font-bold text-gray-700">Total</span>
-                <span className="text-3xl font-black text-orange-600">
-                  ${calculateTotal().toFixed(2)}
-                </span>
-              </div>
-
-              {/* Add to Cart Button */}
               <button
                 onClick={handleAddToCart}
                 disabled={!food.isAvailable}
-                className="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-4 rounded-2xl font-bold text-lg flex items-center justify-center space-x-3 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                className="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-4 rounded-2xl font-bold text-base flex items-center justify-center space-x-3 transition-all duration-300 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/35 hover:-translate-y-0.5 active:translate-y-0"
               >
-                <ShoppingCart className="w-6 h-6" />
-                <span>{food.isAvailable ? 'Add to Cart' : 'Unavailable'}</span>
+                <ShoppingCart className="w-5 h-5" />
+                <span>{food.isAvailable ? 'Add to Cart' : 'Currently Unavailable'}</span>
               </button>
             </div>
+
           </div>
         </div>
 
-        {/* Reviews Section */}
-        <div className="mt-16">
-          <h2 className="text-3xl font-black text-gray-900 mb-8">Customer Reviews</h2>
+        {/* Customer Reviews Section */}
+        <div className="mt-20">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl sm:text-3xl font-black text-gray-900">Customer Reviews</h2>
+            <div className="text-sm font-semibold text-gray-500">{reviewCount} total feedback</div>
+          </div>
           
           {reviewCount === 0 ? (
-            <div className="bg-white rounded-2xl p-12 text-center shadow-lg">
-              <div className="text-gray-400 text-5xl mb-4">⭐</div>
-              <h3 className="text-xl font-bold text-gray-700 mb-2">No Reviews Yet</h3>
-              <p className="text-gray-500">Be the first to review this dish!</p>
+            <div className="bg-white rounded-3xl p-12 text-center border border-gray-100 shadow-sm">
+              <div className="text-4xl mb-3">⭐</div>
+              <h3 className="text-lg font-bold text-gray-700 mb-1">No Reviews Yet</h3>
+              <p className="text-sm text-gray-400">Be the first to review this dish after your order!</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {food.reviews.map((review) => (
-                <div key={review.id} className="bg-white rounded-2xl p-6 shadow-lg">
-                  <div className="flex items-start justify-between mb-3">
+                <div key={review.id} className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
+                  <div className="flex items-start justify-between">
                     <div>
-                      <h4 className="font-bold text-gray-900">{review.customer.name}</h4>
+                      <h4 className="font-bold text-gray-900 text-base">{review.customer.name}</h4>
                       <div className="flex items-center space-x-1 mt-1">
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className={`w-4 h-4 ${
-                              i < review.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-300'
+                            className={`w-3.5 h-3.5 ${
+                              i < review.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200'
                             }`}
                           />
                         ))}
                       </div>
                     </div>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-xs text-gray-400 font-medium">
                       {new Date(review.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                   {review.comment && (
-                    <p className="text-gray-700 leading-relaxed">{review.comment}</p>
+                    <p className="text-gray-600 text-sm leading-relaxed">{review.comment}</p>
                   )}
                   {review.image && (
                     <img
                       src={review.image}
-                      alt="Review"
-                      className="mt-4 rounded-xl w-full h-48 object-cover"
+                      alt="Review attachment"
+                      className="rounded-2xl w-full h-40 object-cover border border-gray-100"
                     />
                   )}
                 </div>
@@ -324,6 +288,7 @@ export default function FoodDetailsPage() {
             </div>
           )}
         </div>
+
       </div>
     </div>
   );

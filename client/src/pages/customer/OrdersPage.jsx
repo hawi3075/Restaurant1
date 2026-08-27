@@ -5,12 +5,18 @@ import Navbar from '../../components/Navbar';
 import ReviewModal from '../../components/ReviewModal';
 import API from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
+import { useSocket } from '../../context/SocketContext';
+import showToast from '../../components/Toast';
+
 
 export default function OrdersPage() {
   const { user } = useAuth();
+  const { t, statusLabel } = useLanguage();
+  const socket = useSocket();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all'); // all, pending, completed, cancelled
+  const [filter, setFilter] = useState('all'); // all, pending, completed
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
@@ -19,6 +25,51 @@ export default function OrdersPage() {
       fetchOrders();
     }
   }, [user]);
+
+  // Real-time: listen for order status updates from chef/driver/waiter
+  useEffect(() => {
+    if (!socket || !user) return;
+
+    // Join user room so we get personal order updates
+    socket.emit('join_user_room', user.id);
+
+    const handleStatusUpdate = (updatedOrder) => {
+      // Only update if this is our order
+      if (updatedOrder.customerId === user.id) {
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.id === updatedOrder.id
+              ? { ...o, status: updatedOrder.status, updatedAt: updatedOrder.updatedAt }
+              : o
+          )
+        );
+
+        const statusMessages = {
+          CONFIRMED: '✅ Your order has been confirmed!',
+          PREPARING: '👨‍🍳 Your order is being prepared!',
+          READY: '📦 Your order is ready for pickup!',
+          READY_TO_SERVE: '🍽️ Your order is ready to serve!',
+          OUT_FOR_DELIVERY: '🚗 Your order is out for delivery!',
+          DELIVERED: '✅ Your order has been delivered!',
+          SERVED: '✅ Your order has been served!',
+          CANCELLED: '❌ Your order has been cancelled.',
+        };
+
+        if (statusMessages[updatedOrder.status]) {
+          showToast(statusMessages[updatedOrder.status], 'success');
+          try {
+            new Audio('/notification.mp3').play().catch(() => { });
+          } catch (e) { }
+        }
+      }
+    };
+
+    socket.on('order_status_updated', handleStatusUpdate);
+
+    return () => {
+      socket.off('order_status_updated', handleStatusUpdate);
+    };
+  }, [socket, user]);
 
   const fetchOrders = async () => {
     try {
@@ -78,25 +129,22 @@ export default function OrdersPage() {
     if (filter === 'completed') {
       return orders.filter((o) => ['DELIVERED', 'SERVED', 'COMPLETED'].includes(o.status));
     }
-    if (filter === 'cancelled') {
-      return orders.filter((o) => o.status === 'CANCELLED');
-    }
     return orders;
   };
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
+      <div className="app-page">
         <Navbar />
         <div className="max-w-7xl mx-auto px-6 py-20 text-center">
           <Package className="w-24 h-24 text-gray-300 mx-auto mb-6" />
-          <h2 className="text-3xl font-black text-gray-900 mb-4">Please Login</h2>
-          <p className="text-gray-600 mb-8">You need to login to view your orders</p>
+          <h2 className="text-3xl font-black text-gray-900 mb-4">{t('pleaseLogin')}</h2>
+          <p className="text-gray-600 mb-8">{t('loginToViewOrders')}</p>
           <Link
             to="/login"
             className="inline-block bg-orange-600 hover:bg-orange-700 text-white font-bold px-8 py-4 rounded-2xl transition-all"
           >
-            Login Now
+            {t('loginNow')}
           </Link>
         </div>
       </div>
@@ -104,57 +152,44 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
+    <div className="app-page">
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-black text-gray-900 mb-2">My Orders</h1>
-          <p className="text-gray-600">Track and manage your order history</p>
+          <h1 className="text-4xl font-black text-gray-900 mb-2">{t('myOrders')}</h1>
+          <p className="text-gray-600">{t('trackOrders')}</p>
         </div>
 
         {/* Filter Tabs */}
         <div className="bg-white rounded-2xl shadow-lg p-2 mb-8 flex flex-wrap gap-2">
           <button
             onClick={() => setFilter('all')}
-            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all ${
-              filter === 'all'
+            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all ${filter === 'all'
                 ? 'bg-orange-600 text-white shadow-md'
                 : 'text-gray-700 hover:bg-gray-100'
-            }`}
+              }`}
           >
-            All Orders
+            {t('allOrders')}
           </button>
           <button
             onClick={() => setFilter('pending')}
-            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all ${
-              filter === 'pending'
+            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all ${filter === 'pending'
                 ? 'bg-orange-600 text-white shadow-md'
                 : 'text-gray-700 hover:bg-gray-100'
-            }`}
+              }`}
           >
-            Active
+            {t('active')}
           </button>
           <button
             onClick={() => setFilter('completed')}
-            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all ${
-              filter === 'completed'
+            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all ${filter === 'completed'
                 ? 'bg-orange-600 text-white shadow-md'
                 : 'text-gray-700 hover:bg-gray-100'
-            }`}
+              }`}
           >
-            Completed
-          </button>
-          <button
-            onClick={() => setFilter('cancelled')}
-            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all ${
-              filter === 'cancelled'
-                ? 'bg-orange-600 text-white shadow-md'
-                : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            Cancelled
+            {t('completed')}
           </button>
         </div>
 
@@ -166,17 +201,15 @@ export default function OrdersPage() {
         ) : filteredOrders().length === 0 ? (
           <div className="bg-white rounded-3xl shadow-lg p-16 text-center">
             <Package className="w-24 h-24 text-gray-300 mx-auto mb-6" />
-            <h3 className="text-2xl font-bold text-gray-700 mb-3">No Orders Found</h3>
+            <h3 className="text-2xl font-bold text-gray-700 mb-3">{t('noOrdersFound')}</h3>
             <p className="text-gray-500 mb-8">
-              {filter === 'all'
-                ? "You haven't placed any orders yet"
-                : `No ${filter} orders at the moment`}
+              {filter === 'all' ? t('noOrdersYet') : `No ${filter} orders at the moment`}
             </p>
             <Link
               to="/"
               className="inline-block bg-orange-600 hover:bg-orange-700 text-white font-bold px-8 py-4 rounded-2xl transition-all"
             >
-              Start Shopping
+              {t('startShopping')}
             </Link>
           </div>
         ) : (
@@ -191,7 +224,7 @@ export default function OrdersPage() {
                   <div>
                     <div className="flex items-center space-x-3 mb-2">
                       <h3 className="text-lg font-black text-gray-900">
-                        Order #{order.id.slice(0, 8)}
+                        {t('order')} #{order.id.slice(0, 8)}
                       </h3>
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-bold flex items-center space-x-1 ${getStatusColor(
@@ -199,19 +232,17 @@ export default function OrdersPage() {
                         )}`}
                       >
                         {getStatusIcon(order.status)}
-                        <span>{order.status.replace(/_/g, ' ')}</span>
+                        <span>{statusLabel(order.status)}</span>
                       </span>
                     </div>
                     <p className="text-sm text-gray-600">
-                      Placed on {new Date(order.createdAt).toLocaleDateString()} at{' '}
-                      {new Date(order.createdAt).toLocaleTimeString()}
+                      {new Date(order.createdAt).toLocaleDateString()} {new Date(order.createdAt).toLocaleTimeString()}
                     </p>
                   </div>
 
                   <div className="text-right">
-                    <div className="text-sm text-gray-600 mb-1">Total Amount</div>
-                    <div className="text-2xl font-black text-orange-600">
-                      ${order.totalAmount.toFixed(2)}
+                    <div className="text-sm text-gray-600 mb-1">{t('total')}</div>
+                    <div className="text-2xl font-black text-orange-600">ETB {order.totalAmount.toFixed(2)}
                     </div>
                   </div>
                 </div>
@@ -245,14 +276,13 @@ export default function OrdersPage() {
                         />
                         <div>
                           <h5 className="font-bold text-gray-900">{item.food?.name}</h5>
-                          <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                          <p className="text-sm text-gray-600">{t('quantity')}: {item.quantity}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-bold text-gray-900">
-                          ${(item.unitPrice * item.quantity).toFixed(2)}
+                        <div className="font-bold text-gray-900">ETB {(item.unitPrice * item.quantity).toFixed(2)}
                         </div>
-                        <div className="text-sm text-gray-500">${item.unitPrice} each</div>
+                        <div className="text-sm text-gray-500">ETB {item.unitPrice} each</div>
                       </div>
                     </div>
                   ))}
@@ -264,12 +294,12 @@ export default function OrdersPage() {
                     {order.orderType === 'DELIVERY' ? (
                       <>
                         <Truck className="w-4 h-4" />
-                        <span>Delivery Order</span>
+                        <span>{t('delivery')}</span>
                       </>
                     ) : (
                       <>
                         <ChefHat className="w-4 h-4" />
-                        <span>Dine-In Order</span>
+                        <span>{t('dineIn')}</span>
                       </>
                     )}
                   </div>
@@ -285,7 +315,7 @@ export default function OrdersPage() {
                         className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition-all"
                       >
                         <Star className="w-4 h-4" />
-                        <span>Leave Review</span>
+                        <span>{t('writeReview')}</span>
                       </button>
                     )}
 
@@ -294,7 +324,7 @@ export default function OrdersPage() {
                       className="flex items-center space-x-2 text-orange-600 hover:text-orange-700 font-bold text-sm transition-colors"
                     >
                       <Eye className="w-4 h-4" />
-                      <span>View Details</span>
+                      <span>{t('viewDetails')}</span>
                     </Link>
                   </div>
                 </div>
@@ -303,7 +333,7 @@ export default function OrdersPage() {
                 {order.specialInstructions && (
                   <div className="mt-4 pt-4 border-t">
                     <p className="text-sm text-gray-600">
-                      <span className="font-bold">Note:</span> {order.specialInstructions}
+                      <span className="font-bold">{t('orderNotes')}:</span> {order.specialInstructions}
                     </p>
                   </div>
                 )}
@@ -322,7 +352,7 @@ export default function OrdersPage() {
         }}
         order={selectedOrder}
         onSuccess={() => {
-          fetchOrders(); // Refresh orders after review
+          fetchOrders();
         }}
       />
     </div>

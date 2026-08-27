@@ -1,11 +1,11 @@
-import React from 'react';
+﻿import React from 'react';
 import { Globe, Check, Sun, Moon } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 
 export default function Language() {
-  const { language, changeLanguage } = useLanguage();
+  const { language, changeLanguage, t } = useLanguage();
   const { theme, setLightTheme, setDarkTheme } = useTheme();
 
   const languages = [
@@ -15,7 +15,7 @@ export default function Language() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
+    <div className="app-page">
       <Navbar />
 
       <div className="max-w-3xl mx-auto px-6 py-10 space-y-8">
@@ -26,8 +26,8 @@ export default function Language() {
               <Globe className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-gray-900">Choose Language</h1>
-              <p className="text-sm text-gray-500">Select your preferred app language</p>
+              <h1 className="text-2xl font-black text-gray-900">{t('chooseLanguage')}</h1>
+              <p className="text-sm text-gray-500">{t('selectPreferredLanguage')}</p>
             </div>
           </div>
 
@@ -57,13 +57,6 @@ export default function Language() {
               </button>
             ))}
           </div>
-
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-2xl">
-            <p className="text-sm text-blue-800">
-              <span className="font-bold">ℹ️ Note:</span> Changing the language will update all text
-              throughout the app to your selected language.
-            </p>
-          </div>
         </div>
 
         {/* Theme Selection */}
@@ -77,13 +70,12 @@ export default function Language() {
               )}
             </div>
             <div>
-              <h2 className="text-2xl font-black text-gray-900">Theme Preference</h2>
+              <h2 className="text-2xl font-black text-gray-900">{t('themePreference')}</h2>
               <p className="text-sm text-gray-500">Choose your preferred app appearance</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Light Mode */}
             <button
               onClick={setLightTheme}
               className={`p-6 rounded-2xl border-2 transition-all hover:shadow-md ${
@@ -93,30 +85,22 @@ export default function Language() {
               }`}
             >
               <div className="flex flex-col items-center space-y-3">
-                <div
-                  className={`p-4 rounded-2xl ${
-                    theme === 'light' ? 'bg-yellow-100' : 'bg-gray-100'
-                  }`}
-                >
-                  <Sun
-                    className={`w-8 h-8 ${theme === 'light' ? 'text-yellow-600' : 'text-gray-600'}`}
-                  />
+                <div className={`p-4 rounded-2xl ${theme === 'light' ? 'bg-yellow-100' : 'bg-gray-100'}`}>
+                  <Sun className={`w-8 h-8 ${theme === 'light' ? 'text-yellow-600' : 'text-gray-600'}`} />
                 </div>
                 <div className="text-center">
-                  <p className="font-black text-lg text-gray-900">Light Mode</p>
-                  <p className="text-xs text-gray-500 mt-1">Bright and clear</p>
+                  <p className="font-black text-lg text-gray-900">{t('lightMode')}</p>
+                  <p className="text-xs text-gray-500 mt-1">{t('brightAndClear')}</p>
                 </div>
                 {theme === 'light' && (
                   <div className="mt-2">
                     <div className="bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center space-x-1">
                       <Check className="w-3 h-3" />
-                      <span>Active</span>
+                      <span>{t('active')}</span>
                     </div>
                   </div>
                 )}
               </div>
-
-              {/* Preview */}
               <div className="mt-4 p-3 bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl border border-gray-200">
                 <div className="bg-white p-2 rounded-lg shadow-sm">
                   <div className="h-2 bg-gray-200 rounded mb-1"></div>
@@ -125,7 +109,6 @@ export default function Language() {
               </div>
             </button>
 
-            {/* Dark Mode */}
             <button
               onClick={setDarkTheme}
               className={`p-6 rounded-2xl border-2 transition-all hover:shadow-md ${
@@ -135,30 +118,22 @@ export default function Language() {
               }`}
             >
               <div className="flex flex-col items-center space-y-3">
-                <div
-                  className={`p-4 rounded-2xl ${
-                    theme === 'dark' ? 'bg-indigo-100' : 'bg-gray-100'
-                  }`}
-                >
-                  <Moon
-                    className={`w-8 h-8 ${theme === 'dark' ? 'text-indigo-600' : 'text-gray-600'}`}
-                  />
+                <div className={`p-4 rounded-2xl ${theme === 'dark' ? 'bg-indigo-100' : 'bg-gray-100'}`}>
+                  <Moon className={`w-8 h-8 ${theme === 'dark' ? 'text-indigo-600' : 'text-gray-600'}`} />
                 </div>
                 <div className="text-center">
-                  <p className="font-black text-lg text-gray-900">Dark Mode</p>
-                  <p className="text-xs text-gray-500 mt-1">Easy on the eyes</p>
+                  <p className="font-black text-lg text-gray-900">{t('darkMode')}</p>
+                  <p className="text-xs text-gray-500 mt-1">{t('easyOnEyes')}</p>
                 </div>
                 {theme === 'dark' && (
                   <div className="mt-2">
                     <div className="bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center space-x-1">
                       <Check className="w-3 h-3" />
-                      <span>Active</span>
+                      <span>{t('active')}</span>
                     </div>
                   </div>
                 )}
               </div>
-
-              {/* Preview */}
               <div className="mt-4 p-3 bg-gray-800 rounded-xl border border-gray-700">
                 <div className="bg-gray-900 p-2 rounded-lg">
                   <div className="h-2 bg-gray-700 rounded mb-1"></div>
@@ -166,13 +141,6 @@ export default function Language() {
                 </div>
               </div>
             </button>
-          </div>
-
-          <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
-            <p className="text-sm text-amber-800">
-              <span className="font-bold">🌙 Coming Soon:</span> Dark mode is currently in
-              development. Full dark theme support will be available in the next update.
-            </p>
           </div>
         </div>
       </div>

@@ -57,18 +57,18 @@ export const NotificationProvider = ({ children }) => {
         if (user.role === 'WAITER' && order.status === 'READY_TO_SERVE') {
           addNotification({
             type: 'success',
-            title: 'Order Ready',
-            message: `Table ${order.tableNumber || 'Walk-In'} order is ready to serve`,
+            title: '🔔 FOOD IS READY, PLEASE SERVE!',
+            message: `Order #${order.id.slice(0, 8)} for Table ${order.tableNumber || 'Walk-In'} is ready to serve.`,
             orderId: order.id,
           });
         }
 
         // Notify driver when order is ready for pickup
-        if (user.role === 'DRIVER' && order.status === 'READY' && order.orderType === 'DELIVERY') {
+        if (user.role === 'DRIVER' && (order.status === 'READY' || order.status === 'READY_TO_SERVE') && order.orderType === 'DELIVERY') {
           addNotification({
-            type: 'info',
-            title: 'Delivery Available',
-            message: `Order #${order.id.slice(0, 8)} is ready for pickup`,
+            type: 'success',
+            title: '🔔 FOOD IS READY, PLEASE SERVE / PICK UP!',
+            message: `Delivery Order #${order.id.slice(0, 8)} is ready for pickup and delivery.`,
             orderId: order.id,
           });
         }

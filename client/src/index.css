@@ -2,6 +2,95 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    transition-property: color, background-color, border-color;
+    transition-duration: 200ms;
+  }
+
+  body {
+    background-color: #fff8f3;
+    color: #1f2937;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  html.dark body {
+    background-color: #030712;
+    color: #f3f4f6;
+  }
+}
+
+/* Shared page surfaces — theme applies system-wide via html.dark */
+.app-page {
+  min-height: 100vh;
+  background-image: linear-gradient(to bottom right, #fff7ed, #fffbeb);
+  color: #1f2937;
+  transition: background-color 200ms, color 200ms;
+}
+
+html.dark .app-page {
+  background-image: linear-gradient(to bottom right, #030712, #111827, #030712);
+  color: #f3f4f6;
+}
+
+.app-page-warm {
+  min-height: 100vh;
+  background-image: linear-gradient(to bottom right, #fff5ee, #fff8f3, #ffeddf);
+  color: #1f2937;
+  transition: background-color 200ms, color 200ms;
+}
+
+html.dark .app-page-warm {
+  background-image: linear-gradient(to bottom right, #030712, #111827, #030712);
+  color: #f3f4f6;
+}
+
+/*
+  System-wide dark remaps: when html has .dark, flip common light utility
+  classes used across pages (not only Navbar).
+*/
+html.dark .bg-white {
+  background-color: rgb(17 24 39) !important;
+}
+html.dark .bg-white\/70,
+html.dark .bg-white\/95,
+html.dark .bg-white\/90 {
+  background-color: rgb(17 24 39 / 0.85) !important;
+}
+html.dark .bg-gray-50,
+html.dark .bg-orange-50,
+html.dark .bg-amber-50,
+html.dark .bg-blue-50,
+html.dark .bg-purple-50,
+html.dark .bg-yellow-50,
+html.dark .bg-red-50 {
+  background-color: rgb(31 41 55) !important;
+}
+html.dark .bg-gray-100 {
+  background-color: rgb(55 65 81) !important;
+}
+html.dark .text-gray-900,
+html.dark .text-gray-800 {
+  color: rgb(243 244 246) !important;
+}
+html.dark .text-gray-700,
+html.dark .text-gray-600 {
+  color: rgb(209 213 219) !important;
+}
+html.dark .text-gray-500 {
+  color: rgb(156 163 175) !important;
+}
+html.dark .border-gray-100,
+html.dark .border-gray-200,
+html.dark .border-orange-100 {
+  border-color: rgb(55 65 81) !important;
+}
+html.dark .border-blue-200,
+html.dark .border-amber-200,
+html.dark .border-purple-200 {
+  border-color: rgb(75 85 99) !important;
+}
+
 /* Notification animations */
 @keyframes slide-in-right {
   from {

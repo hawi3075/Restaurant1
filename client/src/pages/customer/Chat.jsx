@@ -23,7 +23,7 @@ export default function Chat() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isTyping]);
 
   // Load chat history
   useEffect(() => {
@@ -32,16 +32,16 @@ export default function Chat() {
     }
   }, [user]);
 
-  // Socket.IO real-time messaging
+  // Socket.IO real-time messaging & AI responses
   useEffect(() => {
     if (socket && user) {
       // Join user's personal chat room
       socket.emit('join_user_room', user.id);
 
-      // Listen for incoming messages
+      // Listen for incoming messages (including AI bot replies from server)
       socket.on('receive_message', (message) => {
         setMessages((prev) => [...prev, message]);
-        setIsTyping(false);
+        setIsTyping(false); // Stop typing when response arrives
       });
 
       // Listen for typing indicator
@@ -73,21 +73,27 @@ export default function Chat() {
   const loadChatHistory = async () => {
     try {
       setLoading(true);
-      // In production, fetch chat history from API
-      // const response = await API.get('/chat/history');
-      // setMessages(response.data);
-      
-      // For now, add a welcome message
-      setMessages([
-        {
-          id: 1,
-          sender: 'support',
-          senderName: 'Ma\'ad Support',
-          text: `Hello ${user?.name || 'there'}! Welcome to Ma'ad Support. How can we assist you with your food order today?`,
-          timestamp: new Date(),
-          read: true,
-        },
-      ]);
+      const res = await API.get('/support');
+      const dbMsgs = (res.data || []).map((msg) => ({
+        id: msg.id,
+        sender: msg.isFromAdmin ? 'support' : 'user',
+        senderId: msg.senderId,
+        senderName: msg.senderName,
+        text: msg.text,
+        timestamp: new Date(msg.createdAt),
+        read: true,
+      }));
+
+      const welcomeMessage = {
+        id: 1,
+        sender: 'support',
+        senderName: "Ma'ad Support",
+        text: `Hello ${user?.name || 'there'}! Welcome to Ma'ad Support. How can we assist you with your food order, menu items, or payments today?`,
+        timestamp: new Date(user?.createdAt || Date.now()),
+        read: true,
+      };
+
+      setMessages([welcomeMessage, ...dbMsgs]);
     } catch (error) {
       console.error('Error loading chat history:', error);
     } finally {
@@ -109,30 +115,18 @@ export default function Chat() {
       read: false,
     };
 
-    // Add message to local state
+    // Add message to local state immediately
     setMessages((prev) => [...prev, newMessage]);
     setInput('');
+    setIsTyping(true); // Show typing indicator while waiting for Gemini AI
 
-    // Emit message via Socket.IO
+    // Emit message via Socket.IO to trigger server AI chatbot response
     if (socket) {
       socket.emit('send_message', {
         ...newMessage,
-        recipientId: 'support', // Send to support team
+        recipientId: 'support', // Route to AI support handler on server
       });
     }
-
-    // Simulate support response (in production, this would come from real support staff)
-    setTimeout(() => {
-      const supportResponse = {
-        id: Date.now() + 1,
-        sender: 'support',
-        senderName: 'Ma\'ad Support',
-        text: 'Thank you for your message. Our support team will assist you shortly. For urgent matters, please call us at +251-911-234567.',
-        timestamp: new Date(),
-        read: false,
-      };
-      setMessages((prev) => [...prev, supportResponse]);
-    }, 2000);
   };
 
   const handleTyping = () => {
@@ -158,7 +152,7 @@ export default function Chat() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
+    <div className="app-page">
       <Navbar />
 
       <div className="max-w-5xl mx-auto px-6 py-10">
@@ -171,14 +165,14 @@ export default function Chat() {
                 <MessageSquare className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="font-black text-gray-900 text-xl">Live Support Chat</h2>
+                <h2 className="font-black text-gray-900 text-xl">Ma'ad AI Support Chat</h2>
                 <p className={`text-sm font-bold flex items-center space-x-2 ${
                   supportOnline ? 'text-emerald-600' : 'text-gray-500'
                 }`}>
                   <span className={`w-2 h-2 rounded-full ${
                     supportOnline ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'
                   }`}></span>
-                  <span>{supportOnline ? 'Support Online' : 'Support Offline'}</span>
+                  <span>{supportOnline ? 'AI Assistant Online' : 'Support Offline'}</span>
                 </p>
               </div>
             </div>
@@ -206,13 +200,13 @@ export default function Chat() {
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <MessageSquare className="w-20 h-20 text-gray-300 mb-4" />
                 <p className="text-gray-500 font-medium">No messages yet</p>
-                <p className="text-sm text-gray-400 mt-2">Start a conversation with our support team</p>
+                <p className="text-sm text-gray-400 mt-2">Ask our AI assistant anything about your order or menu</p>
               </div>
             ) : (
               <>
-                {messages.map((msg) => (
+                {messages.map((msg, index) => (
                   <div
-                    key={msg.id}
+                    key={msg.id || index}
                     className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div className={`max-w-md ${msg.sender === 'user' ? 'max-w-sm' : ''}`}>
@@ -226,17 +220,17 @@ export default function Chat() {
                           </div>
                         )}
                         <span className="text-xs font-bold text-gray-600">
-                          {msg.senderName || (msg.sender === 'user' ? 'You' : 'Support')}
+                          {msg.senderName || (msg.sender === 'user' ? 'You' : "Ma'ad Support")}
                         </span>
                         <span className="text-xs text-gray-400 flex items-center space-x-1">
                           <Clock className="w-3 h-3" />
-                          <span>{formatTime(msg.timestamp)}</span>
+                          <span>{formatTime(msg.timestamp || new Date())}</span>
                         </span>
                       </div>
 
                       {/* Message Bubble */}
                       <div
-                        className={`p-4 rounded-2xl text-sm shadow-sm ${
+                        className={`p-4 rounded-2xl text-sm shadow-sm whitespace-pre-wrap ${
                           msg.sender === 'user'
                             ? 'bg-orange-600 text-white rounded-br-md shadow-orange-600/10'
                             : 'bg-white text-gray-800 rounded-bl-md border border-gray-100'
@@ -262,11 +256,12 @@ export default function Chat() {
                 {/* Typing Indicator */}
                 {isTyping && (
                   <div className="flex justify-start">
-                    <div className="bg-white text-gray-800 rounded-2xl rounded-bl-md border border-gray-100 p-4 shadow-sm">
-                      <div className="flex space-x-2">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    <div className="bg-white text-gray-800 rounded-2xl rounded-bl-md border border-gray-100 p-4 shadow-sm flex items-center space-x-2">
+                      <Bot className="w-4 h-4 text-orange-600 animate-pulse" />
+                      <div className="flex space-x-1.5">
+                        <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                       </div>
                     </div>
                   </div>
@@ -280,7 +275,7 @@ export default function Chat() {
           {/* Chat Input */}
           <form
             onSubmit={handleSend}
-            className="p-4 border-t border-gray-200 bg-white flex items-center space-x-3 rounded-b-3xl"
+            className="p-4 border-t border-gray-200 bg-white flex items-center space-x-3"
           >
             <input
               type="text"
@@ -289,7 +284,7 @@ export default function Chat() {
                 setInput(e.target.value);
                 handleTyping();
               }}
-              placeholder="Type your message here..."
+              placeholder="Ask about menu items, orders, or Chapa payments..."
               className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition"
               disabled={!user}
             />
@@ -306,31 +301,36 @@ export default function Chat() {
           <div className="p-4 bg-gray-50 border-t border-gray-200 rounded-b-3xl">
             <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => setInput('I need help with my order')}
+                type="button"
+                onClick={() => setInput('What traditional Ethiopian dishes do you have on the menu?')}
                 className="px-3 py-1.5 bg-white hover:bg-orange-50 text-gray-700 hover:text-orange-600 rounded-lg text-xs font-medium border border-gray-200 hover:border-orange-300 transition"
               >
-                📦 Order Help
+                🍲 Traditional Menu
               </button>
               <button
-                onClick={() => setInput('How long does delivery take?')}
+                type="button"
+                onClick={() => setInput('How long does delivery take in Adama?')}
                 className="px-3 py-1.5 bg-white hover:bg-orange-50 text-gray-700 hover:text-orange-600 rounded-lg text-xs font-medium border border-gray-200 hover:border-orange-300 transition"
               >
-                🚚 Delivery Time
+                🚚 Delivery Time & Fee
               </button>
               <button
-                onClick={() => setInput('I want to cancel my order')}
-                className="px-3 py-1.5 bg-white hover:bg-orange-50 text-gray-700 hover:text-orange-600 rounded-lg text-xs font-medium border border-gray-200 hover:border-orange-300 transition"
-              >
-                ❌ Cancel Order
-              </button>
-              <button
-                onClick={() => setInput('I have a payment issue')}
+                type="button"
+                onClick={() => setInput('How do I complete my payment using Chapa?')}
                 className="px-3 py-1.5 bg-white hover:bg-orange-50 text-gray-700 hover:text-orange-600 rounded-lg text-xs font-medium border border-gray-200 hover:border-orange-300 transition"
               >
                 💳 Payment Issue
               </button>
+              <button
+                type="button"
+                onClick={() => setInput('I need help tracking my recent food order.')}
+                className="px-3 py-1.5 bg-white hover:bg-orange-50 text-gray-700 hover:text-orange-600 rounded-lg text-xs font-medium border border-gray-200 hover:border-orange-300 transition"
+              >
+                📦 Order Help
+              </button>
             </div>
           </div>
+
         </div>
       </div>
     </div>

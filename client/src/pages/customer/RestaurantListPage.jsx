@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { MapPin, Clock, Star, Bike, ArrowRight, Search, Filter } from 'lucide-react';
+import { MapPin, Clock, Star, Bike, ArrowRight, Search, Store } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import API from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function RestaurantListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { t } = useLanguage();
   const [restaurants, setRestaurants] = useState([]);
   const [filteredRestaurants, setFilteredRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -68,88 +70,104 @@ export default function RestaurantListPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
+    <div className="app-page min-h-screen bg-[#FFFBF7]">
       <Navbar />
 
-      {/* Header Section */}
-      <section className="bg-gradient-to-r from-orange-600 to-amber-600 text-white py-16">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight">
-              Discover Amazing Restaurants
+      {/* Minimized Header with mg3.jpg Background */}
+      <section className="relative bg-gray-900 text-white py-10 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-orange-500/20">
+        {/* Background Image with a subtle overlay for text readability */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/mg3.jpg"
+            alt="Restaurant Background"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white drop-shadow-md">
+              {t('discoverRestaurants') || 'Discover Restaurants'}
             </h1>
-            <p className="text-lg text-orange-100 max-w-2xl mx-auto">
-              Browse through our curated list of top restaurants and find your next favorite meal
+            <p className="text-xs sm:text-sm text-gray-200 font-medium mt-1 drop-shadow-sm">
+              {t('discoverRestaurantsHint') || 'Browse curated local spots and find your next favorite meal.'}
             </p>
           </div>
 
-          {/* Search Bar */}
-          <div className="mt-8 max-w-3xl mx-auto">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          {/* Search and Filters grouped compactly */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            {/* Search Input */}
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
               <input
                 type="text"
-                placeholder="Search restaurants by name or location..."
+                placeholder={t('searchRestaurants') || 'Search restaurants...'}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-orange-300"
+                className="w-full pl-10 pr-4 py-2.5 bg-black/40 backdrop-blur-md border border-white/30 rounded-xl text-xs font-semibold text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-black/60 transition-all shadow-inner"
               />
+            </div>
+
+            {/* Filter Chips */}
+            <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+              <button
+                onClick={() => toggleFilter('isOpen')}
+                className={`px-4 py-2 rounded-xl font-extrabold text-xs transition-all cursor-pointer whitespace-nowrap backdrop-blur-md ${filters.isOpen
+                    ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/40 border border-orange-500'
+                    : 'bg-black/40 text-gray-200 border border-white/30 hover:bg-black/60 hover:text-white'
+                  }`}
+              >
+                {t('openNow') || 'Open Now'}
+              </button>
+
+              <button
+                onClick={() => toggleFilter('isDelivery')}
+                className={`px-4 py-2 rounded-xl font-extrabold text-xs transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap backdrop-blur-md ${filters.isDelivery
+                    ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/40 border border-orange-500'
+                    : 'bg-black/40 text-gray-200 border border-white/30 hover:bg-black/60 hover:text-white'
+                  }`}
+              >
+                <Bike className="w-3.5 h-3.5" />
+                <span>{t('delivery') || 'Delivery'}</span>
+              </button>
+
+              <button
+                onClick={() => toggleFilter('isDineIn')}
+                className={`px-4 py-2 rounded-xl font-extrabold text-xs transition-all cursor-pointer flex items-center space-x-1.5 whitespace-nowrap backdrop-blur-md ${filters.isDineIn
+                    ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/40 border border-orange-500'
+                    : 'bg-black/40 text-gray-200 border border-white/30 hover:bg-black/60 hover:text-white'
+                  }`}
+              >
+                <Store className="w-3.5 h-3.5" />
+                <span>{t('dineIn') || 'Dine-In'}</span>
+              </button>
             </div>
           </div>
 
-          {/* Filter Chips */}
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <button
-              onClick={() => toggleFilter('isOpen')}
-              className={`px-6 py-2.5 rounded-full font-bold text-sm transition-all duration-300 ${
-                filters.isOpen
-                  ? 'bg-white text-orange-600 shadow-lg'
-                  : 'bg-white/20 text-white hover:bg-white/30'
-              }`}
-            >
-              Open Now
-            </button>
-            <button
-              onClick={() => toggleFilter('isDelivery')}
-              className={`px-6 py-2.5 rounded-full font-bold text-sm transition-all duration-300 flex items-center space-x-2 ${
-                filters.isDelivery
-                  ? 'bg-white text-orange-600 shadow-lg'
-                  : 'bg-white/20 text-white hover:bg-white/30'
-              }`}
-            >
-              <Bike className="w-4 h-4" />
-              <span>Delivery</span>
-            </button>
-            <button
-              onClick={() => toggleFilter('isDineIn')}
-              className={`px-6 py-2.5 rounded-full font-bold text-sm transition-all duration-300 ${
-                filters.isDineIn
-                  ? 'bg-white text-orange-600 shadow-lg'
-                  : 'bg-white/20 text-white hover:bg-white/30'
-              }`}
-            >
-              Dine-In
-            </button>
-          </div>
         </div>
       </section>
 
       {/* Results Section */}
-      <section className="py-12">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="mb-6 text-gray-700 font-medium">
-            Found {filteredRestaurants.length} restaurant{filteredRestaurants.length !== 1 ? 's' : ''}
+      <section className="py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+          <div className="mb-6 flex items-center justify-between">
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+              Found <span className="text-orange-600 font-black">{filteredRestaurants.length}</span> restaurant{filteredRestaurants.length !== 1 ? 's' : ''}
+            </span>
           </div>
 
           {loading ? (
-            <div className="flex justify-center items-center py-20">
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-orange-500 border-t-transparent"></div>
+            <div className="flex justify-center items-center py-24">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent shadow-sm"></div>
             </div>
           ) : filteredRestaurants.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="text-gray-400 text-6xl mb-4">🔍</div>
-              <h3 className="text-2xl font-bold text-gray-700 mb-2">No Restaurants Found</h3>
-              <p className="text-gray-500">Try adjusting your search or filters</p>
+            <div className="bg-white rounded-3xl border-2 border-dashed border-orange-200 p-16 text-center shadow-xs max-w-md mx-auto">
+              <div className="text-3xl mb-3">🔍</div>
+              <h3 className="text-base font-bold text-gray-800 mb-1">{t('restaurantNotFound') || 'No restaurants found'}</h3>
+              <p className="text-gray-400 text-xs">{t('noItemsFound') || 'Try adjusting your search terms or filters.'}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -157,80 +175,82 @@ export default function RestaurantListPage() {
                 <Link
                   key={restaurant.id}
                   to={`/restaurants/${restaurant.id}`}
-                  className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
+                  className="group bg-white rounded-3xl overflow-hidden border border-orange-100/80 shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1.5 flex flex-col justify-between"
                 >
                   {/* Restaurant Image */}
-                  <div className="relative h-56 overflow-hidden bg-gray-100">
+                  <div className="relative h-48 overflow-hidden bg-gray-100">
                     <img
                       src={restaurant.coverImage || restaurant.logo || '/m7.jpg'}
                       alt={restaurant.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    
+
                     {/* Rating Badge */}
-                    <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-bold flex items-center space-x-1 shadow-lg">
-                      <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                      <span>{restaurant.rating.toFixed(1)}</span>
+                    <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-black flex items-center space-x-1 shadow-md">
+                      <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                      <span>{restaurant.rating ? restaurant.rating.toFixed(1) : '4.5'}</span>
                     </div>
 
                     {/* Status Badge */}
                     {restaurant.isOpen ? (
-                      <div className="absolute top-3 left-3 bg-green-500 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-lg">
-                        Open Now
+                      <div className="absolute top-3 left-3 bg-emerald-500 text-white px-2.5 py-1 rounded-full text-[10px] font-black shadow-md flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                        <span>{t('openNow') || 'Open'}</span>
                       </div>
                     ) : (
-                      <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-lg">
-                        Closed
+                      <div className="absolute top-3 left-3 bg-rose-500 text-white px-2.5 py-1 rounded-full text-[10px] font-black shadow-md">
+                        <span>{t('closed') || 'Closed'}</span>
                       </div>
                     )}
                   </div>
 
                   {/* Restaurant Info */}
-                  <div className="p-6 space-y-4">
+                  <div className="p-5 space-y-3.5 flex-1 flex flex-col justify-between">
                     <div>
-                      <h3 className="text-xl font-black text-gray-900 group-hover:text-orange-600 transition-colors mb-2">
+                      <h3 className="text-lg font-black text-gray-900 group-hover:text-orange-600 transition-colors mb-1">
                         {restaurant.name}
                       </h3>
                       {restaurant.description && (
-                        <p className="text-sm text-gray-600 line-clamp-2">{restaurant.description}</p>
+                        <p className="text-xs text-gray-500 line-clamp-2 font-medium">{restaurant.description}</p>
                       )}
                     </div>
 
-                    <div className="flex items-start space-x-2 text-sm text-gray-600">
-                      <MapPin className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
-                      <span className="line-clamp-1">{restaurant.address}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center space-x-2 text-gray-700">
-                        <Clock className="w-4 h-4 text-orange-500" />
-                        <span className="font-bold">
-                          {restaurant.openingHours} - {restaurant.closingHours}
-                        </span>
+                    <div className="space-y-2 pt-2 border-t border-orange-50 text-xs">
+                      <div className="flex items-center space-x-2 text-gray-600 font-medium">
+                        <MapPin className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+                        <span className="line-clamp-1">{restaurant.address}</span>
                       </div>
+
+                      {restaurant.openingHours && restaurant.closingHours && (
+                        <div className="flex items-center space-x-2 text-gray-600 font-medium">
+                          <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                          <span>{restaurant.openingHours} - {restaurant.closingHours}</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Service Badges */}
-                    <div className="flex items-center gap-2 pt-2">
+                    <div className="flex items-center gap-2">
                       {restaurant.isDelivery && (
-                        <span className="flex items-center space-x-1 bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
-                          <Bike className="w-3.5 h-3.5" />
-                          <span>Delivery</span>
+                        <span className="inline-flex items-center space-x-1 bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold">
+                          <Bike className="w-3 h-3 text-emerald-600" />
+                          <span>{t('delivery') || 'Delivery'}</span>
                         </span>
                       )}
                       {restaurant.isDineIn && (
-                        <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">
-                          Dine-In
+                        <span className="inline-flex items-center space-x-1 bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold">
+                          <Store className="w-3 h-3 text-blue-600" />
+                          <span>{t('dineIn') || 'Dine-In'}</span>
                         </span>
                       )}
                     </div>
 
                     {/* View Menu Button */}
-                    <div className="pt-2">
-                      <button className="w-full bg-orange-50 hover:bg-orange-600 text-orange-600 hover:text-white font-bold py-3 rounded-xl transition-all duration-300 flex items-center justify-center space-x-2 group-hover:shadow-lg">
-                        <span>View Menu</span>
-                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                      </button>
+                    <div className="pt-1">
+                      <div className="w-full bg-orange-50 group-hover:bg-orange-600 text-orange-600 group-hover:text-white font-extrabold text-xs py-2.5 rounded-2xl transition-all duration-300 flex items-center justify-center space-x-2 shadow-2xs">
+                        <span>{t('viewMenu') || 'View Menu'}</span>
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                      </div>
                     </div>
                   </div>
                 </Link>

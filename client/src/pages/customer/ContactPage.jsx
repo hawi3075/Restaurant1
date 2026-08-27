@@ -1,26 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Phone, Mail, MapPin, Send, Utensils } from 'lucide-react';
+import { Phone, Mail, MapPin, Send, Utensils, MessageSquare, CheckCircle } from 'lucide-react';
 import Navbar from '../../components/Navbar';
+import { useLanguage } from '../../context/LanguageContext';
+import { useSocket } from '../../context/SocketContext';
+import { useAuth } from '../../context/AuthContext';
+import { useSettings } from '../../context/SettingsContext';
 
 export default function ContactPage() {
+  const { t } = useLanguage();
+  const socket = useSocket();
+  const { user } = useAuth();
+  const { supportPhone, supportEmail } = useSettings();
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     message: ''
   });
   const [submitted, setSubmitted] = useState(false);
+  const [responses, setResponses] = useState([]);
+
+  useEffect(() => {
+    if (socket && user) {
+      socket.emit('join_user_room', user.id);
+
+      const handleReceive = (data) => {
+        setResponses((prev) => [...prev, data]);
+      };
+
+      socket.on('receive_message', handleReceive);
+      return () => {
+        socket.off('receive_message', handleReceive);
+      };
+    }
+  }, [socket, user]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Add your form submission API logic here
+    if (!formData.message.trim()) return;
+
+    const payload = {
+      id: Date.now(),
+      sender: user?.name || formData.name,
+      senderId: user?.id || formData.email,
+      senderName: formData.name,
+      email: formData.email,
+      text: formData.message,
+      userRole: user?.role || 'Customer',
+      timestamp: new Date(),
+    };
+
+    if (socket) {
+      socket.emit('send_message', payload);
+    }
+
     setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 4000);
-    setFormData({ name: '', email: '', message: '' });
+    setTimeout(() => setSubmitted(false), 5000);
+    setFormData({ name: formData.name, email: formData.email, message: '' });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FFF5EE] via-[#FFF8F3] to-[#FFEDDF] text-gray-800 font-sans flex flex-col justify-between">
+    <div className="app-page-warm font-sans flex flex-col justify-between">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;0,9..144,900;1,9..144,600&family=Work+Sans:wght@400;500;600;700;800&display=swap');
         .font-display { font-family: 'Fraunces', serif; }
@@ -36,7 +77,7 @@ export default function ContactPage() {
           {/* Header Title */}
           <div className="text-center mb-16">
             <h1 className="font-display text-4xl sm:text-5xl font-black text-orange-600 tracking-tight">
-              Contact us
+              {t('getInTouch')}
             </h1>
             <div className="w-16 h-1 bg-orange-600 mx-auto mt-3 rounded-full"></div>
           </div>
@@ -51,7 +92,7 @@ export default function ContactPage() {
               </div>
               <div>
                 <h3 className="text-gray-500 font-bold text-sm uppercase tracking-wider mb-1">Call us</h3>
-                <p className="text-gray-900 font-display font-bold text-lg">+251 900 000 000</p>
+                <p className="text-gray-900 font-display font-bold text-lg">{supportPhone || '+251 900 000 000'}</p>
               </div>
             </div>
 
@@ -62,7 +103,7 @@ export default function ContactPage() {
               </div>
               <div>
                 <h3 className="text-gray-500 font-bold text-sm uppercase tracking-wider mb-1">Mail us</h3>
-                <p className="text-gray-900 font-display font-bold text-base sm:text-lg break-all">support@maad.com</p>
+                <p className="text-gray-900 font-display font-bold text-base sm:text-lg break-all">{supportEmail || 'support@maed.com'}</p>
               </div>
             </div>
 
@@ -140,6 +181,31 @@ export default function ContactPage() {
                   <span>Submit</span>
                 </button>
               </form>
+
+              {/* Admin Responses Panel */}
+              {responses.length > 0 && (
+                <div className="mt-8 pt-6 border-t border-gray-200">
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2 mb-3">
+                    <MessageSquare className="w-4 h-4 text-orange-600" />
+                    <span>Responses from Support Team ({responses.length})</span>
+                  </h3>
+                  <div className="space-y-3">
+                    {responses.map((resp, idx) => (
+                      <div key={idx} className="bg-orange-50/80 border border-orange-200 p-4 rounded-2xl">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-bold text-orange-900">
+                            {resp.senderName || resp.sender || 'Admin Support'}
+                          </span>
+                          <span className="text-[10px] text-gray-500">
+                            {new Date(resp.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-800 font-medium">{resp.text || resp.message}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right: Support Illustration Image */}

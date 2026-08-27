@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, ShoppingBag, Store, UtensilsCrossed, 
   MapPin, Users, Settings, MessageSquare, 
-  ShieldCheck, ChevronDown, ChevronRight, Bike
+  ShieldCheck, ChevronDown, ChevronRight, Bike, Headphones, Star
 } from 'lucide-react';
 
 export default function AdminSidebar() {
@@ -28,7 +28,7 @@ export default function AdminSidebar() {
   };
 
   return (
-    <aside className="w-72 bg-gray-900 text-gray-300 flex flex-col h-screen sticky top-0 border-r border-gray-800 select-none overflow-y-auto">
+    <aside className="w-72 bg-gray-900 text-gray-300 flex flex-col h-screen sticky top-0 border-r border-gray-800 select-none overflow-y-auto shrink-0">
       
       {/* Brand Header */}
       <div className="h-20 flex items-center px-6 bg-gray-950 border-b border-gray-800 shrink-0">
@@ -66,6 +66,17 @@ export default function AdminSidebar() {
           <span>Dashboard</span>
         </Link>
 
+        {/* Point Of Sale (Direct Link) */}
+        <Link 
+          to="/admin/pos" 
+          className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition ${
+            isActive('/admin/pos') ? 'bg-orange-600 text-white font-bold shadow-lg shadow-orange-600/20' : 'hover:bg-gray-800 hover:text-white'
+          }`}
+        >
+          <ShoppingBag className="w-4 h-4 text-orange-500" />
+          <span>Point Of Sale</span>
+        </Link>
+
         {/* ORDER MANAGEMENT */}
         <div className="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
           Order Management
@@ -87,8 +98,6 @@ export default function AdminSidebar() {
             <div className="pl-9 pr-2 py-1 space-y-1 bg-gray-950/40 rounded-xl my-1">
               <Link to="/admin/orders/all" className="block py-1.5 px-2 rounded-lg hover:text-orange-400 transition">All Orders</Link>
               <Link to="/admin/orders/pending" className="block py-1.5 px-2 rounded-lg hover:text-orange-400 transition">Pending Orders</Link>
-              <Link to="/admin/orders/delivering" className="block py-1.5 px-2 rounded-lg hover:text-orange-400 transition">Out for Delivery</Link>
-              <Link to="/admin/orders/refunds" className="block py-1.5 px-2 rounded-lg hover:text-orange-400 transition">Refund Requests</Link>
             </div>
           )}
         </div>
@@ -163,16 +172,6 @@ export default function AdminSidebar() {
           <span>Foods</span>
         </Link>
 
-        <Link 
-          to="/admin/food/addons" 
-          className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition ${
-            isActive('/admin/food/addons') ? 'bg-orange-600 text-white font-bold' : 'hover:bg-gray-800 hover:text-white'
-          }`}
-        >
-          <ShoppingBag className="w-4 h-4 text-orange-500" />
-          <span>Addons</span>
-        </Link>
-
         {/* DELIVERYMAN MANAGEMENT */}
         <div className="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
           Deliveryman Management
@@ -228,6 +227,21 @@ export default function AdminSidebar() {
           <span>Customers</span>
         </Link>
 
+        {/* REVIEW MANAGEMENT */}
+        <div className="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+          Review Management
+        </div>
+
+        <Link 
+          to="/admin/reviews" 
+          className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition ${
+            isActive('/admin/reviews') ? 'bg-orange-600 text-white font-bold' : 'hover:bg-gray-800 hover:text-white'
+          }`}
+        >
+          <Star className="w-4 h-4 text-orange-500" />
+          <span>Reviews & Ratings</span>
+        </Link>
+
         {/* HELP & SUPPORT */}
         <div className="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
           Help & Support
@@ -241,6 +255,16 @@ export default function AdminSidebar() {
         >
           <MessageSquare className="w-4 h-4 text-orange-500" />
           <span>Contact Messages</span>
+        </Link>
+
+        <Link 
+          to="/admin/support/chat" 
+          className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition ${
+            isActive('/admin/support/chat') ? 'bg-orange-600 text-white font-bold' : 'hover:bg-gray-800 hover:text-white'
+          }`}
+        >
+          <Headphones className="w-4 h-4 text-orange-500" />
+          <span>Live Support Chat</span>
         </Link>
 
         {/* SYSTEM SETUP */}
@@ -261,4 +285,4 @@ export default function AdminSidebar() {
       </div>
     </aside>
   );
-} 
+}

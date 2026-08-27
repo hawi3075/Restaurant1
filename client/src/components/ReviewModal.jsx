@@ -113,7 +113,7 @@ export default function ReviewModal({ isOpen, onClose, order, onSuccess }) {
                     <div className="flex-1">
                       <p className="font-bold text-gray-900">{item.food?.name}</p>
                       <p className="text-sm text-gray-500">
-                        Quantity: {item.quantity} • ${item.unitPrice.toFixed(2)}
+                        Quantity: {item.quantity} • ETB {item.unitPrice.toFixed(2)}
                       </p>
                     </div>
                     {selectedFood?.id === item.id && (

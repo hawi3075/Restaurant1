@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useLanguage } from './LanguageContext';
+import { showToast } from '../components/Toast';
 
 const CartContext = createContext();
 
@@ -12,6 +14,8 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
+  const [cartLoaded, setCartLoaded] = useState(false);
+  const { t } = useLanguage();
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -23,6 +27,7 @@ export const CartProvider = ({ children }) => {
         console.error('Error loading cart:', error);
       }
     }
+    setCartLoaded(true);
   }, []);
 
   // Save cart to localStorage whenever it changes
@@ -45,6 +50,7 @@ export const CartProvider = ({ children }) => {
     };
 
     setCart((prev) => [...prev, newItem]);
+    showToast(`${food.name} ${t('addedToCartSuccessfully') || 'added to cart successfully!'}`, 'success');
   };
 
   const removeFromCart = (itemId) => {
@@ -85,7 +91,11 @@ export const CartProvider = ({ children }) => {
 
   const getRestaurantId = () => {
     if (cart.length === 0) return null;
-    return cart[0].food.restaurantId;
+    for (const item of cart) {
+      const id = item?.food?.restaurantId || item?.food?.restaurant_id || item?.food?.restaurant?.id || item?.restaurantId || item?.restaurant_id;
+      if (id) return id;
+    }
+    return null;
   };
 
   const canAddItem = (restaurantId) => {
@@ -95,6 +105,7 @@ export const CartProvider = ({ children }) => {
 
   const value = {
     cart,
+    cartLoaded,
     addToCart,
     removeFromCart,
     updateQuantity,

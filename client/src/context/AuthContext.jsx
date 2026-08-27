@@ -20,16 +20,34 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await API.post('/auth/login', { email, password });
       const { token: newToken, user: userData } = response.data;
-      
+
       localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(userData));
       setToken(newToken);
       setUser(userData);
       return { success: true, role: userData.role };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Login failed. Please check your credentials.' 
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Login failed. Please check your credentials.',
+      };
+    }
+  };
+
+  const googleLogin = async (credential) => {
+    try {
+      const response = await API.post('/auth/google', { credential });
+      const { token: newToken, user: userData } = response.data;
+
+      localStorage.setItem('token', newToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setToken(newToken);
+      setUser(userData);
+      return { success: true, role: userData.role };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Google sign-in failed. Please try again.',
       };
     }
   };
@@ -38,16 +56,16 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await API.post('/auth/register', formData);
       const { token: newToken, user: userData } = response.data;
-      
+
       localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(userData));
       setToken(newToken);
       setUser(userData);
       return { success: true, role: userData.role };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Registration failed.' 
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Registration failed.',
       };
     }
   };
@@ -60,7 +78,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, login, googleLogin, register, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
