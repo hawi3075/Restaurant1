@@ -3,9 +3,11 @@ import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { 
   LayoutDashboard, ShoppingBag, Store, UtensilsCrossed, 
   MapPin, Users, Settings, MessageSquare, 
-  ShieldCheck, ChevronDown, ChevronRight, Bike, LogOut, Bell, Headphones, Star
+  ShieldCheck, ChevronDown, ChevronRight, Bike, LogOut, Bell, Headphones, Star, Moon, Sun, Globe
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import AdminDashboardHome from './AdminDashboardHome';
 
 // Import admin pages
@@ -293,6 +295,9 @@ function AdminSidebar() {
 
 export default function AdminDashboard() {
   const { user, logout, loading } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const { language, changeLanguage, t } = useLanguage();
+  const [showLangDropdown, setShowLangDropdown] = useState(false);
 
   // Show loading while checking auth
   if (loading) {
@@ -329,6 +334,70 @@ export default function AdminDashboard() {
               <Bell className="w-5 h-5 text-gray-600" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
+
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 hover:bg-gray-100 rounded-xl transition"
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-5 h-5 text-yellow-500" />
+              ) : (
+                <Moon className="w-5 h-5 text-gray-600" />
+              )}
+            </button>
+
+            {/* Language Selector */}
+            <div className="relative">
+              <button
+                onClick={() => setShowLangDropdown(!showLangDropdown)}
+                className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-xl transition"
+                title="Change Language"
+              >
+                <Globe className="w-5 h-5 text-gray-600" />
+                <span className="text-sm font-semibold text-gray-700 uppercase">{language}</span>
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              </button>
+
+              {showLangDropdown && (
+                <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+                  <button
+                    onClick={() => {
+                      changeLanguage('en');
+                      setShowLangDropdown(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 hover:bg-gray-100 transition ${
+                      language === 'en' ? 'bg-orange-50 text-orange-600 font-bold' : 'text-gray-700'
+                    }`}
+                  >
+                    English
+                  </button>
+                  <button
+                    onClick={() => {
+                      changeLanguage('fr');
+                      setShowLangDropdown(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 hover:bg-gray-100 transition ${
+                      language === 'fr' ? 'bg-orange-50 text-orange-600 font-bold' : 'text-gray-700'
+                    }`}
+                  >
+                    Français
+                  </button>
+                  <button
+                    onClick={() => {
+                      changeLanguage('es');
+                      setShowLangDropdown(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 hover:bg-gray-100 transition ${
+                      language === 'es' ? 'bg-orange-50 text-orange-600 font-bold' : 'text-gray-700'
+                    }`}
+                  >
+                    Español
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* User Profile */}
             <div className="flex items-center space-x-3">
