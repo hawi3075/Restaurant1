@@ -17,9 +17,25 @@ const prisma = require('./config/prisma');
 const app = express();
 const server = http.createServer(app);
 
-// CORS configuration for production
+// CORS configuration for production and development
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'https://restaurant1-rust-ten.vercel.app',
+  process.env.CORS_ORIGIN
+].filter(Boolean); // Remove undefined values
+
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -27,7 +43,7 @@ const corsOptions = {
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
   }
