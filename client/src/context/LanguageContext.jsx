@@ -194,6 +194,10 @@ const translations = {
     status_SERVED: 'Served',
     status_COMPLETED: 'Completed',
     status_CANCELLED: 'Cancelled',
+    // Admin Dashboard
+    adminDashboard: 'Admin Dashboard',
+    manageRestaurantPlatform: 'Manage your restaurant platform',
+    notifications: 'Notifications',
   },
   am: {
     home: 'ቤት',
@@ -383,6 +387,10 @@ const translations = {
     status_SERVED: 'ቀርቧል',
     status_COMPLETED: 'ተጠናቋል',
     status_CANCELLED: 'ተሰርዟል',
+    // Admin Dashboard
+    adminDashboard: 'የአስተዳዳሪ ሰሌዳ',
+    manageRestaurantPlatform: 'የምግብ ቤት መድረክዎን ያስተዳድሩ',
+    notifications: 'ማሳወቂያዎች',
   },
   om: {
     home: 'Mana',
@@ -572,6 +580,10 @@ const translations = {
     status_SERVED: 'Dhiyaate',
     status_COMPLETED: 'Xumurame',
     status_CANCELLED: 'Haqame',
+    // Admin Dashboard
+    adminDashboard: 'Boordi Bulchaa',
+    manageRestaurantPlatform: 'Waltajjii mana nyaataa bulchi',
+    notifications: 'Beeksisawwan',
   },
 };
 

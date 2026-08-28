@@ -324,13 +324,13 @@ export default function AdminDashboard() {
         {/* Top Header */}
         <header className="bg-white border-b border-gray-200 h-20 flex items-center justify-between px-8 shrink-0">
           <div>
-            <h2 className="text-xl font-black text-gray-900">Admin Dashboard</h2>
-            <p className="text-sm text-gray-600">Manage your restaurant platform</p>
+            <h2 className="text-xl font-black text-gray-900">{t('adminDashboard')}</h2>
+            <p className="text-sm text-gray-600">{t('manageRestaurantPlatform')}</p>
           </div>
 
           <div className="flex items-center space-x-4">
             {/* Notifications */}
-            <button className="relative p-2 hover:bg-gray-100 rounded-xl transition">
+            <button className="relative p-2 hover:bg-gray-100 rounded-xl transition" title={t('notifications')}>
               <Bell className="w-5 h-5 text-gray-600" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
@@ -440,7 +440,7 @@ export default function AdminDashboard() {
               className="flex items-center space-x-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition font-bold text-sm"
             >
               <LogOut className="w-4 h-4" />
-              <span>Logout</span>
+              <span>{t('logout')}</span>
             </button>
           </div>
         </header>
