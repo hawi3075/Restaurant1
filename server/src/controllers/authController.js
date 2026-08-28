@@ -2,9 +2,23 @@ const prisma = require('../config/prisma');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 const { OAuth2Client } = require('google-auth-library');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// Create email transporter
+const createTransporter = () => {
+  return nodemailer.createTransporter({
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.EMAIL_PORT) || 587,
+    secure: false, // true for 465, false for other ports
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD,
+    },
+  });
+};
 
 // Register a new user (Customer or Staff assigned by Admin)
 const register = async (req, res) => {
@@ -199,13 +213,72 @@ const forgotPassword = async (req, res) => {
       },
     });
 
-    // In production, send email with resetToken
-    // For now, return it in the response (REMOVE IN PRODUCTION)
-    console.log(`Password reset code for ${email}: ${resetToken}`);
+    // Send email with reset code
+    try {
+      const transporter = createTransporter();
+      
+      await transporter.sendMail({
+        from: `"Ma'ad Restaurant" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: 'Password Reset Code - Ma\'ad Restaurant',
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #ea580c 0%, #f59e0b 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+              .code-box { background: white; border: 3px dashed #ea580c; border-radius: 10px; padding: 20px; text-align: center; margin: 20px 0; }
+              .code { font-size: 32px; font-weight: bold; color: #ea580c; letter-spacing: 8px; }
+              .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 5px; }
+              .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1 style="margin: 0;">🍽️ Ma'ad Restaurant</h1>
+                <p style="margin: 10px 0 0 0;">Password Reset Request</p>
+              </div>
+              <div class="content">
+                <p>Hello <strong>${user.name}</strong>,</p>
+                <p>We received a request to reset your password. Use the code below to reset your password:</p>
+                
+                <div class="code-box">
+                  <p style="margin: 0 0 10px 0; font-size: 14px; color: #6b7280;">Your Reset Code</p>
+                  <div class="code">${resetToken}</div>
+                </div>
+                
+                <div class="warning">
+                  <strong>⏰ Important:</strong> This code expires in <strong>15 minutes</strong>.
+                </div>
+                
+                <p>If you didn't request a password reset, please ignore this email or contact support if you have concerns.</p>
+                
+                <p>Best regards,<br><strong>Ma'ad Restaurant Team</strong></p>
+              </div>
+              <div class="footer">
+                <p>This is an automated message, please do not reply to this email.</p>
+                <p>© ${new Date().getFullYear()} Ma'ad Restaurant. All rights reserved.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `,
+      });
+      
+      console.log(`✅ Password reset email sent to ${email}`);
+    } catch (emailError) {
+      console.error('Email sending error:', emailError);
+      // If email fails, still log the code for development
+      console.log(`⚠️  Email failed. Reset code for ${email}: ${resetToken}`);
+    }
     
     res.json({ 
       message: 'If an account with that email exists, a password reset code has been sent.',
-      // REMOVE THIS IN PRODUCTION - Only for development
+      // Return code in development mode only
       resetCode: process.env.NODE_ENV === 'development' ? resetToken : undefined
     });
   } catch (error) {

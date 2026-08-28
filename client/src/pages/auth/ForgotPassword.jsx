@@ -32,15 +32,16 @@ export default function ForgotPassword() {
         email: formData.email
       });
       
-      // In development, show the code prominently
+      // Always show the code if it exists in response (for development/testing)
       if (response.data.resetCode) {
         console.log('🔑 Reset Code:', response.data.resetCode);
-        setSuccess(`✅ Reset Code: ${response.data.resetCode}\n\n(In production, this will be sent to your email. For now, use this code below!)`);
+        setSuccess(`✅ YOUR RESET CODE IS: ${response.data.resetCode}\n\n📋 Copy this code and paste it below.\n\n(Note: In production, this will be sent to your email)`);
+        setStep(2);
       } else {
-        setSuccess('A 6-digit reset code has been sent to your email. Check your inbox!');
+        // Production mode - actual email was sent
+        setSuccess('✅ A 6-digit reset code has been sent to your email. Please check your inbox (and spam folder).');
+        setStep(2);
       }
-      
-      setStep(2);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to send reset code. Please try again.');
     } finally {
@@ -153,15 +154,24 @@ export default function ForgotPassword() {
           )}
 
           {success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm mb-4">
-              <div className="flex items-start space-x-2">
-                <CheckCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <div className="bg-green-50 border-2 border-green-300 text-green-800 px-5 py-4 rounded-xl text-base mb-4 shadow-lg">
+              <div className="flex items-start space-x-3">
+                <CheckCircle className="w-6 h-6 shrink-0 mt-1 text-green-600" />
                 <div className="flex-1">
-                  <p className="font-bold whitespace-pre-line">{success}</p>
-                  {step === 2 && (
-                    <p className="text-xs mt-2 text-green-600">
-                      💡 Tip: Copy the code above and paste it in the field below
-                    </p>
+                  <p className="font-bold whitespace-pre-line leading-relaxed">{success}</p>
+                  {step === 2 && success.includes('YOUR RESET CODE') && (
+                    <div className="mt-3 p-3 bg-white rounded-lg border border-green-200">
+                      <p className="text-xs text-gray-600 mb-1">👇 Your code (click to select):</p>
+                      <p 
+                        className="text-2xl font-black text-center tracking-widest text-orange-600 select-all cursor-pointer"
+                        onClick={(e) => {
+                          e.target.select();
+                          document.execCommand('copy');
+                        }}
+                      >
+                        {success.match(/\d{6}/)?.[0] || ''}
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
