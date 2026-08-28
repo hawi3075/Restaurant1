@@ -3,6 +3,18 @@ import { UtensilsCrossed, Plus, Search, Edit, Trash2, X, Image } from 'lucide-re
 import API from '../../services/api';
 import ImageUpload from '../../components/ImageUpload';
 
+// Helper function to get full image URL
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return '/m1.webp';
+  if (imagePath.startsWith('http')) return imagePath;
+  if (imagePath.startsWith('/uploads')) {
+    // For uploaded images, prepend the API base URL without /api
+    const baseUrl = API.defaults.baseURL.replace('/api', '');
+    return `${baseUrl}${imagePath}`;
+  }
+  return imagePath; // For public folder images like /m7.webp
+};
+
 export default function AdminFoodsPage() {
   const [foods, setFoods] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -188,9 +200,13 @@ export default function AdminFoodsPage() {
             >
               <div className="relative h-48 bg-gray-100">
                 <img
-                  src={food.image || '/m1.webp'}
+                  src={getImageUrl(food.image)}
                   alt={food.name}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/m1.webp';
+                  }}
                 />
                 {food.isPopular && (
                   <span className="absolute top-3 left-3 bg-orange-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">
