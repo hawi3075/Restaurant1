@@ -580,6 +580,15 @@ export default function Navbar() {
 
           {/* Right Header Actions */}
           <div className="flex items-center space-x-4">
+            {/* Order Now Button - Links to Menu/Restaurants */}
+            <Link
+              to="/restaurants"
+              className="hidden md:flex items-center space-x-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-orange-600/30 hover:shadow-orange-600/40 transition-all text-sm cursor-pointer"
+            >
+              <Utensils className="w-4 h-4" />
+              <span>{t('orderNow') || 'Order Now'}</span>
+            </Link>
+
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
