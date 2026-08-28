@@ -538,7 +538,7 @@ export default function LandingPage() {
 
             <div className="pt-4 flex flex-col sm:flex-row justify-center lg:justify-start gap-4 animate-slide-up" style={{ animationDelay: '0.55s', opacity: 0 }}>
               <Link
-                to="/restaurants"
+                to="/menu"
                 className="group relative inline-flex items-center justify-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white text-base font-bold px-8 py-4 rounded-2xl shadow-lg shadow-orange-600/30 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-xl hover:shadow-orange-600/40 overflow-hidden animate-pulse-glow"
               >
                 <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/25 to-transparent"></span>
