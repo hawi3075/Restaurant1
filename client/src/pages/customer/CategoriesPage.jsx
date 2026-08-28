@@ -7,6 +7,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
+import { getCategoryImageUrl, getFoodImageUrl } from '../../utils/imageUtils';
 
 export default function CategoriesPage() {
   const { t } = useLanguage();
@@ -131,7 +132,7 @@ export default function CategoriesPage() {
                   <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-md mb-4 bg-orange-50 relative group-hover:scale-110 transition-transform duration-500">
                     {category.image ? (
                       <img
-                        src={category.image}
+                        src={getCategoryImageUrl(category.image)}
                         alt={category.name}
                         loading="lazy"
                         className="w-full h-full object-cover"
@@ -181,11 +182,11 @@ export default function CategoriesPage() {
                     {/* Image container — click through to full detail page */}
                     <Link to={`/foods/${food.id}`} className="h-40 w-full overflow-hidden relative bg-orange-50 block">
                       <img
-                        src={food.image || '/m1.webp'}
+                        src={getFoodImageUrl(food.image)}
                         alt={food.name}
                         loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        onError={(e) => { e.target.src = '/m1.webp'; }}
+                        onError={(e) => { e.target.src = getFoodImageUrl(null); }}
                       />
                     </Link>
 

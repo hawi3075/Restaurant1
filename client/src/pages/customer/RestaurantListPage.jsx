@@ -4,6 +4,7 @@ import { MapPin, Clock, Star, Bike, ArrowRight, Search, Store } from 'lucide-rea
 import Navbar from '../../components/Navbar';
 import API from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
+import { getRestaurantImageUrl } from '../../utils/imageUtils';
 
 export default function RestaurantListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -180,9 +181,10 @@ export default function RestaurantListPage() {
                   {/* Restaurant Image */}
                   <div className="relative h-48 overflow-hidden bg-gray-100">
                     <img
-                      src={restaurant.coverImage || restaurant.logo || '/m7.webp'}
+                      src={getRestaurantImageUrl(restaurant.coverImage || restaurant.logo)}
                       alt={restaurant.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => { e.target.src = getRestaurantImageUrl(null); }}
                     />
 
                     {/* Rating Badge */}

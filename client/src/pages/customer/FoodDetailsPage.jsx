@@ -6,6 +6,7 @@ import API from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { getFoodImageUrl, getRestaurantImageUrl } from '../../utils/imageUtils';
 
 export default function FoodDetailsPage() {
   const { id } = useParams();
@@ -99,10 +100,10 @@ export default function FoodDetailsPage() {
             {/* Main Product Image Container */}
             <div className="relative rounded-3xl overflow-hidden shadow-xl bg-white border border-gray-100 group">
               <img
-                src={food.image || '/m1.webp'}
+                src={getFoodImageUrl(food.image)}
                 alt={food.name}
                 className="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-500"
-                onError={(e) => { e.target.src = '/m1.webp'; }}
+                onError={(e) => { e.target.src = getFoodImageUrl(null); }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60"></div>
               
@@ -129,10 +130,10 @@ export default function FoodDetailsPage() {
                 className="flex items-center space-x-4 group/rest"
               >
                 <img
-                  src={food.restaurant.logo || '/m7.webp'}
+                  src={getRestaurantImageUrl(food.restaurant.logo)}
                   alt={food.restaurant.name}
                   className="w-14 h-14 rounded-2xl object-cover shadow-inner"
-                  onError={(e) => { e.target.src = '/m7.webp'; }}
+                  onError={(e) => { e.target.src = getRestaurantImageUrl(null); }}
                 />
                 <div className="flex-1 min-w-0">
                   <h4 className="text-base font-bold text-gray-900 group-hover/rest:text-orange-600 truncate transition-colors">

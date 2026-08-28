@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useSocket } from '../../context/SocketContext';
 import showToast from '../../components/Toast';
+import { getRestaurantImageUrl, getFoodImageUrl } from '../../utils/imageUtils';
 
 
 export default function OrdersPage() {
@@ -252,9 +253,10 @@ export default function OrdersPage() {
                   <div className="bg-gray-50 rounded-xl p-4 mb-4">
                     <div className="flex items-center space-x-3">
                       <img
-                        src={order.restaurant.logo || '/m7.webp'}
+                        src={getRestaurantImageUrl(order.restaurant.logo)}
                         alt={order.restaurant.name}
                         className="w-12 h-12 rounded-xl object-cover"
+                        onError={(e) => { e.target.src = getRestaurantImageUrl(null); }}
                       />
                       <div>
                         <h4 className="font-bold text-gray-900">{order.restaurant.name}</h4>
@@ -270,9 +272,10 @@ export default function OrdersPage() {
                     <div key={idx} className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <img
-                          src={item.food?.image || '/m1.webp'}
+                          src={getFoodImageUrl(item.food?.image)}
                           alt={item.food?.name}
                           className="w-16 h-16 rounded-xl object-cover"
+                          onError={(e) => { e.target.src = getFoodImageUrl(null); }}
                         />
                         <div>
                           <h5 className="font-bold text-gray-900">{item.food?.name}</h5>

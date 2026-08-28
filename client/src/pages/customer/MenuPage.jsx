@@ -8,6 +8,7 @@ import Navbar from '../../components/Navbar';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
+import { getFoodImageUrl } from '../../utils/imageUtils';
 
 // -----------------------------------------------------------------------
 // MOCK DATA — replace with real API calls, e.g.:

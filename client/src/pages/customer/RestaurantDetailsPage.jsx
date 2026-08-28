@@ -5,6 +5,7 @@ import Navbar from '../../components/Navbar';
 import API from '../../services/api';
 import { useCart } from '../../context/CartContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { getRestaurantImageUrl, getFoodImageUrl } from '../../utils/imageUtils';
 
 export default function RestaurantDetailsPage() {
   const { id } = useParams();
@@ -105,9 +106,10 @@ export default function RestaurantDetailsPage() {
       {/* Hero Section */}
       <section className="relative h-80 overflow-hidden">
         <img
-          src={restaurant.coverImage || restaurant.logo || '/m7.webp'}
+          src={getRestaurantImageUrl(restaurant.coverImage || restaurant.logo)}
           alt={restaurant.name}
           className="w-full h-full object-cover"
+          onError={(e) => { e.target.src = getRestaurantImageUrl(null); }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
 
@@ -238,10 +240,10 @@ export default function RestaurantDetailsPage() {
                     {/* Food Image */}
                     <div className="relative h-48 overflow-hidden bg-gray-100">
                       <img
-                        src={food.image || '/m1.webp'}
+                        src={getFoodImageUrl(food.image)}
                         alt={food.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        onError={(e) => { e.target.src = '/m1.webp'; }}
+                        onError={(e) => { e.target.src = getFoodImageUrl(null); }}
                       />
                       {food.isPopular && (
                         <span className="absolute top-3 left-3 bg-orange-600 text-white px-3 py-1 rounded-full text-[10px] font-black shadow-md">

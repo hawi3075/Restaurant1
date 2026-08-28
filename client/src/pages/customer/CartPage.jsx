@@ -6,6 +6,7 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useSettings } from '../../context/SettingsContext';
+import { getFoodImageUrl } from '../../utils/imageUtils';
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -115,10 +116,10 @@ export default function CartPage() {
                 <div className="flex flex-col sm:flex-row gap-6">
                   {/* Food Image */}
                   <img
-                    src={item.food.image || '/m1.webp'}
+                    src={getFoodImageUrl(item.food.image)}
                     alt={item.food.name}
                     className="w-full sm:w-32 h-32 rounded-xl object-cover flex-shrink-0"
-                    onError={(e) => { e.target.src = '/m1.webp'; }}
+                    onError={(e) => { e.target.src = getFoodImageUrl(null); }}
                   />
 
                   {/* Item Details */}

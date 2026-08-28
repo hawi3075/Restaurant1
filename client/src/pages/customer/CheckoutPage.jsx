@@ -28,6 +28,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useSettings } from '../../context/SettingsContext';
 import API from '../../services/api';
 import { showToast } from '../../components/Toast';
+import { getRestaurantImageUrl } from '../../utils/imageUtils';
 
 /* -------------------------------------------------------------------------
  * Map helpers — mirrors the implementation used on the Address page so the
@@ -949,9 +950,10 @@ export default function CheckoutPage() {
                 <h2 className="text-xl font-black text-gray-900 mb-4">{t('restaurant')}</h2>
                 <div className="flex items-center space-x-4">
                   <img
-                    src={restaurant.logo || '/m7.webp'}
+                    src={getRestaurantImageUrl(restaurant.logo)}
                     alt={restaurant.name}
                     className="w-16 h-16 rounded-xl object-cover"
+                    onError={(e) => { e.target.src = getRestaurantImageUrl(null); }}
                   />
                   <div>
                     <h3 className="text-lg font-bold text-gray-900">{restaurant.name}</h3>
