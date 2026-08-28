@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Link, X, Image as ImageIcon } from 'lucide-react';
 import API from '../services/api';
 
@@ -14,6 +14,11 @@ export default function ImageUpload({
   const [preview, setPreview] = useState(value || '');
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
+
+  // Sync preview with value prop changes (for edit mode)
+  useEffect(() => {
+    setPreview(value || '');
+  }, [value]);
 
   // Handle file selection
   const handleFileSelect = async (e) => {
