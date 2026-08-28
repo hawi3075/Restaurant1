@@ -32,14 +32,15 @@ export default function ForgotPassword() {
         email: formData.email
       });
       
-      setSuccess('A 6-digit reset code has been sent to your email.');
-      setStep(2);
-      
-      // In development, show the code
+      // In development, show the code prominently
       if (response.data.resetCode) {
-        console.log('Reset Code:', response.data.resetCode);
-        setSuccess(`Reset code: ${response.data.resetCode} (Check console in production)`);
+        console.log('🔑 Reset Code:', response.data.resetCode);
+        setSuccess(`✅ Reset Code: ${response.data.resetCode}\n\n(In production, this will be sent to your email. For now, use this code below!)`);
+      } else {
+        setSuccess('A 6-digit reset code has been sent to your email. Check your inbox!');
       }
+      
+      setStep(2);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to send reset code. Please try again.');
     } finally {
@@ -152,9 +153,18 @@ export default function ForgotPassword() {
           )}
 
           {success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-xs mb-4 flex items-start space-x-2">
-              <CheckCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>{success}</span>
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm mb-4">
+              <div className="flex items-start space-x-2">
+                <CheckCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-bold whitespace-pre-line">{success}</p>
+                  {step === 2 && (
+                    <p className="text-xs mt-2 text-green-600">
+                      💡 Tip: Copy the code above and paste it in the field below
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
