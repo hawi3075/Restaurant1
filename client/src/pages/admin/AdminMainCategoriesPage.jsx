@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Layers, Plus, Edit, Trash2, X, Image } from 'lucide-react';
 import API from '../../services/api';
+import ImageUpload from '../../components/ImageUpload';
 
 export default function AdminMainCategoriesPage() {
   const [categories, setCategories] = useState([]);
@@ -203,13 +204,11 @@ export default function AdminMainCategoriesPage() {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Category Image URL</label>
-                <input
-                  type="text"
+                <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Category Image</label>
+                <ImageUpload
                   value={form.image}
-                  onChange={e => setForm({ ...form, image: e.target.value })}
-                  placeholder="e.g. /uploads/traditional.webp"
-                  className="mt-1 w-full px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs outline-none focus:border-orange-500 transition"
+                  onChange={(url) => setForm({ ...form, image: url })}
+                  placeholder="Upload or enter image URL"
                 />
               </div>
             </div>

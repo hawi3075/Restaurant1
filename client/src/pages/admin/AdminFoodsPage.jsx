@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UtensilsCrossed, Plus, Search, Edit, Trash2, X, Image } from 'lucide-react';
 import API from '../../services/api';
+import ImageUpload from '../../components/ImageUpload';
 
 export default function AdminFoodsPage() {
   const [foods, setFoods] = useState([]);
@@ -294,14 +295,12 @@ export default function AdminFoodsPage() {
                 />
               </div>
 
-              <div>
-                <label className="font-bold text-gray-500 uppercase tracking-wide">Image URL</label>
-                <input
-                  type="text"
+              <div className="sm:col-span-2">
+                <label className="font-bold text-gray-500 uppercase tracking-wide">Food Image</label>
+                <ImageUpload
                   value={form.image}
-                  onChange={e => setForm({ ...form, image: e.target.value })}
-                  placeholder="e.g. /uploads/dish.webp"
-                  className="mt-1 w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-orange-500 transition"
+                  onChange={(url) => setForm({ ...form, image: url })}
+                  placeholder="Upload or enter image URL"
                 />
               </div>
 
