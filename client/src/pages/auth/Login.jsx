@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Utensils } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -59,6 +60,42 @@ export default function Login() {
       console.error('Login failed:', result.error);
       setError(result.error);
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true);
+    setError('');
+    
+    const result = await googleLogin(credentialResponse.credential);
+    setLoading(false);
+
+    if (result.success) {
+      // Redirect based on user role
+      switch (result.role) {
+        case 'ADMIN':
+          navigate('/admin');
+          break;
+        case 'CHEF':
+          navigate('/chef');
+          break;
+        case 'WAITER':
+          navigate('/waiter');
+          break;
+        case 'DRIVER':
+          navigate('/driver');
+          break;
+        case 'CUSTOMER':
+        default:
+          navigate('/');
+          break;
+      }
+    } else {
+      setError(result.error);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError('Google sign in failed. Please try again.');
   };
 
   return (
@@ -181,6 +218,29 @@ export default function Login() {
               <span>{loading ? 'Signing In...' : 'Sign In'}</span>
               {!loading && <ArrowRight className="w-4 h-4" />}
             </button>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200"></div>
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="px-3 bg-white text-gray-500 font-medium">Or continue with</span>
+              </div>
+            </div>
+
+            {/* Google Sign In Button */}
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                width="100%"
+                size="large"
+                text="signin_with"
+                shape="rectangular"
+                logo_alignment="left"
+              />
+            </div>
 
           </form>
 

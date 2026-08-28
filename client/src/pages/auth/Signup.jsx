@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, Utensils, User, Phone } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function Signup() {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, googleLogin } = useAuth();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -57,6 +58,26 @@ export default function Signup() {
       console.error('Signup failed:', result.error);
       setError(result.error || 'Registration failed. Please try again.');
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setLoading(true);
+    setError('');
+    
+    const result = await googleLogin(credentialResponse.credential);
+    setLoading(false);
+
+    if (result.success) {
+      console.log('Google signup successful! Redirecting to home');
+      navigate('/');
+    } else {
+      console.error('Google signup failed:', result.error);
+      setError(result.error);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError('Google sign up failed. Please try again.');
   };
 
   return (
@@ -237,6 +258,29 @@ export default function Signup() {
               <span>{loading ? 'Creating Account...' : 'Create Account'}</span>
               {!loading && <ArrowRight className="w-4 h-4" />}
             </button>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200"></div>
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="px-3 bg-white text-gray-500 font-medium">Or sign up with</span>
+              </div>
+            </div>
+
+            {/* Google Sign Up Button */}
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                width="100%"
+                size="large"
+                text="signup_with"
+                shape="rectangular"
+                logo_alignment="left"
+              />
+            </div>
 
           </form>
 
