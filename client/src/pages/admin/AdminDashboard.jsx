@@ -3,7 +3,7 @@ import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { 
   LayoutDashboard, ShoppingBag, Store, UtensilsCrossed, 
   MapPin, Users, Settings, MessageSquare, 
-  ShieldCheck, ChevronDown, ChevronRight, Bike, LogOut, Bell, Headphones, Star, Moon, Sun, Globe
+  ShieldCheck, ChevronDown, ChevronRight, Bike, LogOut, Bell, Headphones, Star, Moon, Sun, Globe, Check
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -361,39 +361,63 @@ export default function AdminDashboard() {
               </button>
 
               {showLangDropdown && (
-                <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
                   <button
                     onClick={() => {
                       changeLanguage('en');
                       setShowLangDropdown(false);
                     }}
-                    className={`w-full text-left px-4 py-2 hover:bg-gray-100 transition ${
+                    className={`w-full text-left px-4 py-3 hover:bg-gray-100 transition flex items-center justify-between ${
                       language === 'en' ? 'bg-orange-50 text-orange-600 font-bold' : 'text-gray-700'
                     }`}
                   >
-                    English
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xl">🇬🇧</span>
+                      <span>English</span>
+                    </div>
+                    {language === 'en' && (
+                      <div className="bg-orange-600 text-white p-1 rounded-lg">
+                        <Check className="w-3 h-3" />
+                      </div>
+                    )}
                   </button>
                   <button
                     onClick={() => {
-                      changeLanguage('fr');
+                      changeLanguage('am');
                       setShowLangDropdown(false);
                     }}
-                    className={`w-full text-left px-4 py-2 hover:bg-gray-100 transition ${
-                      language === 'fr' ? 'bg-orange-50 text-orange-600 font-bold' : 'text-gray-700'
+                    className={`w-full text-left px-4 py-3 hover:bg-gray-100 transition flex items-center justify-between ${
+                      language === 'am' ? 'bg-orange-50 text-orange-600 font-bold' : 'text-gray-700'
                     }`}
                   >
-                    Français
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xl">🇪🇹</span>
+                      <span>አማርኛ</span>
+                    </div>
+                    {language === 'am' && (
+                      <div className="bg-orange-600 text-white p-1 rounded-lg">
+                        <Check className="w-3 h-3" />
+                      </div>
+                    )}
                   </button>
                   <button
                     onClick={() => {
-                      changeLanguage('es');
+                      changeLanguage('om');
                       setShowLangDropdown(false);
                     }}
-                    className={`w-full text-left px-4 py-2 hover:bg-gray-100 transition ${
-                      language === 'es' ? 'bg-orange-50 text-orange-600 font-bold' : 'text-gray-700'
+                    className={`w-full text-left px-4 py-3 hover:bg-gray-100 transition flex items-center justify-between ${
+                      language === 'om' ? 'bg-orange-50 text-orange-600 font-bold' : 'text-gray-700'
                     }`}
                   >
-                    Español
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xl">🇪🇹</span>
+                      <span>Afaan Oromoo</span>
+                    </div>
+                    {language === 'om' && (
+                      <div className="bg-orange-600 text-white p-1 rounded-lg">
+                        <Check className="w-3 h-3" />
+                      </div>
+                    )}
                   </button>
                 </div>
               )}
