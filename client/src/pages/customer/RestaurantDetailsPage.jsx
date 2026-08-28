@@ -241,6 +241,7 @@ export default function RestaurantDetailsPage() {
                         src={food.image || '/m1.webp'}
                         alt={food.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => { e.target.src = '/m1.webp'; }}
                       />
                       {food.isPopular && (
                         <span className="absolute top-3 left-3 bg-orange-600 text-white px-3 py-1 rounded-full text-[10px] font-black shadow-md">

@@ -161,6 +161,7 @@ function CategoryScroller({ categories, activeCategory, onSelect }) {
                 alt=""
                 draggable={false}
                 className="absolute inset-0 w-full h-full object-cover pointer-events-none group-hover:scale-110 transition-transform duration-500"
+                onError={(e) => { e.target.src = '/m1.webp'; }}
               />
             )}
             <div className={`absolute inset-0 bg-gradient-to-br ${colorClass} mix-blend-multiply`} />
@@ -462,6 +463,7 @@ export default function LandingPage() {
             alt=""
             aria-hidden="true"
             className="w-full h-full object-cover opacity-[0.16] dark:opacity-[0.22]"
+            onError={(e) => { e.target.src = '/m7.webp'; }}
             style={{
               WebkitMaskImage: 'radial-gradient(ellipse 90% 75% at 68% 40%, black 30%, transparent 78%)',
               maskImage: 'radial-gradient(ellipse 90% 75% at 68% 40%, black 30%, transparent 78%)',
@@ -480,6 +482,7 @@ export default function LandingPage() {
                   src={HERO_PHOTO}
                   alt="Fresh gourmet meal, ready to order"
                   className="w-full h-full object-cover border-2 border-transparent group-hover:border-orange-500 transition-all duration-300 shadow-lg"
+                  onError={(e) => { e.target.src = '/m7.webp'; }}
                 />
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 flex space-x-3 pointer-events-none">
                   <span className="w-2 h-10 rounded-full bg-white/50 blur-[2px] steam-wisp"></span>
@@ -678,6 +681,7 @@ export default function LandingPage() {
               <img
                 src="/m7.webp"
                 alt="Ma'ad Restaurant ambiance and dishes"
+                onError={(e) => { e.target.src = '/m1.webp'; }}
                 className="relative w-full h-[320px] sm:h-[380px] object-cover rounded-[2rem] shadow-lg border-4 border-white dark:border-gray-900 transition-transform duration-500 group-hover:scale-[1.02]"
               />
             </div>
@@ -765,6 +769,7 @@ export default function LandingPage() {
                     src={card.img}
                     alt={card.title}
                     className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                    onError={(e) => { e.target.src = '/m1.webp'; }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-orange-600/90 via-orange-600/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center px-8">
                     <h3 className="text-white text-2xl sm:text-3xl font-black tracking-tight transform -translate-x-4 group-hover:translate-x-0 transition-transform duration-300">
@@ -811,6 +816,7 @@ export default function LandingPage() {
                         src={restaurant.coverImage || restaurant.logo || '/m7.webp'}
                         alt={restaurant.name}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        onError={(e) => { e.target.src = '/m7.webp'; }}
                       />
                       <div className="absolute top-3 right-3 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold flex items-center space-x-1 text-gray-900 dark:text-white">
                         <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />

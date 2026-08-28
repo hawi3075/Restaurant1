@@ -102,6 +102,7 @@ export default function FoodDetailsPage() {
                 src={food.image || '/m1.webp'}
                 alt={food.name}
                 className="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-500"
+                onError={(e) => { e.target.src = '/m1.webp'; }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60"></div>
               
@@ -131,6 +132,7 @@ export default function FoodDetailsPage() {
                   src={food.restaurant.logo || '/m7.webp'}
                   alt={food.restaurant.name}
                   className="w-14 h-14 rounded-2xl object-cover shadow-inner"
+                  onError={(e) => { e.target.src = '/m7.webp'; }}
                 />
                 <div className="flex-1 min-w-0">
                   <h4 className="text-base font-bold text-gray-900 group-hover/rest:text-orange-600 truncate transition-colors">

@@ -387,7 +387,7 @@ export default function MenuPage() {
                       <div className="mt-3 grid grid-cols-4 gap-1.5">
                         <button
                           type="button"
-                          onClick={() => navigate(`/order/${item.id}`)}
+                          onClick={() => navigate(`/food/${item.id}`)}
                           title="View details"
                           className="flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-900 hover:text-white transition-colors"
                         >

@@ -118,6 +118,7 @@ export default function CartPage() {
                     src={item.food.image || '/m1.webp'}
                     alt={item.food.name}
                     className="w-full sm:w-32 h-32 rounded-xl object-cover flex-shrink-0"
+                    onError={(e) => { e.target.src = '/m1.webp'; }}
                   />
 
                   {/* Item Details */}
