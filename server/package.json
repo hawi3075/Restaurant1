@@ -3,11 +3,14 @@
   "version": "1.0.0",
   "description": "Backend API for Restaurant Order Management System",
   "main": "src/server.js",
+  "engines": {
+    "node": "18.x",
+    "npm": "9.x"
+  },
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "build": "prisma generate",
-    "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js",

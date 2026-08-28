@@ -51,7 +51,7 @@ The fastest way to get your Restaurant Order Management System live.
    **Build & Deploy:**
    - Build Command:
      ```
-     npm install && npm run build
+     npm ci && npm run build
      ```
    - Start Command:
      ```

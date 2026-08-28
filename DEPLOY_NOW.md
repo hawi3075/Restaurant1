@@ -74,7 +74,7 @@ If you haven't deployed yet:
 - **Runtime:** Node
 - **Build Command:**
   ```bash
-  npm install && npm run build
+  npm ci && npm run build
   ```
 - **Start Command:**
   ```bash
@@ -136,13 +136,13 @@ Should return:
 
 ### Render Build Command (Use This)
 ```bash
-npm install && npm run build
+npm ci && npm run build
 ```
 
 **Why it works:**
-- `npm install` installs all dependencies (including prisma)
+- `npm ci` is faster and more reliable than `npm install` for CI/CD
 - `npm run build` runs `prisma generate` script
-- `postinstall` also runs `prisma generate` automatically
+- `rootDir: server` ensures commands run in the correct directory
 
 ### Railway Build Command
 ```bash
