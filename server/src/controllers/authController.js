@@ -1,6 +1,7 @@
 const prisma = require('../config/prisma');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { OAuth2Client } = require('google-auth-library');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -165,4 +166,111 @@ const googleLogin = async (req, res) => {
   }
 };
 
-module.exports = { register, login, googleLogin };
+// Request password reset
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Please provide your email address.' });
+    }
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      // For security, return success even if user doesn't exist
+      return res.json({ 
+        message: 'If an account with that email exists, a password reset code has been sent.' 
+      });
+    }
+
+    // Generate 6-digit verification code
+    const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Hash the token before storing
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    
+    // Create reset token record (expires in 15 minutes)
+    await prisma.passwordReset.create({
+      data: {
+        email,
+        token: hashedToken,
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
+      },
+    });
+
+    // In production, send email with resetToken
+    // For now, return it in the response (REMOVE IN PRODUCTION)
+    console.log(`Password reset code for ${email}: ${resetToken}`);
+    
+    res.json({ 
+      message: 'If an account with that email exists, a password reset code has been sent.',
+      // REMOVE THIS IN PRODUCTION - Only for development
+      resetCode: process.env.NODE_ENV === 'development' ? resetToken : undefined
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ error: 'Error processing password reset request.' });
+  }
+};
+
+// Verify reset code and reset password
+const resetPassword = async (req, res) => {
+  try {
+    const { email, resetCode, newPassword } = req.body;
+
+    if (!email || !resetCode || !newPassword) {
+      return res.status(400).json({ error: 'Please provide email, reset code, and new password.' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
+    }
+
+    // Hash the provided code to compare with stored hash
+    const hashedCode = crypto.createHash('sha256').update(resetCode).digest('hex');
+
+    // Find valid reset token
+    const resetRecord = await prisma.passwordReset.findFirst({
+      where: {
+        email,
+        token: hashedCode,
+        used: false,
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    if (!resetRecord) {
+      return res.status(400).json({ error: 'Invalid or expired reset code.' });
+    }
+
+    // Find user
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update user password and mark token as used
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { email },
+        data: { password: hashedPassword },
+      }),
+      prisma.passwordReset.update({
+        where: { id: resetRecord.id },
+        data: { used: true },
+      }),
+    ]);
+
+    res.json({ message: 'Password reset successfully. You can now login with your new password.' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Error resetting password.' });
+  }
+};
+
+module.exports = { register, login, googleLogin, forgotPassword, resetPassword };

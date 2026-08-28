@@ -12,6 +12,7 @@ import { SettingsProvider } from './context/SettingsContext';
 // Import Pages & Portals
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
+import ForgotPassword from './pages/auth/ForgotPassword';
 import CustomerHome from './pages/customer/CustomerHome';
 import CategoriesPage from './pages/customer/CategoriesPage';
 import AboutUsPage from './pages/customer/AboutUsPage';
@@ -81,6 +82,7 @@ function App() {
                       {/* Public Authentication Routes */}
                       <Route path="/login" element={<Login />} />
                       <Route path="/register" element={<Signup />} />
+                      <Route path="/forgot-password" element={<ForgotPassword />} />
 
                       {/* Customer Portal & Pages */}
                       <Route path="/" element={<CustomerHome />} />
