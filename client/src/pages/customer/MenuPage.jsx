@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Search, MapPin, Clock, Star, UtensilsCrossed, Coffee, Sandwich, IceCream,
@@ -8,7 +8,8 @@ import Navbar from '../../components/Navbar';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
-import { getFoodImageUrl } from '../../utils/imageUtils';
+import { getFoodImageUrl, getRestaurantImageUrl } from '../../utils/imageUtils';
+import API from '../../services/api';
 
 // -----------------------------------------------------------------------
 // MOCK DATA — replace with real API calls, e.g.:
@@ -141,24 +142,59 @@ export default function MenuPage() {
   const { cart, addToCart } = useCart();
   const { supportPhone, supportEmail, businessName } = useSettings();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRestaurant, setSelectedRestaurant] = useState(RESTAURANTS[0].id);
-  const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0].id);
+  const [restaurants, setRestaurants] = useState([]);
+  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [loading, setLoading] = useState(true);
 
   // Which item's reviews panel is currently open
   const [openReviewItemId, setOpenReviewItemId] = useState(null);
 
-  const activeRestaurant = RESTAURANTS.find((r) => r.id === selectedRestaurant);
-  const cTheme = CATEGORIES.find((c) => c.id === selectedCategory) || CATEGORIES[0];
+  // Fetch restaurants on mount
+  useEffect(() => {
+    fetchRestaurants();
+  }, []);
+
+  const fetchRestaurants = async () => {
+    try {
+      setLoading(true);
+      const response = await API.get('/restaurants');
+      setRestaurants(response.data);
+      if (response.data.length > 0) {
+        setSelectedRestaurant(response.data[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching restaurants:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const activeRestaurant = restaurants.find((r) => r.id === selectedRestaurant);
+  
+  // Get unique categories from the selected restaurant's foods
+  const categories = useMemo(() => {
+    if (!activeRestaurant?.foods) return [];
+    const categoryMap = new Map();
+    activeRestaurant.foods.forEach((food) => {
+      if (food.category && !categoryMap.has(food.category.id)) {
+        categoryMap.set(food.category.id, food.category);
+      }
+    });
+    return Array.from(categoryMap.values());
+  }, [activeRestaurant]);
 
   const filteredRestaurants = useMemo(
-    () => RESTAURANTS.filter((r) => r.name.toLowerCase().includes(searchTerm.toLowerCase())),
-    [searchTerm]
+    () => restaurants.filter((r) => r.name.toLowerCase().includes(searchTerm.toLowerCase())),
+    [searchTerm, restaurants]
   );
 
-  const items = useMemo(
-    () => MENU_ITEMS[selectedRestaurant]?.[selectedCategory] || [],
-    [selectedRestaurant, selectedCategory]
-  );
+  // Get foods for selected restaurant and category
+  const items = useMemo(() => {
+    if (!activeRestaurant?.foods) return [];
+    if (selectedCategory === 'all') return activeRestaurant.foods;
+    return activeRestaurant.foods.filter((food) => food.category?.id === selectedCategory);
+  }, [activeRestaurant, selectedCategory]);
 
   const filteredItems = useMemo(
     () => items.filter((item) => item.name.toLowerCase().includes(searchTerm.toLowerCase())),
@@ -167,25 +203,22 @@ export default function MenuPage() {
 
   const handleSelectRestaurant = (id) => {
     setSelectedRestaurant(id);
-    setSelectedCategory(CATEGORIES[0].id); // reset to first category on switch
+    setSelectedCategory('all'); // reset to all categories on switch
   };
 
   const toggleReviews = (itemId) => {
     setOpenReviewItemId((prev) => (prev === itemId ? null : itemId));
   };
 
+  const calculateRating = (reviews) => {
+    if (!reviews || reviews.length === 0) return 0;
+    const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
+    return Math.round(sum / reviews.length);
+  };
+
   // Add a menu item to the local cart (state + localStorage so it survives navigation)
   const handleAddToCart = (item) => {
-    const foodItem = {
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      restaurantId: selectedRestaurant,
-      restaurant: {
-        name: activeRestaurant?.name || 'Restaurant'
-      }
-    };
-    addToCart(foodItem, 1, [], '');
+    addToCart(item, 1, [], '');
   };
 
   return (
