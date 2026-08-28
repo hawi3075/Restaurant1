@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Store, Plus, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Store, Plus, ArrowLeft, Save } from 'lucide-react';
 import API from '../../services/api';
+import ImageUpload from '../../components/ImageUpload';
 
 export default function AdminAddRestaurantPage() {
   const navigate = useNavigate();
+  const { id } = useParams(); // Get ID from URL for edit mode
+  const isEditMode = Boolean(id);
+  
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -17,8 +21,42 @@ export default function AdminAddRestaurantPage() {
     latitude: '',
     longitude: ''
   });
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  // Fetch restaurant data if in edit mode
+  useEffect(() => {
+    if (isEditMode) {
+      fetchRestaurant();
+    }
+  }, [id]);
+
+  const fetchRestaurant = async () => {
+    try {
+      setLoading(true);
+      const response = await API.get(`/restaurants/${id}`);
+      const restaurant = response.data;
+      
+      setForm({
+        name: restaurant.name || '',
+        description: restaurant.description || '',
+        address: restaurant.address || '',
+        phone: restaurant.phone || '',
+        openingHours: restaurant.openingHours || '08:00 AM',
+        closingHours: restaurant.closingHours || '10:00 PM',
+        logo: restaurant.logo || '',
+        coverImage: restaurant.coverImage || '',
+        latitude: restaurant.latitude || '',
+        longitude: restaurant.longitude || ''
+      });
+    } catch (err) {
+      console.error('Error fetching restaurant:', err);
+      setError('Failed to load restaurant data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -41,15 +79,33 @@ export default function AdminAddRestaurantPage() {
         longitude: form.longitude ? parseFloat(form.longitude) : null
       };
 
-      await API.post('/restaurants', payload);
+      if (isEditMode) {
+        // Update existing restaurant
+        await API.put(`/restaurants/${id}`, payload);
+      } else {
+        // Create new restaurant
+        await API.post('/restaurants', payload);
+      }
+      
       navigate('/admin/restaurants/list');
     } catch (err) {
-      console.error('Error creating restaurant:', err);
-      setError(err.response?.data?.error || 'Failed to create restaurant. Please try again.');
+      console.error('Error saving restaurant:', err);
+      setError(err.response?.data?.error || `Failed to ${isEditMode ? 'update' : 'create'} restaurant. Please try again.`);
     } finally {
       setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading restaurant data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
@@ -62,8 +118,12 @@ export default function AdminAddRestaurantPage() {
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
           <div>
-            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Add New Restaurant</h1>
-            <p className="text-xs text-gray-500 mt-0.5">Register a new vendor partner into the system.</p>
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight">
+              {isEditMode ? 'Edit Restaurant' : 'Add New Restaurant'}
+            </h1>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {isEditMode ? 'Update restaurant information' : 'Register a new vendor partner into the system.'}
+            </p>
           </div>
         </div>
       </div>
@@ -153,26 +213,20 @@ export default function AdminAddRestaurantPage() {
           </div>
 
           <div>
-            <label className="font-bold text-gray-600 uppercase">Logo Image URL</label>
-            <input 
-              type="text" 
-              name="logo"
+            <ImageUpload
+              label="Logo Image"
               value={form.logo}
-              onChange={handleChange}
-              placeholder="e.g. /uploads/logo.png or external link" 
-              className="w-full mt-1 px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-orange-500 transition" 
+              onChange={(value) => setForm(prev => ({ ...prev, logo: value }))}
+              placeholder="Upload logo or enter image URL"
             />
           </div>
 
           <div>
-            <label className="font-bold text-gray-600 uppercase">Cover Image URL</label>
-            <input 
-              type="text" 
-              name="coverImage"
+            <ImageUpload
+              label="Cover Image"
               value={form.coverImage}
-              onChange={handleChange}
-              placeholder="e.g. /uploads/cover.webp or external link" 
-              className="w-full mt-1 px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-orange-500 transition" 
+              onChange={(value) => setForm(prev => ({ ...prev, coverImage: value }))}
+              placeholder="Upload cover or enter image URL"
             />
           </div>
 
@@ -216,8 +270,8 @@ export default function AdminAddRestaurantPage() {
             disabled={saving}
             className="flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs shadow-lg shadow-orange-600/20 disabled:opacity-50 transition cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span>{saving ? 'Saving...' : 'Save Restaurant'}</span>
+            {isEditMode ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            <span>{saving ? 'Saving...' : (isEditMode ? 'Update Restaurant' : 'Save Restaurant')}</span>
           </button>
         </div>
       </form>

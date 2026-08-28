@@ -365,6 +365,7 @@ export default function AdminDashboard() {
             <Route path="/zones" element={<AdminZonesPage />} />
             <Route path="/cuisine" element={<AdminCuisinePage />} />
             <Route path="/restaurants/add" element={<AdminAddRestaurantPage />} />
+            <Route path="/restaurants/edit/:id" element={<AdminAddRestaurantPage />} />
             <Route path="/restaurants/list" element={<AdminRestaurantsPage />} />
 
             {/* Food Management */}

@@ -85,6 +85,7 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const chefRoutes = require('./routes/chefRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const supportRoutes = require('./routes/supportRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -99,6 +100,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/chef', chefRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/support', supportRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
