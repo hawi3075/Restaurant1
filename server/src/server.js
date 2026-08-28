@@ -25,12 +25,21 @@ const allowedOrigins = [
   process.env.CORS_ORIGIN
 ].filter(Boolean); // Remove undefined values
 
+// Matches ANY Vercel preview/branch URL for this specific project
+// e.g. https://restaurant1-git-main-hawis-projects-b3fda57f.vercel.app
+// e.g. https://restaurant1-3jddg4rhp-hawis-projects-b3fda57f.vercel.app
+const vercelPreviewPattern = /^https:\/\/restaurant1-[a-z0-9-]+-hawis-projects-b3fda57f\.vercel\.app$/;
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true; // mobile apps, curl, server-to-server, etc.
+  if (allowedOrigins.indexOf(origin) !== -1) return true;
+  if (vercelPreviewPattern.test(origin)) return true;
+  return false;
+}
+
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (isAllowedOrigin(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -43,7 +52,13 @@ const corsOptions = {
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
   }
