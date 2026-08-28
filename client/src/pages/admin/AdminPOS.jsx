@@ -368,7 +368,15 @@ export default function AdminPOS() {
                       className="group bg-gray-50 border border-gray-200 rounded-xl p-3 cursor-pointer hover:border-orange-500 hover:shadow-md transition duration-200 flex flex-col justify-between"
                     >
                       <div className="h-28 rounded-lg overflow-hidden bg-gray-200 mb-2">
-                        <img src={food.image || '/m1.webp'} alt={food.name} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                        <img 
+                          src={food.image || '/m1.webp'} 
+                          alt={food.name} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition" 
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/m1.webp';
+                          }}
+                        />
                       </div>
                       <div>
                         <h4 className="text-xs font-bold text-gray-900 truncate">{food.name}</h4>

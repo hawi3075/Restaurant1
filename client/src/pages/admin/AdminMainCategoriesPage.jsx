@@ -133,7 +133,15 @@ export default function AdminMainCategoriesPage() {
               <div className="flex items-center space-x-4 mb-4">
                 <div className="w-16 h-16 bg-orange-100 rounded-xl flex items-center justify-center overflow-hidden">
                   {category.image ? (
-                    <img src={category.image} alt={category.name} className="w-full h-full object-cover" />
+                    <img 
+                      src={category.image} 
+                      alt={category.name} 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/m1.webp';
+                      }}
+                    />
                   ) : (
                     <Layers className="w-8 h-8 text-orange-600" />
                   )}

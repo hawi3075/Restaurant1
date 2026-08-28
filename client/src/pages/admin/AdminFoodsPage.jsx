@@ -190,6 +190,11 @@ export default function AdminFoodsPage() {
                   src={food.image || '/m1.webp'}
                   alt={food.name}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/m1.webp';
+                  }}
+                />
                 />
                 {food.isPopular && (
                   <span className="absolute top-3 left-3 bg-orange-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">
