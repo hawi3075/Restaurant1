@@ -191,11 +191,6 @@ export default function AdminFoodsPage() {
                   src={food.image || '/m1.webp'}
                   alt={food.name}
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = '/m1.webp';
-                  }}
-                />
                 />
                 {food.isPopular && (
                   <span className="absolute top-3 left-3 bg-orange-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">
@@ -244,10 +239,9 @@ export default function AdminFoodsPage() {
 
       {/* Add / Edit Modal */}
       {modalMode && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <form onSubmit={handleSave} className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
-            {/* Sticky Header */}
-            <div className="flex items-center justify-between border-b px-6 py-4 shrink-0">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <form onSubmit={handleSave} className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 space-y-4 my-8">
+            <div className="flex items-center justify-between border-b pb-3">
               <h2 className="text-base font-black text-gray-900">
                 {modalMode === 'add' ? 'Add New Food Item' : 'Edit Food Item'}
               </h2>
@@ -260,30 +254,28 @@ export default function AdminFoodsPage() {
               </button>
             </div>
 
-            {/* Scrollable Body */}
-            <div className="overflow-y-auto px-6 py-4 flex-1">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div className="sm:col-span-2">
-                  <label className="font-bold text-gray-500 uppercase tracking-wide">Dish Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={form.name}
-                    onChange={e => setForm({ ...form, name: e.target.value })}
-                    placeholder="e.g. Special Tibs"
-                    className="mt-1 w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-orange-500 transition"
-                  />
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="sm:col-span-2">
+                <label className="font-bold text-gray-500 uppercase tracking-wide">Dish Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={form.name}
+                  onChange={e => setForm({ ...form, name: e.target.value })}
+                  placeholder="e.g. Special Tibs"
+                  className="mt-1 w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-orange-500 transition"
+                />
+              </div>
 
-                <div className="sm:col-span-2">
-                  <label className="font-bold text-gray-500 uppercase tracking-wide">Description</label>
-                  <textarea
-                    value={form.description}
-                    onChange={e => setForm({ ...form, description: e.target.value })}
-                    placeholder="Describe the dish ingredients or size..."
-                    className="mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-orange-500 transition h-16 resize-none"
-                  />
-                </div>
+              <div className="sm:col-span-2">
+                <label className="font-bold text-gray-500 uppercase tracking-wide">Description</label>
+                <textarea
+                  value={form.description}
+                  onChange={e => setForm({ ...form, description: e.target.value })}
+                  placeholder="Describe the dish ingredients or size..."
+                  className="mt-1 w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-orange-500 transition h-16 resize-none"
+                />
+              </div>
 
               <div>
                 <label className="font-bold text-gray-500 uppercase tracking-wide">Price (ETB) *</label>
@@ -301,6 +293,7 @@ export default function AdminFoodsPage() {
               <div className="sm:col-span-2">
                 <label className="font-bold text-gray-500 uppercase tracking-wide">Food Image</label>
                 <ImageUpload
+                  key={`food-image-${editingFood?.id || 'new'}-${modalMode}`}
                   value={form.image}
                   onChange={(url) => setForm({ ...form, image: url })}
                   placeholder="Upload or enter image URL"
@@ -361,10 +354,8 @@ export default function AdminFoodsPage() {
                 </label>
               </div>
             </div>
-            </div>
 
-            {/* Sticky Footer */}
-            <div className="flex justify-end space-x-2 border-t px-6 py-4 shrink-0">
+            <div className="flex justify-end space-x-2 border-t pt-3">
               <button
                 type="button"
                 onClick={closeModal}
