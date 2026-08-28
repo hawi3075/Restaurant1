@@ -51,7 +51,7 @@ The fastest way to get your Restaurant Order Management System live.
    **Build & Deploy:**
    - Build Command:
      ```
-     npm install && npx prisma generate && npx prisma db push
+     npm install && npm run build
      ```
    - Start Command:
      ```

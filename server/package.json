@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "build": "prisma generate",
+    "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js",
@@ -22,10 +24,10 @@
     "google-auth-library": "^11.0.2",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.2.0",
+    "prisma": "^5.10.0",
     "socket.io": "^4.7.5"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0",
-    "prisma": "^5.10.0"
+    "nodemon": "^3.1.0"
   }
 }

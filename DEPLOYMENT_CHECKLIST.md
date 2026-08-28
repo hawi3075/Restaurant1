@@ -55,7 +55,7 @@ Use this checklist before deploying your Restaurant Order Management System.
 - [ ] Root directory: `client`
 
 ### Backend (Render/Railway/Heroku)
-- [ ] Build command: `npm install && npx prisma generate && npx prisma db push`
+- [ ] Build command: `npm install && npm run build`
 - [ ] Start command: `npm start`
 - [ ] Node version: 18 or higher
 - [ ] Root directory: `server`
