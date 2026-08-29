@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Search, MapPin, Clock, Star, UtensilsCrossed, Coffee, Sandwich, IceCream,
@@ -10,117 +10,6 @@ import { useAuth } from '../../context/AuthContext';
 import { useSettings } from '../../context/SettingsContext';
 import { getFoodImageUrl, getRestaurantImageUrl } from '../../utils/imageUtils';
 import API from '../../services/api';
-
-// -----------------------------------------------------------------------
-// MOCK DATA — replace with real API calls, e.g.:
-//   GET /api/restaurants                        -> RESTAURANTS
-//   GET /api/restaurants/:id/menu?category=...    -> MENU_ITEMS[id][category]
-// Keep the same shape so the component below doesn't need to change.
-// -----------------------------------------------------------------------
-const RESTAURANTS = [
-  {
-    id: 'yod-abyssinia',
-    name: 'Yod Abyssinia Restaurant',
-    location: 'Bole Road, Addis Ababa',
-    hours: '08:00 - 23:00',
-    open: true,
-  },
-  {
-    id: 'tomoca-coffee',
-    name: 'Tomoca Coffee',
-    location: 'Wawel Street, Piazza, Addis Ababa',
-    hours: '06:00 - 21:00',
-    open: true,
-  },
-  {
-    id: 'habesha-2000',
-    name: 'Habesha 2000 Restaurant',
-    location: 'Kazanchis, Addis Ababa',
-    hours: '10:00 - 22:00',
-    open: true,
-  },
-  {
-    id: 'oda',
-    name: 'Oda',
-    location: 'To be updated',
-    hours: '09:00 - 22:00',
-    open: true,
-  },
-];
-
-// Category identity — "Desserts" always reads pink, "Coffee" always reads
-// espresso-brown, no matter which restaurant you're browsing.
-const CATEGORIES = [
-  {
-    id: 'ethiopian', label: 'Ethiopian Food', icon: UtensilsCrossed,
-    iconBg: 'bg-orange-100', iconText: 'text-orange-700',
-    activeBg: 'bg-orange-600', activeGlow: 'shadow-orange-600/25',
-    tile: 'from-orange-100 to-amber-50', tileIcon: 'text-orange-300',
-  },
-  {
-    id: 'coffee', label: 'Coffee & Beverages', icon: Coffee,
-    iconBg: 'bg-amber-100', iconText: 'text-amber-800',
-    activeBg: 'bg-amber-800', activeGlow: 'shadow-amber-800/25',
-    tile: 'from-amber-100 to-orange-50', tileIcon: 'text-amber-400',
-  },
-  {
-    id: 'fastfood', label: 'Fast Food', icon: Sandwich,
-    iconBg: 'bg-red-100', iconText: 'text-red-700',
-    activeBg: 'bg-red-600', activeGlow: 'shadow-red-600/25',
-    tile: 'from-red-100 to-orange-50', tileIcon: 'text-red-300',
-  },
-  {
-    id: 'desserts', label: 'Desserts', icon: IceCream,
-    iconBg: 'bg-pink-100', iconText: 'text-pink-700',
-    activeBg: 'bg-pink-600', activeGlow: 'shadow-pink-600/25',
-    tile: 'from-pink-100 to-rose-50', tileIcon: 'text-pink-300',
-  },
-];
-
-const MENU_ITEMS = {
-  'yod-abyssinia': {
-    ethiopian: [
-      { id: 'cdd8aed1-bd27-4bff-8f35-7633f4ddd945', name: 'Doro Wot with Injera', price: 250, rating: 0 },
-      { id: 'f2c487f1-06e0-4850-b13d-0586a23d2192', name: 'Kitfo', price: 300, rating: 0 },
-      { id: '3', name: 'Tibs', price: 220, rating: 0 },
-    ],
-    coffee: [
-      { id: '9feb387a-c261-4d6a-b924-127ce70d0658', name: 'Ethiopian Coffee Ceremony', price: 80, rating: 0 },
-    ],
-    fastfood: [],
-    desserts: [],
-  },
-  'tomoca-coffee': {
-    ethiopian: [],
-    coffee: [
-      { id: 'a1aabbd4-d39d-4290-9441-5248c08b9204', name: 'Macchiato', price: 50, rating: 0 },
-      { id: '6', name: 'Espresso', price: 45, rating: 0 },
-      { id: '9feb387a-c261-4d6a-b924-127ce70d0658', name: 'Ethiopian Coffee Ceremony', price: 80, rating: 0 },
-    ],
-    fastfood: [],
-    desserts: [],
-  },
-  'habesha-2000': {
-    ethiopian: [
-      { id: 8, name: 'Shiro Wot with Injera', price: 180, rating: 0 },
-      { id: 9, name: 'Tibs Special', price: 260, rating: 0 },
-    ],
-    coffee: [],
-    fastfood: [
-      { id: 10, name: 'Chicken Burger', price: 150, rating: 0 },
-    ],
-    desserts: [
-      { id: 11, name: 'Baklava', price: 90, rating: 0 },
-    ],
-  },
-  oda: {
-    ethiopian: [],
-    coffee: [],
-    fastfood: [],
-    desserts: [],
-  },
-};
-// -----------------------------------------------------------------------
 
 function StarRow({ rating = 0, count = 0 }) {
   return (
@@ -171,7 +60,7 @@ export default function MenuPage() {
   };
 
   const activeRestaurant = restaurants.find((r) => r.id === selectedRestaurant);
-  
+
   // Get unique categories from the selected restaurant's foods
   const categories = useMemo(() => {
     if (!activeRestaurant?.foods) return [];
@@ -260,7 +149,7 @@ export default function MenuPage() {
         </div>
 
         {/* --- MAIN CONTENT --- */}
-        <main className="max-w-7xl mx-auto px-6 py-12">
+        <main className="max-w-7xl mx-auto px-6 py-10">
 
           {loading ? (
             <div className="text-center py-12">
@@ -268,312 +157,319 @@ export default function MenuPage() {
               <p className="text-gray-600 font-medium">Loading restaurants...</p>
             </div>
           ) : (
-            <>
-              {/* Step 1: Restaurant Selector */}
-              <p className="text-xs sm:text-sm text-gray-500 font-medium mb-4">
-                <span className="text-orange-600 font-bold">Step 1:</span> First, select a restaurant below.
-              </p>
+            <div className="flex flex-col lg:flex-row gap-8">
 
-          {filteredRestaurants.length === 0 ? (
-            <div className="text-center py-10 space-y-2 mb-12">
-              <Store className="w-10 h-10 text-orange-300 mx-auto" />
-              <h3 className="text-base font-bold text-gray-700">No restaurants match your search</h3>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-              {filteredRestaurants.map((r) => {
-                const isActive = r.id === selectedRestaurant;
-                return (
-                  <button
-                    key={r.id}
-                    onClick={() => handleSelectRestaurant(r.id)}
-                    className={`group text-left bg-white rounded-2xl p-5 shadow-sm border transition-all duration-300 transform hover:-translate-y-1.5 cursor-pointer ${isActive
-                      ? 'border-orange-400 shadow-xl ring-2 ring-orange-500/30'
-                      : 'border-orange-100 hover:border-orange-400 hover:shadow-xl'
-                      }`}
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className={`w-14 h-14 rounded-2xl overflow-hidden shadow-md flex items-center justify-center transition-transform duration-500 group-hover:scale-110 ${isActive ? 'bg-orange-600' : 'bg-orange-50'
-                        }`}>
-                        <Store className={`w-6 h-6 ${isActive ? 'text-white' : 'text-orange-500'}`} />
-                      </div>
-                      <div className="flex flex-col items-end gap-1.5">
-                        {r.open && (
-                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full whitespace-nowrap">
-                            ● Open
-                          </span>
-                        )}
-                        {isActive && (
-                          <span className="w-5 h-5 rounded-full bg-orange-600 text-white flex items-center justify-center shadow-md">
-                            <Check className="w-3 h-3" strokeWidth={3} />
-                          </span>
-                        )}
-                      </div>
+              {/* --- SIDEBAR: Restaurant Selector --- */}
+              <aside className="lg:w-72 lg:shrink-0">
+                <div className="lg:sticky lg:top-24">
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">
+                    Restaurants
+                  </p>
+
+                  {filteredRestaurants.length === 0 ? (
+                    <div className="text-center py-10 space-y-2 bg-white rounded-2xl border border-dashed border-orange-200">
+                      <Store className="w-8 h-8 text-orange-300 mx-auto" />
+                      <h3 className="text-sm font-bold text-gray-700 px-4">No restaurants match your search</h3>
                     </div>
+                  ) : (
+                    <div className="flex flex-col gap-2 max-h-[calc(100vh-8rem)] overflow-y-auto pr-1">
+                      {filteredRestaurants.map((r) => {
+                        const isActive = r.id === selectedRestaurant;
+                        return (
+                          <button
+                            key={r.id}
+                            onClick={() => handleSelectRestaurant(r.id)}
+                            className={`group text-left bg-white rounded-2xl p-3.5 shadow-sm border transition-all duration-300 cursor-pointer flex items-center gap-3 ${isActive
+                              ? 'border-orange-400 shadow-md ring-2 ring-orange-500/25 bg-orange-50/40'
+                              : 'border-orange-100 hover:border-orange-300 hover:shadow-md'
+                              }`}
+                          >
+                            <div className={`w-11 h-11 rounded-xl overflow-hidden shrink-0 shadow-sm flex items-center justify-center transition-transform duration-500 group-hover:scale-105 ${isActive ? 'bg-orange-600' : 'bg-orange-50'
+                              }`}>
+                              <Store className={`w-5 h-5 ${isActive ? 'text-white' : 'text-orange-500'}`} />
+                            </div>
 
-                    <h3 className={`font-bold text-sm sm:text-base mb-1 leading-snug transition-colors ${isActive ? 'text-orange-600' : 'text-gray-900 group-hover:text-orange-600'
-                      }`}>
-                      {r.name}
-                    </h3>
-                    <p className="text-[11px] text-gray-500 flex items-center space-x-1 mb-0.5">
-                      <MapPin className="w-3 h-3 flex-shrink-0 text-gray-400" />
-                      <span className="truncate">{r.address}</span>
-                    </p>
-                    <p className="text-[11px] text-gray-500 flex items-center space-x-1">
-                      <Clock className="w-3 h-3 flex-shrink-0 text-gray-400" />
-                      <span>{r.openingHours} - {r.closingHours}</span>
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <h3 className={`font-bold text-xs sm:text-sm leading-snug truncate transition-colors ${isActive ? 'text-orange-600' : 'text-gray-900 group-hover:text-orange-600'
+                                  }`}>
+                                  {r.name}
+                                </h3>
+                                {isActive && (
+                                  <span className="w-4 h-4 rounded-full bg-orange-600 text-white flex items-center justify-center shrink-0">
+                                    <Check className="w-2.5 h-2.5" strokeWidth={3} />
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-gray-500 flex items-center space-x-1 mt-0.5">
+                                <MapPin className="w-2.5 h-2.5 flex-shrink-0 text-gray-400" />
+                                <span className="truncate">{r.address}</span>
+                              </p>
+                              <div className="flex items-center justify-between mt-1">
+                                <p className="text-[10px] text-gray-400 flex items-center space-x-1">
+                                  <Clock className="w-2.5 h-2.5 flex-shrink-0" />
+                                  <span>{r.openingHours} - {r.closingHours}</span>
+                                </p>
+                                {r.isOpen && (
+                                  <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full whitespace-nowrap ml-1">
+                                    ● Open
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </aside>
 
-          {/* Step 2: Category Chips */}
-          {activeRestaurant && (
-            <>
-              <p className="text-xs sm:text-sm text-gray-500 font-medium mb-4">
-                <span className="text-orange-600 font-bold">Step 2:</span> Choose a category.
-              </p>
-
-              <div className="flex flex-wrap gap-2.5 mb-10">
-                {/* All Items Button */}
-                <button
-                  onClick={() => setSelectedCategory('all')}
-                  className={`flex items-center gap-2.5 pl-2 pr-4 py-2 rounded-2xl text-sm font-bold transition-all duration-300 cursor-pointer ${selectedCategory === 'all'
-                    ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/25'
-                    : 'bg-white text-gray-600 border border-orange-100 hover:border-orange-300 hover:shadow-sm'
-                    }`}
-                >
-                  <span className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors ${selectedCategory === 'all' ? 'bg-white/20' : 'bg-orange-100 text-orange-700'
-                    }`}>
-                    <UtensilsCrossed className={`w-3.5 h-3.5 ${selectedCategory === 'all' ? 'text-white' : ''}`} />
-                  </span>
-                  <span className="whitespace-nowrap">All Items</span>
-                  <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full ${selectedCategory === 'all' ? 'bg-white/25 text-white' : 'bg-gray-100 text-gray-400'
-                    }`}>
-                    {activeRestaurant.foods?.length || 0}
-                  </span>
-                </button>
-
-                {/* Real Categories from API */}
-                {categories.map((cat) => {
-                  const isActive = cat.id === selectedCategory;
-                  const count = activeRestaurant.foods?.filter((f) => f.category?.id === cat.id).length || 0;
-                  return (
+              {/* --- MAIN COLUMN: Categories + Items --- */}
+              <div className="flex-1 min-w-0">
+                {/* Category Chips */}
+                {activeRestaurant && (
+                  <div className="flex flex-wrap gap-2.5 mb-8">
+                    {/* All Items Button */}
                     <button
-                      key={cat.id}
-                      onClick={() => setSelectedCategory(cat.id)}
-                      className={`flex items-center gap-2.5 pl-2 pr-4 py-2 rounded-2xl text-sm font-bold transition-all duration-300 cursor-pointer ${isActive
+                      onClick={() => setSelectedCategory('all')}
+                      className={`flex items-center gap-2.5 pl-2 pr-4 py-2 rounded-2xl text-sm font-bold transition-all duration-300 cursor-pointer ${selectedCategory === 'all'
                         ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/25'
                         : 'bg-white text-gray-600 border border-orange-100 hover:border-orange-300 hover:shadow-sm'
                         }`}
                     >
-                      {cat.image ? (
-                        <img
-                          src={cat.image}
-                          alt={cat.name}
-                          className={`w-7 h-7 rounded-xl object-cover ${isActive ? 'ring-2 ring-white/30' : ''}`}
-                        />
-                      ) : (
-                        <span className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors ${isActive ? 'bg-white/20' : 'bg-orange-100 text-orange-700'
-                          }`}>
-                          <UtensilsCrossed className={`w-3.5 h-3.5 ${isActive ? 'text-white' : ''}`} />
-                        </span>
-                      )}
-                      <span className="whitespace-nowrap">{cat.name}</span>
-                      <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full ${isActive ? 'bg-white/25 text-white' : 'bg-gray-100 text-gray-400'
+                      <span className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors ${selectedCategory === 'all' ? 'bg-white/20' : 'bg-orange-100 text-orange-700'
                         }`}>
-                        {count}
+                        <UtensilsCrossed className={`w-3.5 h-3.5 ${selectedCategory === 'all' ? 'text-white' : ''}`} />
+                      </span>
+                      <span className="whitespace-nowrap">All Items</span>
+                      <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full ${selectedCategory === 'all' ? 'bg-white/25 text-white' : 'bg-gray-100 text-gray-400'
+                        }`}>
+                        {activeRestaurant.foods?.length || 0}
                       </span>
                     </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
 
-          {/* Menu Items Grid */}
-          {activeRestaurant && (
-            <>
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h2 className="font-display text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
-                    {activeRestaurant?.name}
-                  </h2>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {selectedCategory === 'all' ? 'All Menu Items' : categories.find((c) => c.id === selectedCategory)?.name} · Savor dishes made fresh to order
-                  </p>
-                </div>
-              </div>
-
-              {filteredItems.length === 0 ? (
-                <div className="bg-white rounded-2xl border-2 border-dashed border-orange-100 p-14 text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-orange-100 text-orange-700 flex items-center justify-center mx-auto mb-4">
-                    <UtensilsCrossed className="w-6 h-6" />
-                  </div>
-                  <p className="text-gray-400 font-medium text-sm">
-                    {searchTerm
-                      ? `No dishes match "${searchTerm}".`
-                      : `No menu items available yet for ${activeRestaurant?.name}.`}
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-                  {filteredItems.map((item) => {
-                    const qtyInCart = cart.filter((c) => c.food.id === item.id).reduce((sum, c) => sum + c.quantity, 0);
-                    const reviewsOpen = openReviewItemId === item.id;
-                    const reviews = item.reviews || [];
-                    const rating = calculateRating(reviews);
-
-                    return (
-                      <div
-                        key={item.id}
-                        className="group bg-white rounded-2xl overflow-hidden shadow-sm border border-orange-100 hover:border-orange-400 hover:shadow-xl transition-all duration-300 flex flex-col relative"
-                      >
-                        {/* Food Image */}
-                        <div className="h-40 w-full overflow-hidden relative bg-orange-50">
-                          <img
-                            src={getFoodImageUrl(item.image)}
-                            alt={item.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            onError={(e) => { e.target.src = getFoodImageUrl(null); }}
-                          />
-                        </div>
-
-                    {/* Content */}
-                    <div className="p-4 flex flex-col flex-grow justify-between">
-                      <div>
-                        <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">
-                          {activeRestaurant?.name}
-                        </span>
-                        <h3 className="font-bold text-sm text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-1">
-                          {item.name}
-                        </h3>
-                        <div className="mt-1.5">
-                          <StarRow rating={item.rating} count={reviews.length} />
-                        </div>
-                      </div>
-
-                      <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
-                        <span className="text-sm font-black text-orange-600">ETB {item.price}</span>
-                        {qtyInCart > 0 && (
-                          <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                            {qtyInCart} in cart
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Action buttons: Detail / Reviews / Add / Checkout */}
-                      <div className="mt-3 grid grid-cols-4 gap-1.5">
+                    {/* Real Categories from API */}
+                    {categories.map((cat) => {
+                      const isActive = cat.id === selectedCategory;
+                      const count = activeRestaurant.foods?.filter((f) => f.category?.id === cat.id).length || 0;
+                      return (
                         <button
-                          type="button"
-                          onClick={() => navigate(`/food/${item.id}`)}
-                          title="View details"
-                          className="flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-900 hover:text-white transition-colors"
-                        >
-                          <Eye className="w-4 h-4" />
-                          <span className="text-[9px] font-bold">Detail</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => toggleReviews(item.id)}
-                          title="Customer reviews"
-                          className={`flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl transition-colors ${reviewsOpen
-                            ? 'bg-amber-500 text-white'
-                            : 'bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white'
+                          key={cat.id}
+                          onClick={() => setSelectedCategory(cat.id)}
+                          className={`flex items-center gap-2.5 pl-2 pr-4 py-2 rounded-2xl text-sm font-bold transition-all duration-300 cursor-pointer ${isActive
+                            ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/25'
+                            : 'bg-white text-gray-600 border border-orange-100 hover:border-orange-300 hover:shadow-sm'
                             }`}
                         >
-                          <MessageCircle className="w-4 h-4" />
-                          <span className="text-[9px] font-bold">Reviews</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleAddToCart(item)}
-                          title="Add to cart"
-                          className="relative flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white transition-colors"
-                        >
-                          <ShoppingCart className="w-4 h-4" />
-                          <span className="text-[9px] font-bold">Add</span>
-                          {qtyInCart > 0 && (
-                            <span className="absolute -top-1.5 -right-1.5 bg-orange-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white">
-                              {qtyInCart}
+                          {cat.image ? (
+                            <img
+                              src={cat.image}
+                              alt={cat.name}
+                              className={`w-7 h-7 rounded-xl object-cover ${isActive ? 'ring-2 ring-white/30' : ''}`}
+                            />
+                          ) : (
+                            <span className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors ${isActive ? 'bg-white/20' : 'bg-orange-100 text-orange-700'
+                              }`}>
+                              <UtensilsCrossed className={`w-3.5 h-3.5 ${isActive ? 'text-white' : ''}`} />
                             </span>
                           )}
+                          <span className="whitespace-nowrap">{cat.name}</span>
+                          <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full ${isActive ? 'bg-white/25 text-white' : 'bg-gray-100 text-gray-400'
+                            }`}>
+                            {count}
+                          </span>
                         </button>
+                      );
+                    })}
+                  </div>
+                )}
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!user) {
-                              navigate('/login');
-                            } else {
-                              if (qtyInCart === 0) {
-                                addToCart(item, 1, [], '');
-                              }
-                              navigate('/checkout');
-                            }
-                          }}
-                          title="Checkout"
-                          className="flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl bg-green-50 text-green-600 hover:bg-green-600 hover:text-white transition-colors"
-                        >
-                          <CreditCard className="w-4 h-4" />
-                          <span className="text-[9px] font-bold">Checkout</span>
-                        </button>
+                {/* Menu Items Grid */}
+                {activeRestaurant && (
+                  <>
+                    <div className="flex items-center justify-between mb-8">
+                      <div>
+                        <h2 className="font-display text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+                          {activeRestaurant?.name}
+                        </h2>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {selectedCategory === 'all' ? 'All Menu Items' : categories.find((c) => c.id === selectedCategory)?.name} · Savor dishes made fresh to order
+                        </p>
                       </div>
                     </div>
 
-                    {/* Reviews popover — overlays the card when open */}
-                    {reviewsOpen && (
-                      <div className="absolute inset-2 z-20 bg-white rounded-xl shadow-2xl border border-orange-200 p-3 overflow-y-auto flex flex-col">
-                        <div className="flex items-center justify-between mb-2 shrink-0">
-                          <h4 className="text-xs font-black text-gray-900">Customer Reviews</h4>
-                          <button
-                            type="button"
-                            onClick={() => setOpenReviewItemId(null)}
-                            className="text-gray-400 hover:text-gray-700 text-sm font-bold leading-none px-1"
-                          >
-                            ✕
-                          </button>
+                    {filteredItems.length === 0 ? (
+                      <div className="bg-white rounded-2xl border-2 border-dashed border-orange-100 p-14 text-center">
+                        <div className="w-14 h-14 rounded-2xl bg-orange-100 text-orange-700 flex items-center justify-center mx-auto mb-4">
+                          <UtensilsCrossed className="w-6 h-6" />
                         </div>
+                        <p className="text-gray-400 font-medium text-sm">
+                          {searchTerm
+                            ? `No dishes match "${searchTerm}".`
+                            : `No menu items available yet for ${activeRestaurant?.name}.`}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {filteredItems.map((item) => {
+                          const qtyInCart = cart.filter((c) => c.food.id === item.id).reduce((sum, c) => sum + c.quantity, 0);
+                          const reviewsOpen = openReviewItemId === item.id;
+                          const reviews = item.reviews || [];
+                          const rating = calculateRating(reviews);
 
-                        {reviews.length > 0 ? (
-                          <ul className="space-y-2 overflow-y-auto">
-                            {reviews.map((review) => (
-                              <li key={review.id} className="border-b border-gray-100 pb-2 last:border-0">
-                                <div className="flex items-center space-x-0.5">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star
-                                      key={i}
-                                      className={`w-3 h-3 ${i < review.rating ? 'text-amber-500 fill-amber-500' : 'text-gray-200'}`}
-                                    />
-                                  ))}
+                          return (
+                            <div
+                              key={item.id}
+                              className="group bg-white rounded-2xl overflow-hidden shadow-sm border border-orange-100 hover:border-orange-400 hover:shadow-xl transition-all duration-300 flex flex-col relative"
+                            >
+                              {/* Food Image */}
+                              <div className="h-40 w-full overflow-hidden relative bg-orange-50">
+                                <img
+                                  src={getFoodImageUrl(item.image)}
+                                  alt={item.name}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                  onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = getFoodImageUrl(null);
+                                  }}
+                                />
+                              </div>
+
+                              {/* Content */}
+                              <div className="p-4 flex flex-col flex-grow justify-between">
+                                <div>
+                                  <span className="text-[11px] font-semibold text-gray-400 block mb-0.5">
+                                    {activeRestaurant?.name}
+                                  </span>
+                                  <h3 className="font-bold text-sm text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-1">
+                                    {item.name}
+                                  </h3>
+                                  <div className="mt-1.5">
+                                    <StarRow rating={item.rating} count={reviews.length} />
+                                  </div>
                                 </div>
-                                <p className="text-[11px] font-bold text-gray-700 mt-1">
-                                  {review.user?.name || 'Anonymous'}
-                                </p>
-                                {review.comment && (
-                                  <p className="text-[11px] text-gray-500 leading-snug">{review.comment}</p>
-                                )}
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="text-xs text-gray-400">No reviews yet.</p>
-                        )}
+
+                                <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                                  <span className="text-sm font-black text-orange-600">ETB {item.price}</span>
+                                  {qtyInCart > 0 && (
+                                    <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                                      {qtyInCart} in cart
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Action buttons: Detail / Reviews / Add / Checkout */}
+                                <div className="mt-3 grid grid-cols-4 gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => navigate(`/food/${item.id}`)}
+                                    title="View details"
+                                    className="flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-900 hover:text-white transition-colors"
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                    <span className="text-[9px] font-bold">Detail</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleReviews(item.id)}
+                                    title="Customer reviews"
+                                    className={`flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl transition-colors ${reviewsOpen
+                                      ? 'bg-amber-500 text-white'
+                                      : 'bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white'
+                                      }`}
+                                  >
+                                    <MessageCircle className="w-4 h-4" />
+                                    <span className="text-[9px] font-bold">Reviews</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAddToCart(item)}
+                                    title="Add to cart"
+                                    className="relative flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white transition-colors"
+                                  >
+                                    <ShoppingCart className="w-4 h-4" />
+                                    <span className="text-[9px] font-bold">Add</span>
+                                    {qtyInCart > 0 && (
+                                      <span className="absolute -top-1.5 -right-1.5 bg-orange-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white">
+                                        {qtyInCart}
+                                      </span>
+                                    )}
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (!user) {
+                                        navigate('/login');
+                                      } else {
+                                        if (qtyInCart === 0) {
+                                          addToCart(item, 1, [], '');
+                                        }
+                                        navigate('/checkout');
+                                      }
+                                    }}
+                                    title="Checkout"
+                                    className="flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl bg-green-50 text-green-600 hover:bg-green-600 hover:text-white transition-colors"
+                                  >
+                                    <CreditCard className="w-4 h-4" />
+                                    <span className="text-[9px] font-bold">Checkout</span>
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Reviews popover — overlays the card when open */}
+                              {reviewsOpen && (
+                                <div className="absolute inset-2 z-20 bg-white rounded-xl shadow-2xl border border-orange-200 p-3 overflow-y-auto flex flex-col">
+                                  <div className="flex items-center justify-between mb-2 shrink-0">
+                                    <h4 className="text-xs font-black text-gray-900">Customer Reviews</h4>
+                                    <button
+                                      type="button"
+                                      onClick={() => setOpenReviewItemId(null)}
+                                      className="text-gray-400 hover:text-gray-700 text-sm font-bold leading-none px-1"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+
+                                  {reviews.length > 0 ? (
+                                    <ul className="space-y-2 overflow-y-auto">
+                                      {reviews.map((review) => (
+                                        <li key={review.id} className="border-b border-gray-100 pb-2 last:border-0">
+                                          <div className="flex items-center space-x-0.5">
+                                            {[...Array(5)].map((_, i) => (
+                                              <Star
+                                                key={i}
+                                                className={`w-3 h-3 ${i < review.rating ? 'text-amber-500 fill-amber-500' : 'text-gray-200'}`}
+                                              />
+                                            ))}
+                                          </div>
+                                          <p className="text-[11px] font-bold text-gray-700 mt-1">
+                                            {review.user?.name || 'Anonymous'}
+                                          </p>
+                                          {review.comment && (
+                                            <p className="text-[11px] text-gray-500 leading-snug">{review.comment}</p>
+                                          )}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  ) : (
+                                    <p className="text-xs text-gray-400">No reviews yet.</p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
-                  </div>
-                );
-              })}
+                  </>
+                )}
+              </div>
             </div>
           )}
-          </>
-        )}
-        </>
-      )}
         </main>
       </div>
 
