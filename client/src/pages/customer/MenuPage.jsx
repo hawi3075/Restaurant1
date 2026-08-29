@@ -125,19 +125,22 @@ export default function MenuPage() {
         <main className="max-w-7xl mx-auto px-6 py-10">
 
           {/* Search Bar */}
-          <div className="relative w-full mb-8">
-            <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-              <Search className="w-5 h-5" />
-            </span>
-            <input
-              type="text"
-              placeholder="Search restaurants or dishes..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-white border border-orange-200/80 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm transition-all"
-            />
+          <div className="sticky top-0 z-30 bg-[#FFFBF7]/95 backdrop-blur-sm py-4 -mx-6 px-6 border-b border-orange-100/60">
+            <div className="relative w-full max-w-7xl mx-auto">
+              <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                <Search className="w-5 h-5" />
+              </span>
+              <input
+                type="text"
+                placeholder="Search restaurants or dishes..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 bg-white border border-orange-200/80 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm transition-all"
+              />
+            </div>
           </div>
 
+          <div className="pt-8">
           {loading ? (
             <div className="text-center py-12">
               <UtensilsCrossed className="w-12 h-12 text-orange-500 mx-auto animate-spin mb-4" />
@@ -275,17 +278,6 @@ export default function MenuPage() {
                 {/* Menu Items Grid */}
                 {activeRestaurant && (
                   <>
-                    <div className="flex items-center justify-between mb-8">
-                      <div>
-                        <h2 className="font-display text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
-                          {activeRestaurant?.name}
-                        </h2>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {selectedCategory === 'all' ? 'All Menu Items' : categories.find((c) => c.id === selectedCategory)?.name} · Savor dishes made fresh to order
-                        </p>
-                      </div>
-                    </div>
-
                     {filteredItems.length === 0 ? (
                       <div className="bg-white rounded-2xl border-2 border-dashed border-orange-100 p-14 text-center">
                         <div className="w-14 h-14 rounded-2xl bg-orange-100 text-orange-700 flex items-center justify-center mx-auto mb-4">
@@ -457,6 +449,7 @@ export default function MenuPage() {
               </div>
             </div>
           )}
+          </div>
         </main>
       </div>
 
