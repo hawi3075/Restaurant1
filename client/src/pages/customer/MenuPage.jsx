@@ -121,35 +121,22 @@ export default function MenuPage() {
       <div>
         <Navbar />
 
-        {/* --- HEADER BANNER / SEARCH BAR SECTION --- */}
-        <div className="bg-[#F8F3EF] border-b border-orange-200/60 py-8 px-6 shadow-sm">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-            <div>
-              <h1 className="font-display text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">
-                Menu
-              </h1>
-              <p className="text-sm sm:text-base text-gray-600 mt-1 italic font-medium">
-                "Pick a restaurant, pick a category, and find your next favorite dish."
-              </p>
-            </div>
-
-            <div className="relative w-full md:w-96">
-              <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-                <Search className="w-5 h-5" />
-              </span>
-              <input
-                type="text"
-                placeholder="Search restaurants or dishes..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 bg-white border border-orange-200/80 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm transition-all"
-              />
-            </div>
-          </div>
-        </div>
-
         {/* --- MAIN CONTENT --- */}
         <main className="max-w-7xl mx-auto px-6 py-10">
+
+          {/* Search Bar */}
+          <div className="relative w-full mb-8">
+            <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+              <Search className="w-5 h-5" />
+            </span>
+            <input
+              type="text"
+              placeholder="Search restaurants or dishes..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 bg-white border border-orange-200/80 rounded-2xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm transition-all"
+            />
+          </div>
 
           {loading ? (
             <div className="text-center py-12">
