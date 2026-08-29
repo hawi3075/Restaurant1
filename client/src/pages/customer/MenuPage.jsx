@@ -262,10 +262,17 @@ export default function MenuPage() {
         {/* --- MAIN CONTENT --- */}
         <main className="max-w-7xl mx-auto px-6 py-12">
 
-          {/* Step 1: Restaurant Selector */}
-          <p className="text-xs sm:text-sm text-gray-500 font-medium mb-4">
-            <span className="text-orange-600 font-bold">Step 1:</span> First, select a restaurant below.
-          </p>
+          {loading ? (
+            <div className="text-center py-12">
+              <UtensilsCrossed className="w-12 h-12 text-orange-500 mx-auto animate-spin mb-4" />
+              <p className="text-gray-600 font-medium">Loading restaurants...</p>
+            </div>
+          ) : (
+            <>
+              {/* Step 1: Restaurant Selector */}
+              <p className="text-xs sm:text-sm text-gray-500 font-medium mb-4">
+                <span className="text-orange-600 font-bold">Step 1:</span> First, select a restaurant below.
+              </p>
 
           {filteredRestaurants.length === 0 ? (
             <div className="text-center py-10 space-y-2 mb-12">
@@ -310,11 +317,11 @@ export default function MenuPage() {
                     </h3>
                     <p className="text-[11px] text-gray-500 flex items-center space-x-1 mb-0.5">
                       <MapPin className="w-3 h-3 flex-shrink-0 text-gray-400" />
-                      <span className="truncate">{r.location}</span>
+                      <span className="truncate">{r.address}</span>
                     </p>
                     <p className="text-[11px] text-gray-500 flex items-center space-x-1">
                       <Clock className="w-3 h-3 flex-shrink-0 text-gray-400" />
-                      <span>{r.hours}</span>
+                      <span>{r.openingHours} - {r.closingHours}</span>
                     </p>
                   </button>
                 );
@@ -323,76 +330,116 @@ export default function MenuPage() {
           )}
 
           {/* Step 2: Category Chips */}
-          <p className="text-xs sm:text-sm text-gray-500 font-medium mb-4">
-            <span className="text-orange-600 font-bold">Step 2:</span> Choose a category.
-          </p>
+          {activeRestaurant && (
+            <>
+              <p className="text-xs sm:text-sm text-gray-500 font-medium mb-4">
+                <span className="text-orange-600 font-bold">Step 2:</span> Choose a category.
+              </p>
 
-          <div className="flex flex-wrap gap-2.5 mb-10">
-            {CATEGORIES.map((cat) => {
-              const Icon = cat.icon;
-              const isActive = cat.id === selectedCategory;
-              const count = MENU_ITEMS[selectedRestaurant]?.[cat.id]?.length || 0;
-              return (
+              <div className="flex flex-wrap gap-2.5 mb-10">
+                {/* All Items Button */}
                 <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`flex items-center gap-2.5 pl-2 pr-4 py-2 rounded-2xl text-sm font-bold transition-all duration-300 cursor-pointer ${isActive
-                    ? `${cat.activeBg} text-white shadow-lg ${cat.activeGlow}`
+                  onClick={() => setSelectedCategory('all')}
+                  className={`flex items-center gap-2.5 pl-2 pr-4 py-2 rounded-2xl text-sm font-bold transition-all duration-300 cursor-pointer ${selectedCategory === 'all'
+                    ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/25'
                     : 'bg-white text-gray-600 border border-orange-100 hover:border-orange-300 hover:shadow-sm'
                     }`}
                 >
-                  <span className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors ${isActive ? 'bg-white/20' : `${cat.iconBg} ${cat.iconText}`
+                  <span className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors ${selectedCategory === 'all' ? 'bg-white/20' : 'bg-orange-100 text-orange-700'
                     }`}>
-                    <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : ''}`} />
+                    <UtensilsCrossed className={`w-3.5 h-3.5 ${selectedCategory === 'all' ? 'text-white' : ''}`} />
                   </span>
-                  <span className="whitespace-nowrap">{cat.label}</span>
-                  <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full ${isActive ? 'bg-white/25 text-white' : 'bg-gray-100 text-gray-400'
+                  <span className="whitespace-nowrap">All Items</span>
+                  <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full ${selectedCategory === 'all' ? 'bg-white/25 text-white' : 'bg-gray-100 text-gray-400'
                     }`}>
-                    {count}
+                    {activeRestaurant.foods?.length || 0}
                   </span>
                 </button>
-              );
-            })}
-          </div>
+
+                {/* Real Categories from API */}
+                {categories.map((cat) => {
+                  const isActive = cat.id === selectedCategory;
+                  const count = activeRestaurant.foods?.filter((f) => f.category?.id === cat.id).length || 0;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className={`flex items-center gap-2.5 pl-2 pr-4 py-2 rounded-2xl text-sm font-bold transition-all duration-300 cursor-pointer ${isActive
+                        ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/25'
+                        : 'bg-white text-gray-600 border border-orange-100 hover:border-orange-300 hover:shadow-sm'
+                        }`}
+                    >
+                      {cat.image ? (
+                        <img
+                          src={cat.image}
+                          alt={cat.name}
+                          className={`w-7 h-7 rounded-xl object-cover ${isActive ? 'ring-2 ring-white/30' : ''}`}
+                        />
+                      ) : (
+                        <span className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors ${isActive ? 'bg-white/20' : 'bg-orange-100 text-orange-700'
+                          }`}>
+                          <UtensilsCrossed className={`w-3.5 h-3.5 ${isActive ? 'text-white' : ''}`} />
+                        </span>
+                      )}
+                      <span className="whitespace-nowrap">{cat.name}</span>
+                      <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full ${isActive ? 'bg-white/25 text-white' : 'bg-gray-100 text-gray-400'
+                        }`}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
 
           {/* Menu Items Grid */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="font-display text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
-                {activeRestaurant?.name}
-              </h2>
-              <p className="text-sm text-gray-600 mt-1">{cTheme.label} · Savor dishes made fresh to order</p>
-            </div>
-          </div>
-
-          {filteredItems.length === 0 ? (
-            <div className="bg-white rounded-2xl border-2 border-dashed border-orange-100 p-14 text-center">
-              <div className={`w-14 h-14 rounded-2xl ${cTheme.iconBg} ${cTheme.iconText} flex items-center justify-center mx-auto mb-4`}>
-                <cTheme.icon className="w-6 h-6" />
+          {activeRestaurant && (
+            <>
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="font-display text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+                    {activeRestaurant?.name}
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {selectedCategory === 'all' ? 'All Menu Items' : categories.find((c) => c.id === selectedCategory)?.name} · Savor dishes made fresh to order
+                  </p>
+                </div>
               </div>
-              <p className="text-gray-400 font-medium text-sm">
-                {searchTerm
-                  ? `No dishes match "${searchTerm}" in ${cTheme.label.toLowerCase()}.`
-                  : `No ${cTheme.label.toLowerCase()} listed yet for ${activeRestaurant?.name}.`}
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-              {filteredItems.map((item) => {
-                const qtyInCart = cart.filter((c) => c.food.id === item.id).reduce((sum, c) => sum + c.quantity, 0);
-                const reviewsOpen = openReviewItemId === item.id;
-                const reviews = item.reviews || [];
 
-                return (
-                  <div
-                    key={item.id}
-                    className="group bg-white rounded-2xl overflow-hidden shadow-sm border border-orange-100 hover:border-orange-400 hover:shadow-xl transition-all duration-300 flex flex-col relative"
-                  >
-                    {/* Image-style tile (icon fallback, matches Categories' image container) */}
-                    <div className={`h-40 w-full flex items-center justify-center bg-gradient-to-br ${cTheme.tile} relative overflow-hidden`}>
-                      <cTheme.icon className={`w-11 h-11 ${cTheme.tileIcon} group-hover:scale-110 transition-transform duration-500`} />
-                      <div className="absolute inset-0 bg-orange-950/5 group-hover:bg-transparent transition-colors" />
-                    </div>
+              {filteredItems.length === 0 ? (
+                <div className="bg-white rounded-2xl border-2 border-dashed border-orange-100 p-14 text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-orange-100 text-orange-700 flex items-center justify-center mx-auto mb-4">
+                    <UtensilsCrossed className="w-6 h-6" />
+                  </div>
+                  <p className="text-gray-400 font-medium text-sm">
+                    {searchTerm
+                      ? `No dishes match "${searchTerm}".`
+                      : `No menu items available yet for ${activeRestaurant?.name}.`}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                  {filteredItems.map((item) => {
+                    const qtyInCart = cart.filter((c) => c.food.id === item.id).reduce((sum, c) => sum + c.quantity, 0);
+                    const reviewsOpen = openReviewItemId === item.id;
+                    const reviews = item.reviews || [];
+                    const rating = calculateRating(reviews);
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="group bg-white rounded-2xl overflow-hidden shadow-sm border border-orange-100 hover:border-orange-400 hover:shadow-xl transition-all duration-300 flex flex-col relative"
+                      >
+                        {/* Food Image */}
+                        <div className="h-40 w-full overflow-hidden relative bg-orange-50">
+                          <img
+                            src={getFoodImageUrl(item.image)}
+                            alt={item.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            onError={(e) => { e.target.src = getFoodImageUrl(null); }}
+                          />
+                        </div>
 
                     {/* Content */}
                     <div className="p-4 flex flex-col flex-grow justify-between">
@@ -523,6 +570,10 @@ export default function MenuPage() {
               })}
             </div>
           )}
+          </>
+        )}
+        </>
+      )}
         </main>
       </div>
 
