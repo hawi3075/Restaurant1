@@ -255,9 +255,10 @@ export default function AdminFoodsPage() {
 
       {/* Add / Edit Modal */}
       {modalMode && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <form onSubmit={handleSave} className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 space-y-4 my-8">
-            <div className="flex items-center justify-between border-b pb-3">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <form onSubmit={handleSave} className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+            {/* Sticky Header */}
+            <div className="flex items-center justify-between border-b px-6 py-4 shrink-0">
               <h2 className="text-base font-black text-gray-900">
                 {modalMode === 'add' ? 'Add New Food Item' : 'Edit Food Item'}
               </h2>
@@ -270,6 +271,8 @@ export default function AdminFoodsPage() {
               </button>
             </div>
 
+            {/* Scrollable Body */}
+            <div className="overflow-y-auto px-6 py-4 flex-1">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div className="sm:col-span-2">
                 <label className="font-bold text-gray-500 uppercase tracking-wide">Dish Name *</label>
@@ -370,8 +373,10 @@ export default function AdminFoodsPage() {
                 </label>
               </div>
             </div>
+            </div>
 
-            <div className="flex justify-end space-x-2 border-t pt-3">
+            {/* Sticky Footer */}
+            <div className="flex justify-end space-x-2 border-t px-6 py-4 shrink-0">
               <button
                 type="button"
                 onClick={closeModal}
