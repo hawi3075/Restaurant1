@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Store, Plus, CheckCircle, XCircle, Search, Edit, X } from 'lucide-react';
 import API from '../../services/api';
+import ImageUpload from '../../components/ImageUpload';
 
 export default function AdminRestaurantsPage() {
   const navigate = useNavigate();
@@ -10,7 +11,7 @@ export default function AdminRestaurantsPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const [editingRestaurant, setEditingRestaurant] = useState(null);
-  const [form, setForm] = useState({ name: '', address: '', phone: '', rating: '', isOpen: true });
+  const [form, setForm] = useState({ name: '', address: '', phone: '', rating: '', isOpen: true, logo: '', coverImage: '' });
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -44,6 +45,8 @@ export default function AdminRestaurantsPage() {
       phone: restaurant.phone || '',
       rating: restaurant.rating ?? '',
       isOpen: !!restaurant.isOpen,
+      logo: restaurant.logo || '',
+      coverImage: restaurant.coverImage || '',
     });
   }
 
@@ -61,6 +64,8 @@ export default function AdminRestaurantsPage() {
         phone: form.phone.trim(),
         rating: Number(form.rating) || 0,
         isOpen: form.isOpen,
+        logo: form.logo,
+        coverImage: form.coverImage,
       };
       const response = await API.put(`/restaurants/${editingRestaurant.id}`, payload);
       const updated = response.data;
@@ -272,6 +277,22 @@ export default function AdminRestaurantsPage() {
                     className="mt-1 w-full px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs outline-none focus:border-orange-500 transition"
                   />
                 </div>
+              </div>
+              <div>
+                <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Logo Image</label>
+                <ImageUpload
+                  value={form.logo}
+                  onChange={(url) => setForm({ ...form, logo: url })}
+                  placeholder="Upload logo or enter image URL"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Cover Image</label>
+                <ImageUpload
+                  value={form.coverImage}
+                  onChange={(url) => setForm({ ...form, coverImage: url })}
+                  placeholder="Upload cover or enter image URL"
+                />
               </div>
               <div>
                 <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Status</label>

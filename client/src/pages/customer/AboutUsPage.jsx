@@ -85,7 +85,7 @@ export default function AboutUsPage() {
             <div className="relative">
               <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-orange-50 max-w-md mx-auto lg:mx-0 border border-orange-100">
                 <img
-                  src="/m8.webp"
+                  src="/mg1.webp"
                   alt="Professional chef preparing a global menu"
                   className="w-full h-[420px] object-cover"
                 />
