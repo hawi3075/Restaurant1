@@ -26,7 +26,7 @@ export const getImageUrl = (imagePath, fallback = '/m1.webp') => {
  * Get restaurant cover image URL with appropriate fallback
  */
 export const getRestaurantImageUrl = (imagePath) => {
-  return getImageUrl(imagePath, '/mg1.jpg');
+  return getImageUrl(imagePath, '/mg1.webp');
 };
 
 /**

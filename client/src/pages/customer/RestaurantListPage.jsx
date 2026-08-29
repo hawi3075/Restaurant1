@@ -184,7 +184,10 @@ export default function RestaurantListPage() {
                       src={getRestaurantImageUrl(restaurant.coverImage || restaurant.logo)}
                       alt={restaurant.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      onError={(e) => { e.target.src = getRestaurantImageUrl(null); }}
+                      onError={(e) => {
+                        e.target.onerror = null; // stop any further retries after first failure
+                        e.target.src = getRestaurantImageUrl(null);
+                      }}
                     />
 
                     {/* Rating Badge */}
