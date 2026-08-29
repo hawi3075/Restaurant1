@@ -2,15 +2,17 @@ import API from '../services/api';
 
 /**
  * Get full image URL for display
- * Handles uploaded images, public folder images, and external URLs
+ * Handles Cloudinary URLs, uploaded images, public folder images, and external URLs
  */
 export const getImageUrl = (imagePath, fallback = '/m1.webp') => {
   if (!imagePath) return fallback;
   
-  // External URL - use as is
-  if (imagePath.startsWith('http')) return imagePath;
+  // External URL or Cloudinary URL - use as is
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
   
-  // Uploaded file - prepend API base URL
+  // Legacy local uploaded file - prepend API base URL (for old images before Cloudinary)
   if (imagePath.startsWith('/uploads')) {
     const baseUrl = API.defaults.baseURL.replace('/api', '');
     return `${baseUrl}${imagePath}`;

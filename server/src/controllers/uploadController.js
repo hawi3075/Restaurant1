@@ -7,12 +7,12 @@ const uploadSingle = async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Return the file path that can be accessed via the server
-    const filePath = `/uploads/${req.file.filename}`;
+    // Cloudinary automatically uploads and returns the URL
+    const filePath = req.file.path; // This is the Cloudinary URL
     
     res.json({
       message: 'File uploaded successfully',
-      filePath: filePath,
+      filePath: filePath, // Full Cloudinary URL (e.g., https://res.cloudinary.com/...)
       fileName: req.file.filename,
       originalName: req.file.originalname,
       size: req.file.size
@@ -31,7 +31,7 @@ const uploadMultiple = async (req, res) => {
     }
 
     const filePaths = req.files.map(file => ({
-      filePath: `/uploads/${file.filename}`,
+      filePath: file.path, // Cloudinary URL
       fileName: file.filename,
       originalName: file.originalname,
       size: file.size

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const upload = require('../config/upload');
+const { upload } = require('../config/cloudinary'); // Use Cloudinary storage
 const { uploadSingle, uploadMultiple } = require('../controllers/uploadController');
 const { verifyToken } = require('../middleware/auth');
 
