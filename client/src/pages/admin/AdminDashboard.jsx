@@ -3,7 +3,7 @@ import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { 
   LayoutDashboard, ShoppingBag, Store, UtensilsCrossed, 
   MapPin, Users, Settings, MessageSquare, 
-  ShieldCheck, ChevronDown, ChevronRight, Bike, LogOut, Bell, Headphones, Star, Moon, Sun, Globe, Check
+  ShieldCheck, ChevronDown, ChevronRight, Bike, LogOut, Bell, Headphones, Star, Moon, Sun, Globe, Check, Menu, X
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -50,7 +50,7 @@ function AdminSidebar() {
   };
 
   return (
-    <aside className="w-72 bg-gray-900 text-gray-300 flex flex-col h-screen sticky top-0 border-r border-gray-800 select-none overflow-y-auto">
+    <aside className="w-72 bg-gray-900 text-gray-300 flex flex-col h-screen sticky top-0 border-r border-gray-800 select-none overflow-y-auto lg:flex hidden">
       
       {/* Brand Header */}
       <div className="h-20 flex items-center px-6 bg-gray-950 border-b border-gray-800 shrink-0">
@@ -298,6 +298,10 @@ export default function AdminDashboard() {
   const { theme, toggleTheme } = useTheme();
   const { language, changeLanguage, t } = useLanguage();
   const [showLangDropdown, setShowLangDropdown] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const closeSidebar = () => setIsSidebarOpen(false);
 
   // Show loading while checking auth
   if (loading) {
@@ -318,12 +322,88 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* Desktop Sidebar */}
       <AdminSidebar />
+      
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden" 
+          onClick={closeSidebar}
+        ></div>
+      )}
+      
+      {/* Mobile Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 w-72 bg-gray-900 text-gray-300 flex flex-col h-screen border-r border-gray-800 select-none overflow-y-auto z-50 transform transition-transform duration-300 lg:hidden ${
+        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        {/* Mobile Sidebar Content - Same as Desktop */}
+        {/* Brand Header */}
+        <div className="h-20 flex items-center justify-between px-6 bg-gray-950 border-b border-gray-800 shrink-0">
+          <div className="flex items-center space-x-3">
+            <div className="bg-orange-600 text-white p-2.5 rounded-xl shadow-md">
+              <UtensilsCrossed className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-lg font-black tracking-tight text-white">ማእድ <span className="text-orange-500 text-xs">Admin</span></span>
+              <p className="text-[10px] text-gray-400 font-medium">Management Dashboard</p>
+            </div>
+          </div>
+          {/* Close Button for Mobile */}
+          <button
+            onClick={closeSidebar}
+            className="p-2 hover:bg-gray-800 rounded-lg transition lg:hidden"
+          >
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+
+        {/* Mobile Sidebar Navigation - Copy from AdminSidebar */}
+        <div className="p-4 shrink-0">
+          <input 
+            type="text" 
+            placeholder="Search Menu..." 
+            className="w-full px-3.5 py-2 rounded-xl bg-gray-800/80 border border-gray-700 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-orange-500 transition"
+          />
+        </div>
+
+        <div className="flex-1 px-3 space-y-1.5 pb-6 text-xs font-medium">
+          <Link 
+            to="/admin" 
+            onClick={closeSidebar}
+            className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition ${
+              location.pathname === '/admin' ? 'bg-orange-600 text-white font-bold shadow-lg shadow-orange-600/20' : 'hover:bg-gray-800 hover:text-white'
+            }`}
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            <span>Dashboard</span>
+          </Link>
+          
+          <Link 
+            to="/admin/pos" 
+            onClick={closeSidebar}
+            className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-gray-800 hover:text-white transition"
+          >
+            <ShoppingBag className="w-4 h-4 text-orange-500" />
+            <span>Point Of Sale</span>
+          </Link>
+          
+          {/* Add more mobile menu items here - copy from AdminSidebar component */}
+        </div>
+      </aside>
       
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header */}
-        <header className="bg-white border-b border-gray-200 h-20 flex items-center justify-between px-8 shrink-0">
-          <div>
+        <header className="bg-white border-b border-gray-200 h-20 flex items-center justify-between px-4 lg:px-8 shrink-0">
+          {/* Mobile Menu Button */}
+          <button
+            onClick={toggleSidebar}
+            className="p-2 hover:bg-gray-100 rounded-xl transition lg:hidden"
+          >
+            <Menu className="w-6 h-6 text-gray-600" />
+          </button>
+          
+          <div className="hidden lg:block">
             <h2 className="text-xl font-black text-gray-900">{t('adminDashboard')}</h2>
             <p className="text-sm text-gray-600">{t('manageRestaurantPlatform')}</p>
           </div>

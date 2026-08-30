@@ -1,6 +1,15 @@
 const axios = require('axios');
 const prisma = require('../config/prisma');
 
+// Get base URLs from environment or use defaults
+const getBaseUrls = () => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  return {
+    backend: isProduction ? 'https://restaurant1-qm7p.onrender.com' : 'http://localhost:5000',
+    frontend: isProduction ? 'https://restaurant1-rust-ten.vercel.app' : 'http://localhost:5173'
+  };
+};
+
 // Initialize Chapa Payment
 const initializeChapaPayment = async (req, res) => {
   try {
@@ -36,6 +45,8 @@ const initializeChapaPayment = async (req, res) => {
       customerPhone = '0912345678';
     }
 
+    const urls = getBaseUrls();
+
     const response = await axios.post(
       'https://api.chapa.co/v1/transaction/initialize',
       {
@@ -46,8 +57,12 @@ const initializeChapaPayment = async (req, res) => {
         last_name: customerLastName,
         phone_number: customerPhone,
         tx_ref,
-        callback_url: `http://localhost:5000/api/payments/verify/${tx_ref}?orderId=${orderId}`,
-        return_url: `http://localhost:5000/api/payments/verify/${tx_ref}?orderId=${orderId}`,
+        callback_url: `${urls.backend}/api/payments/callback/${tx_ref}?orderId=${orderId}`,
+        return_url: `${urls.frontend}/order-success?tx_ref=${tx_ref}&orderId=${orderId}`,
+        customization: {
+          title: "Ma'ad Restaurant Payment",
+          description: `Payment for Order #${orderId}`
+        }
       },
       {
         headers: {
@@ -101,12 +116,98 @@ const initializeChapaPayment = async (req, res) => {
   }
 };
 
-// Verify Chapa Payment
+// Chapa Callback Handler (Called by Chapa after payment)
+const handleChapaCallback = async (req, res) => {
+  try {
+    const { tx_ref } = req.params;
+    const orderId = req.query.orderId || req.body?.orderId;
+
+    console.log(`📥 Chapa Callback received for tx_ref: ${tx_ref}, orderId: ${orderId}`);
+
+    const secretKey = (process.env.CHAPA_SECRET_KEY || '').trim();
+    const verifyConfig = {
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+      },
+    };
+
+    // Verify payment with Chapa API
+    const response = await axios.get(`https://api.chapa.co/v1/transaction/verify/${tx_ref}`, verifyConfig);
+
+    if (response.data.status === 'success' || response.data.data?.status === 'success') {
+      console.log(`✅ Payment verified successfully for tx_ref: ${tx_ref}`);
+      
+      if (orderId) {
+        // Check if payment already exists
+        const existingPayment = await prisma.payment.findUnique({ where: { orderId } });
+        
+        if (!existingPayment) {
+          // Create payment record
+          await prisma.payment.create({
+            data: {
+              orderId,
+              amount: parseFloat(response.data.data?.amount || 0),
+              method: 'CHAPA',
+              status: 'COMPLETED',
+              transactionId: tx_ref,
+            },
+          });
+
+          // Update order status to CONFIRMED
+          const updatedOrder = await prisma.order.update({
+            where: { id: orderId },
+            data: { status: 'CONFIRMED' },
+            include: {
+              items: { include: { food: true } },
+              customer: { select: { name: true, phone: true, email: true } },
+              restaurant: true,
+              address: true,
+            },
+          });
+
+          // Broadcast real-time notification via Socket.IO
+          const io = req.app.get('io');
+          if (io && updatedOrder) {
+            io.to(updatedOrder.restaurantId).emit('new_order', updatedOrder);
+            io.to('admin_global').emit('new_order', updatedOrder);
+          }
+
+          console.log(`✅ Order ${orderId} confirmed and notification sent`);
+        } else {
+          console.log(`ℹ️  Payment already exists for order ${orderId}`);
+        }
+      }
+
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Payment processed successfully',
+        tx_ref,
+        orderId 
+      });
+    } else {
+      console.log(`❌ Payment verification failed for tx_ref: ${tx_ref}`);
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Payment verification failed' 
+      });
+    }
+  } catch (error) {
+    console.error('❌ Callback Error:', error.response?.data || error.message);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Error processing payment callback' 
+    });
+  }
+};
+
+// Verify Chapa Payment (For manual verification or return URL)
 const verifyChapaPayment = async (req, res) => {
   try {
     const { tx_ref } = req.params;
     const orderId = req.query.orderId || req.body?.orderId;
     const wantsJson = req.query.format === 'json' || req.headers.accept?.includes('application/json');
+
+    console.log(`🔍 Verifying payment: tx_ref=${tx_ref}, orderId=${orderId}`);
 
     const secretKey = (process.env.CHAPA_SECRET_KEY || '').trim();
     const verifyConfig = {
@@ -155,23 +256,31 @@ const verifyChapaPayment = async (req, res) => {
       }
 
       if (wantsJson) {
-        return res.status(200).json({ success: true, message: 'Payment verified successfully', order: updatedOrder, tx_ref });
+        return res.status(200).json({ 
+          success: true, 
+          message: 'Payment verified successfully', 
+          order: updatedOrder, 
+          tx_ref 
+        });
       }
 
-      return res.redirect(`http://localhost:5173/order-success?status=success&tx_ref=${tx_ref}&orderId=${orderId || ''}`);
+      const urls = getBaseUrls();
+      return res.redirect(`${urls.frontend}/order-success?status=success&tx_ref=${tx_ref}&orderId=${orderId || ''}`);
     } else {
       if (wantsJson) {
         return res.status(400).json({ success: false, error: 'Chapa transaction verification failed.' });
       }
-      return res.redirect(`http://localhost:5173/order-success?status=failed&tx_ref=${tx_ref}`);
+      const urls = getBaseUrls();
+      return res.redirect(`${urls.frontend}/order-success?status=failed&tx_ref=${tx_ref}`);
     }
   } catch (error) {
     console.error('Verification Error:', error.response?.data || error.message);
     const wantsJson = req.query.format === 'json' || req.headers.accept?.includes('application/json');
+    const urls = getBaseUrls();
     if (wantsJson) {
       return res.status(500).json({ success: false, error: 'Error verifying payment with Chapa.' });
     }
-    return res.redirect(`http://localhost:5173/order-success?status=error&tx_ref=${req.params.tx_ref || ''}`);
+    return res.redirect(`${urls.frontend}/order-success?status=error&tx_ref=${req.params.tx_ref || ''}`);
   }
 };
 
@@ -251,6 +360,7 @@ const getPaymentByOrderId = async (req, res) => {
 
 module.exports = { 
   initializeChapaPayment, 
+  handleChapaCallback,
   verifyChapaPayment, 
   createPayment, 
   getPaymentByOrderId 

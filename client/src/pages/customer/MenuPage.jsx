@@ -243,6 +243,22 @@ export default function MenuPage() {
                     {categories.map((cat) => {
                       const isActive = cat.id === selectedCategory;
                       const count = activeRestaurant.foods?.filter((f) => f.category?.id === cat.id).length || 0;
+                      
+                      // Dynamic icon selection based on category name
+                      const getCategoryIcon = () => {
+                        const nameLower = cat.name.toLowerCase();
+                        if (nameLower.includes('coffee') || nameLower.includes('beverage') || nameLower.includes('drink')) {
+                          return <Coffee className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-orange-700'}`} />;
+                        }
+                        if (nameLower.includes('burger') || nameLower.includes('sandwich')) {
+                          return <Sandwich className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-orange-700'}`} />;
+                        }
+                        if (nameLower.includes('dessert') || nameLower.includes('ice') || nameLower.includes('sweet')) {
+                          return <IceCream className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-orange-700'}`} />;
+                        }
+                        return <UtensilsCrossed className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-orange-700'}`} />;
+                      };
+
                       return (
                         <button
                           key={cat.id}
@@ -252,18 +268,10 @@ export default function MenuPage() {
                             : 'bg-white text-gray-600 border border-orange-100 hover:border-orange-300 hover:shadow-sm'
                             }`}
                         >
-                          {cat.image ? (
-                            <img
-                              src={cat.image}
-                              alt={cat.name}
-                              className={`w-7 h-7 rounded-xl object-cover ${isActive ? 'ring-2 ring-white/30' : ''}`}
-                            />
-                          ) : (
-                            <span className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors ${isActive ? 'bg-white/20' : 'bg-orange-100 text-orange-700'
-                              }`}>
-                              <UtensilsCrossed className={`w-3.5 h-3.5 ${isActive ? 'text-white' : ''}`} />
-                            </span>
-                          )}
+                          <span className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors ${isActive ? 'bg-white/20' : 'bg-orange-100'
+                            }`}>
+                            {getCategoryIcon()}
+                          </span>
                           <span className="whitespace-nowrap">{cat.name}</span>
                           <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full ${isActive ? 'bg-white/25 text-white' : 'bg-gray-100 text-gray-400'
                             }`}>
