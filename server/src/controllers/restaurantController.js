@@ -8,14 +8,7 @@ const getRestaurants = async (req, res) => {
         foods: {
           include: { 
             category: true,
-            addons: true,
-            reviews: {
-              include: {
-                user: {
-                  select: { id: true, name: true }
-                }
-              }
-            }
+            addons: true
           }
         },
         tables: true,
