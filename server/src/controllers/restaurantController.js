@@ -5,7 +5,19 @@ const getRestaurants = async (req, res) => {
   try {
     const restaurants = await prisma.restaurant.findMany({
       include: {
-        foods: true,
+        foods: {
+          include: { 
+            category: true,
+            addons: true,
+            reviews: {
+              include: {
+                user: {
+                  select: { id: true, name: true }
+                }
+              }
+            }
+          }
+        },
         tables: true,
       },
     });
