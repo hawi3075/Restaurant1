@@ -35,6 +35,7 @@ import OrderSuccessPage from './pages/customer/OrderSuccessPage';
 // Import Admin Dashboard, POS & Staff Portals
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminPOS from './pages/admin/AdminPOS';
+import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
 import ChefDashboard from './pages/chef/ChefDashboard';
 import ChefDashboardHome from './pages/chef/ChefDashboardHome';
 import ChefOrdersAll from './pages/chef/ChefOrdersAll';
@@ -145,6 +146,9 @@ function App() {
                       {/* Admin POS & Portal with Wildcard Nested Routing */}
                       <Route path="/admin/pos" element={<AdminPOS />} />
                       <Route path="/admin/*" element={<AdminDashboard />} />
+
+                      {/* Super Admin Portal */}
+                      <Route path="/superadmin/*" element={<SuperAdminDashboard />} />
 
                       {/* Fallback */}
                       <Route path="*" element={<Navigate to="/" replace />} />

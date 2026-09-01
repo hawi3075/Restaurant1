@@ -3,7 +3,8 @@ const router = express.Router();
 const { verifyToken, verifyRole } = require('../middleware/auth');
 const { 
   getProfile, 
-  updateProfile, 
+  updateProfile,
+  changePassword,
   getAllCustomers, 
   getAllStaff, 
   createStaff, 
@@ -18,6 +19,7 @@ const {
 // User profile routes (All authenticated users)
 router.get('/profile', verifyToken, getProfile);
 router.put('/profile', verifyToken, updateProfile);
+router.put('/change-password', verifyToken, changePassword);
 
 // Address management
 router.post('/addresses', verifyToken, addAddress);

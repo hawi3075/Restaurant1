@@ -34,6 +34,10 @@ export default function Login() {
       console.log('Login successful! Role:', result.role);
       // Redirect based on user role
       switch (result.role) {
+        case 'SUPER_ADMIN':
+          console.log('Redirecting to super admin dashboard');
+          navigate('/superadmin');
+          break;
         case 'ADMIN':
           console.log('Redirecting to admin dashboard');
           navigate('/admin');
@@ -72,6 +76,9 @@ export default function Login() {
     if (result.success) {
       // Redirect based on user role
       switch (result.role) {
+        case 'SUPER_ADMIN':
+          navigate('/superadmin');
+          break;
         case 'ADMIN':
           navigate('/admin');
           break;

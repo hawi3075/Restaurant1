@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Globe, Sun, Moon, LogOut, Check, X } from 'lucide-react';
+import { Globe, Sun, Moon, LogOut, Check, X, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
@@ -112,6 +112,26 @@ export default function DashboardHeader({ title }) {
 
         {/* Action Controls */}
         <div className="flex items-center space-x-3">
+          {/* Profile Button */}
+          <button
+            onClick={() => {
+              const basePath = user.role === 'ADMIN' ? '/admin' : 
+                             user.role === 'CHEF' ? '/chef' : 
+                             user.role === 'WAITER' ? '/waiter' : 
+                             user.role === 'DRIVER' ? '/driver' : '/';
+              navigate(`${basePath}/profile`);
+            }}
+            className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl border text-sm font-bold transition ${
+              darkMode 
+                ? 'border-gray-700 bg-gray-800 hover:bg-gray-700 text-gray-200' 
+                : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700'
+            }`}
+            title="View Profile"
+          >
+            <User className="w-4 h-4 text-orange-500" />
+            <span>Profile</span>
+          </button>
+
           {/* Language Switcher Button */}
           <button
             onClick={() => setLangModalOpen(true)}

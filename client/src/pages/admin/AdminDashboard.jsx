@@ -27,6 +27,7 @@ import AdminSettingsPage from './AdminSettingsPage';
 import AdminReviewsPage from './AdminReviewsPage';
 import AdminContactMessagesPage from './AdminContactMessagesPage';
 import AdminAiChatPage from './AdminAiChatPage';
+import AdminProfile from './AdminProfile';
 
 function AdminSidebar() {
   const location = useLocation();
@@ -564,6 +565,7 @@ export default function AdminDashboard() {
 
             {/* System Setup */}
             <Route path="/settings" element={<AdminSettingsPage />} />
+            <Route path="/profile" element={<AdminProfile />} />
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/admin" replace />} />

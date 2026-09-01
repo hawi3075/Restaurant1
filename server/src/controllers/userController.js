@@ -45,11 +45,13 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, phone, address } = req.body;
+    const { name, email, phone, address, profileImage } = req.body;
 
     const updateData = {};
     if (name !== undefined && name !== null) updateData.name = name;
+    if (email !== undefined && email !== null) updateData.email = email;
     if (phone !== undefined && phone !== null) updateData.phone = phone;
+    if (profileImage !== undefined) updateData.profileImage = profileImage;
 
     if (Object.keys(updateData).length > 0) {
       await prisma.user.update({
@@ -87,6 +89,7 @@ const updateProfile = async (req, res) => {
         name: true,
         email: true,
         phone: true,
+        profileImage: true,
         role: true,
         restaurantId: true,
         addresses: true
@@ -394,9 +397,55 @@ const deleteAddress = async (req, res) => {
   }
 };
 
+// Change password
+const changePassword = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current password and new password are required.' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
+    }
+
+    // Get user with password
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    // Verify current password
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Current password is incorrect.' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword }
+    });
+
+    res.json({ message: 'Password changed successfully.' });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+};
+
 module.exports = { 
   getProfile, 
-  updateProfile, 
+  updateProfile,
+  changePassword,
   getAllCustomers, 
   getAllStaff, 
   createStaff, 
