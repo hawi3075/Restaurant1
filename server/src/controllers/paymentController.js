@@ -60,8 +60,8 @@ const initializeChapaPayment = async (req, res) => {
         callback_url: `${urls.backend}/api/payments/callback/${tx_ref}?orderId=${orderId}`,
         return_url: `${urls.frontend}/order-success?tx_ref=${tx_ref}&orderId=${orderId}`,
         customization: {
-          title: "Ma'ad Restaurant Payment",
-          description: `Payment for Order #${orderId}`
+          title: "Ma'ad Payment",
+          description: `Order ${orderId}`
         }
       },
       {
