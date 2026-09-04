@@ -22,6 +22,8 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'https://restaurant1-rust-ten.vercel.app',
+  'http://maad.emerald-import-export.com',
+  'https://maad.emerald-import-export.com',
   process.env.CORS_ORIGIN
 ].filter(Boolean); // Remove undefined values
 
