@@ -1,6 +1,6 @@
 const prisma = require('../config/prisma');
 
-// Place a new order (Customer or Waiter)
+
 const createOrder = async (req, res) => {
   try {
     const {
