@@ -27,7 +27,6 @@ export default function DriverManualOrder() {
       return;
     }
 
-    // TODO: Integrate with backend API
     console.log('Manual Order:', formData);
     
     if (window.showToast) {

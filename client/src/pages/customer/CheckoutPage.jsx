@@ -287,9 +287,6 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useLanguage();
-  // NOTE: updateQuantity / removeFromCart are assumed to exist on CartContext
-  // (common naming). If your context uses different names, rename these two
-  // destructured values and the two call sites that use them below.
   const { cart, cartLoaded, getCartTotal, clearCart, getRestaurantId, updateQuantity, removeFromCart } = useCart();
   const { deliveryFee: defaultDeliveryFee } = useSettings();
 
