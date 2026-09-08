@@ -58,14 +58,14 @@ function SuperAdminSidebar() {
   const SidebarContent = () => (
     <>
       {/* Brand Header */}
-      <div className="h-20 flex items-center px-6 bg-gradient-to-r from-purple-900 to-purple-800 border-b border-purple-700 shrink-0">
+      <div className="h-20 flex items-center px-6 bg-gradient-to-r from-orange-900 to-orange-800 border-b border-orange-700 shrink-0">
         <div className="flex items-center space-x-3">
           <div className="bg-gradient-to-br from-amber-400 to-amber-600 text-white p-2.5 rounded-xl shadow-lg">
             <Crown className="w-5 h-5" />
           </div>
           <div>
             <span className="text-lg font-black tracking-tight text-white">ማእድ <span className="text-amber-400 text-xs">Super Admin</span></span>
-            <p className="text-[10px] text-purple-200 font-medium">System Control Panel</p>
+            <p className="text-[10px] text-orange-200 font-medium">System Control Panel</p>
           </div>
         </div>
       </div>
@@ -75,7 +75,7 @@ function SuperAdminSidebar() {
         <input 
           type="text" 
           placeholder="Search Menu..." 
-          className="w-full px-3.5 py-2 rounded-xl bg-gray-800/80 border border-gray-700 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition"
+          className="w-full px-3.5 py-2 rounded-xl bg-gray-800/80 border border-gray-700 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-orange-500 transition"
         />
       </div>
 
@@ -87,7 +87,7 @@ function SuperAdminSidebar() {
           to="/superadmin" 
           onClick={() => setIsSidebarOpen(false)}
           className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl transition ${
-            isActive('/superadmin') ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white font-bold shadow-lg' : 'hover:bg-gray-800 hover:text-white text-gray-300'
+            isActive('/superadmin') ? 'bg-gradient-to-r from-orange-600 to-orange-700 text-white font-bold shadow-lg' : 'hover:bg-gray-800 hover:text-white text-gray-300'
           }`}
         >
           <LayoutDashboard className="w-4 h-4" />
@@ -95,7 +95,7 @@ function SuperAdminSidebar() {
         </Link>
 
         {/* SUPER ADMIN MANAGEMENT */}
-        <div className="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-purple-400">
+        <div className="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-orange-400">
           <div className="flex items-center space-x-1">
             <Crown className="w-3 h-3" />
             <span>Super Admin</span>
@@ -120,7 +120,7 @@ function SuperAdminSidebar() {
                 to="/superadmin/manage-admins" 
                 onClick={() => setIsSidebarOpen(false)}
                 className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition text-xs ${
-                  isActive('/superadmin/manage-admins') ? 'bg-purple-600 text-white font-bold' : 'hover:bg-gray-800 text-gray-400'
+                  isActive('/superadmin/manage-admins') ? 'bg-orange-600 text-white font-bold' : 'hover:bg-gray-800 text-gray-400'
                 }`}
               >
                 <Users className="w-3.5 h-3.5" />
@@ -130,7 +130,7 @@ function SuperAdminSidebar() {
                 to="/superadmin/system-settings" 
                 onClick={() => setIsSidebarOpen(false)}
                 className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition text-xs ${
-                  isActive('/superadmin/system-settings') ? 'bg-purple-600 text-white font-bold' : 'hover:bg-gray-800 text-gray-400'
+                  isActive('/superadmin/system-settings') ? 'bg-orange-600 text-white font-bold' : 'hover:bg-gray-800 text-gray-400'
                 }`}
               >
                 <Settings className="w-3.5 h-3.5" />
@@ -413,7 +413,7 @@ function SuperAdminSidebar() {
       {/* Mobile Hamburger Button */}
       <button
         onClick={() => setIsSidebarOpen(true)}
-        className="lg:hidden fixed top-5 left-4 z-40 bg-gradient-to-r from-purple-600 to-purple-700 text-white p-2.5 rounded-xl shadow-lg hover:shadow-xl transition"
+        className="lg:hidden fixed top-5 left-4 z-40 bg-gradient-to-r from-orange-600 to-orange-700 text-white p-2.5 rounded-xl shadow-lg hover:shadow-xl transition"
       >
         <Menu className="w-5 h-5" />
       </button>

@@ -3,11 +3,17 @@ const prisma = require('../config/prisma');
 
 // Get base URLs from environment or use defaults
 const getBaseUrls = () => {
-  const isProduction = process.env.NODE_ENV === 'production';
-  return {
-    backend: process.env.BACKEND_URL || (isProduction ? 'https://restaurant1-qm7p.onrender.com' : 'http://localhost:5000'),
-    frontend: process.env.FRONTEND_URL || (isProduction ? 'https://maad.emerald-import-export.com' : 'http://localhost:5173')
-  };
+  // Always use production URLs if BACKEND_URL/FRONTEND_URL env vars are set,
+  // otherwise check NODE_ENV, with hardcoded production URLs as fallback
+  const backend = process.env.BACKEND_URL || 
+                  (process.env.NODE_ENV === 'production' ? 'https://restaurant1-qm7p.onrender.com' : 'http://localhost:5000');
+  
+  const frontend = process.env.FRONTEND_URL || 
+                   (process.env.NODE_ENV === 'production' ? 'https://maad.emerald-import-export.com' : 'http://localhost:5173');
+  
+  console.log('🔗 Payment URLs:', { backend, frontend, env: process.env.NODE_ENV });
+  
+  return { backend, frontend };
 };
 
 // Initialize Chapa Payment
