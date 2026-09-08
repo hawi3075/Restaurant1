@@ -160,7 +160,7 @@ export default function ImageUpload({
         <div className="relative mt-3 group">
           <div className="relative w-full h-40 bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
             <img
-              src={preview.startsWith('http') ? preview : `${API.defaults.baseURL}${preview}`.replace('/api', '')}
+              src={preview}
               alt="Preview"
               className="w-full h-full object-cover"
               onError={(e) => {

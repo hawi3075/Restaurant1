@@ -14,11 +14,11 @@ export const getImageUrl = (imagePath, fallback = '/m1.webp') => {
   
   // Legacy local uploaded file - prepend API base URL (for old images before Cloudinary)
   if (imagePath.startsWith('/uploads')) {
-    const baseUrl = API.defaults.baseURL.replace('/api', '');
+    const baseUrl = API.defaults.baseURL?.replace('/api', '') || 'http://localhost:5000';
     return `${baseUrl}${imagePath}`;
   }
   
-  // Public folder file - use as is
+  // Public folder file or relative path - use as is
   return imagePath;
 };
 

@@ -29,8 +29,6 @@ const allowedOrigins = [
 ].filter(Boolean); // Remove undefined values
 
 // Matches ANY Vercel preview/branch URL for this specific project
-// e.g. https://restaurant1-git-main-hawis-projects-b3fda57f.vercel.app
-// e.g. https://restaurant1-3jddg4rhp-hawis-projects-b3fda57f.vercel.app
 const vercelPreviewPattern = /^https:\/\/restaurant1-[a-z0-9-]+-hawis-projects-b3fda57f\.vercel\.app$/;
 
 function isAllowedOrigin(origin) {
@@ -128,7 +126,6 @@ io.on('connection', (socket) => {
 
   // Chef -> Driver / Waiter notification sync
   socket.on('update_order_status', (data) => {
-    // data: { orderId, status, restaurantId, targetRole, customerId }
     io.to(data.restaurantId).emit('order_status_updated', data);
     if (data.customerId) {
       io.to(data.customerId).emit('order_status_updated', data);
@@ -140,10 +137,8 @@ io.on('connection', (socket) => {
     io.to(data.restaurantId).emit('new_order', data);
   });
 
-  // AI-Powered Chat message handler
-  // Live Chat & Support Message Handler
+  // AI-Powered Chat message handler & Live Support
   socket.on('send_message', async (data) => {
-    // Persist message to DB (non-AI messages only)
     if (!data.useAi && data.senderId && data.text) {
       try {
         await prisma.supportMessage.create({
@@ -161,17 +156,14 @@ io.on('connection', (socket) => {
       }
     }
 
-    // Forward message to specific recipient user room if specified
     if (data.recipientId) {
       io.to(data.recipientId).emit('receive_message', data);
     }
 
-    // Always broadcast user/staff support messages to admin_global room so Admin sees them live
     if (data.sender !== 'admin' && data.userRole !== 'ADMIN') {
       io.to('admin_global').emit('receive_message', data);
     }
 
-    // Optional: Gemini AI response for automated support if no human admin responds immediately
     if (data.useAi || data.recipientId === 'ai_support') {
       try {
         const userRole = data.userRole || 'Customer';
