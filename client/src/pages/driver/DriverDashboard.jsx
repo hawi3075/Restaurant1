@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
+import { Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import DriverSidebar from '../../components/DriverSidebar';
-import DashboardHeader from '../../components/DashboardHeader'; // Import your top header
+import DashboardHeader from '../../components/DashboardHeader';
 
 export default function DriverDashboard() {
   const { user, loading: authLoading } = useAuth();
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Show loading while checking auth (Orange theme)
   if (authLoading) {
@@ -26,15 +28,40 @@ export default function DriverDashboard() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-orange-50/40">
-      {/* Sidebar */}
-      <DriverSidebar />
+      {/* Mobile Overlay */}
+      {isMobileSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - Desktop */}
+      <div className="hidden lg:block">
+        <DriverSidebar />
+      </div>
+
+      {/* Sidebar - Mobile */}
+      <DriverSidebar 
+        isMobileOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
+      />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Navbar Header */}
-        <DashboardHeader title="Today's Deliveries" />
+        {/* Mobile Menu Button */}
+        <div className="lg:hidden flex items-center justify-between bg-white dark:bg-gray-800 p-4 border-b border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => setIsMobileSidebarOpen(true)}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+          >
+            <Menu className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+          </button>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white">Driver Portal</h1>
+          <div className="w-10"></div>
+        </div>
 
-        {/* Dynamic Nested Page Content via Outlet */}
+        <DashboardHeader title="Today's Deliveries" />
         <main className="flex-1 overflow-y-auto">
           <Outlet />
         </main>

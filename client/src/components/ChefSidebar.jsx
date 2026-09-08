@@ -7,13 +7,17 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
-export default function ChefSidebar() {
+export default function ChefSidebar({ isMobileOpen, onClose }) {
   const location = useLocation();
   const { t } = useLanguage();
   const [ordersExpanded, setOrdersExpanded] = useState(true);
 
   const isActive = (path) => location.pathname === path;
   const isParentActive = (paths) => paths.some(path => location.pathname.startsWith(path));
+
+  const handleLinkClick = () => {
+    if (onClose) onClose();
+  };
 
   const menuItems = [
     {
@@ -60,7 +64,13 @@ export default function ChefSidebar() {
   ];
 
   return (
-    <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 h-screen sticky top-0 flex flex-col shadow-sm">
+    <aside className={`w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 h-screen flex flex-col shadow-sm ${
+      isMobileOpen !== undefined
+        ? `fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 lg:relative lg:translate-x-0 ${
+            isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+          }`
+        : 'sticky top-0 hidden lg:flex'
+    }`}>
       {/* Header */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center space-x-3">
@@ -108,6 +118,7 @@ export default function ChefSidebar() {
                         <Link
                           key={subIndex}
                           to={subItem.path}
+                          onClick={handleLinkClick}
                           className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                             isActive(subItem.path)
                               ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/25'
@@ -137,6 +148,7 @@ export default function ChefSidebar() {
                 /* Regular Menu Item */
                 <Link
                   to={item.path}
+                  onClick={handleLinkClick}
                   className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
                     isActive(item.path)
                       ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/25'
