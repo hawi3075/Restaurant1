@@ -4,6 +4,7 @@ import API from '../../services/api';
 import { useSettings } from '../../context/SettingsContext';
 
 export default function AdminSettingsPage() {
+  const { refreshSettings } = useSettings();
   const [form, setForm] = useState({
     businessName: '',
     supportEmail: '',
