@@ -25,7 +25,10 @@ const allowedOrigins = [
   'http://maad.emerald-import-export.com',
   'https://maad.emerald-import-export.com',
   'https://emerald-import-export.com',
-  process.env.CORS_ORIGIN
+  'http://backend.emerald-import-export.com',
+  'https://backend.emerald-import-export.com',
+  process.env.CORS_ORIGIN,
+  process.env.FRONTEND_URL
 ].filter(Boolean); // Remove undefined values
 
 // Matches ANY Vercel preview/branch URL for this specific project
