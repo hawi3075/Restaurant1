@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, Plus, CheckCircle, XCircle, Search, Edit, X } from 'lucide-react';
+import { Store, Plus, CheckCircle, XCircle, Search, Edit, X, Trash2 } from 'lucide-react';
 import API from '../../services/api';
 import ImageUpload from '../../components/ImageUpload';
 
@@ -205,6 +205,13 @@ export default function AdminRestaurantsPage() {
                         ) : (
                           <CheckCircle className="w-3.5 h-3.5" />
                         )}
+                      </button>
+                      <button
+                        onClick={() => setDeleteTarget(res)}
+                        className="p-2 bg-gray-100 hover:bg-red-100 hover:text-red-600 rounded-lg transition cursor-pointer"
+                        title="Delete Restaurant"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </td>
                   </tr>
