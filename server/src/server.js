@@ -24,6 +24,7 @@ const allowedOrigins = [
   'https://restaurant1-rust-ten.vercel.app',
   'http://maad.emerald-import-export.com',
   'https://maad.emerald-import-export.com',
+  'https://emerald-import-export.com',
   process.env.CORS_ORIGIN
 ].filter(Boolean); // Remove undefined values
 
@@ -175,7 +176,7 @@ io.on('connection', (socket) => {
       try {
         const userRole = data.userRole || 'Customer';
         const response = await ai.models.generateContent({
-          model: 'gemini-3.6-flash',
+          model: 'gemini-2.5-flash',
           contents: data.text || data.message || '',
           config: {
             systemInstruction: `You are Ma'ad Support, an intelligent, friendly AI assistant for "Ma'ad", a restaurant and food delivery platform based in Adama, Ethiopia. 

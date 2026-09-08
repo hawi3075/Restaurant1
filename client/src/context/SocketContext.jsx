@@ -9,7 +9,9 @@ export const SocketProvider = ({ children }) => {
   const { user } = useAuth();
 
   useEffect(() => {
-    const socketConnection = io(import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000');
+    const socketConnection = io(import.meta.env.VITE_API_URL?.replace(/\/api$/, '') || 'http://localhost:5000', {
+      transports: ['polling']
+    });
     setSocket(socketConnection);
 
     return () => {
