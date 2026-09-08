@@ -5,8 +5,8 @@ const prisma = require('../config/prisma');
 const getBaseUrls = () => {
   const isProduction = process.env.NODE_ENV === 'production';
   return {
-    backend: isProduction ? 'https://restaurant1-qm7p.onrender.com' : 'http://localhost:5000',
-    frontend: isProduction ? 'https://restaurant1-rust-ten.vercel.app' : 'http://localhost:5173'
+    backend: process.env.BACKEND_URL || (isProduction ? 'https://restaurant1-qm7p.onrender.com' : 'http://localhost:5000'),
+    frontend: process.env.FRONTEND_URL || (isProduction ? 'https://maad.emerald-import-export.com' : 'http://localhost:5173')
   };
 };
 
