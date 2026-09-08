@@ -36,12 +36,7 @@ export default function WaiterDashboard() {
         />
       )}
 
-      {/* Sidebar - Desktop */}
-      <div className="hidden lg:block">
-        <WaiterSidebar />
-      </div>
-
-      {/* Sidebar - Mobile */}
+      {/* Sidebar - Responsive */}
       <WaiterSidebar 
         isMobileOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}

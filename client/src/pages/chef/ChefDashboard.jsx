@@ -36,12 +36,7 @@ export default function ChefDashboard() {
         />
       )}
 
-      {/* Sidebar - Desktop (hidden on mobile) */}
-      <div className="hidden lg:block">
-        <ChefSidebar />
-      </div>
-
-      {/* Sidebar - Mobile (slide-in) */}
+      {/* Sidebar - Responsive */}
       <ChefSidebar 
         isMobileOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}

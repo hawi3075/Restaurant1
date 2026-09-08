@@ -36,12 +36,7 @@ export default function DriverDashboard() {
         />
       )}
 
-      {/* Sidebar - Desktop */}
-      <div className="hidden lg:block">
-        <DriverSidebar />
-      </div>
-
-      {/* Sidebar - Mobile */}
+      {/* Sidebar - Responsive */}
       <DriverSidebar 
         isMobileOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
