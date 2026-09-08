@@ -379,17 +379,190 @@ export default function AdminDashboard() {
             <LayoutDashboard className="w-4 h-4" />
             <span>Dashboard</span>
           </Link>
-          
+
+          {/* ORDER MANAGEMENT */}
+          <div className="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+            Order Management
+          </div>
+
           <Link 
-            to="/admin/pos" 
+            to="/admin/orders/all" 
             onClick={closeSidebar}
             className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-gray-800 hover:text-white transition"
           >
             <ShoppingBag className="w-4 h-4 text-orange-500" />
-            <span>Point Of Sale</span>
+            <span>All Orders</span>
           </Link>
-          
-          {/* Add more mobile menu items here - copy from AdminSidebar component */}
+
+          <Link 
+            to="/admin/orders/pending" 
+            onClick={closeSidebar}
+            className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-gray-800 hover:text-white transition"
+          >
+            <ShoppingBag className="w-4 h-4 text-orange-500" />
+            <span>Pending Orders</span>
+          </Link>
+
+          {/* RESTAURANT MANAGEMENT */}
+          <div className="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+            Restaurant Management
+          </div>
+
+          <Link 
+            to="/admin/zones" 
+            onClick={closeSidebar}
+            className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-gray-800 hover:text-white transition"
+          >
+            <MapPin className="w-4 h-4 text-orange-500" />
+            <span>Zone Setup</span>
+          </Link>
+
+          <Link 
+            to="/admin/cuisine" 
+            onClick={closeSidebar}
+            className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-gray-800 hover:text-white transition"
+          >
+            <UtensilsCrossed className="w-4 h-4 text-orange-500" />
+            <span>Cuisine</span>
+          </Link>
+
+          <Link 
+            to="/admin/restaurants/add" 
+            onClick={closeSidebar}
+            className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-gray-800 hover:text-white transition"
+          >
+            <Store className="w-4 h-4 text-orange-500" />
+            <span>Add Restaurant</span>
+          </Link>
+
+          <Link 
+            to="/admin/restaurants/list" 
+            onClick={closeSidebar}
+            className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-gray-800 hover:text-white transition"
+          >
+            <Store className="w-4 h-4 text-orange-500" />
+            <span>Restaurants List</span>
+          </Link>
+
+          {/* FOOD MANAGEMENT */}
+          <div className="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+            Food Management
+          </div>
+
+          <Link 
+            to="/admin/food/categories" 
+            onClick={closeSidebar}
+            className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-gray-800 hover:text-white transition"
+          >
+            <Store className="w-4 h-4 text-orange-500" />
+            <span>Main Categories</span>
+          </Link>
+
+          <Link 
+            to="/admin/food/items" 
+            onClick={closeSidebar}
+            className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-gray-800 hover:text-white transition"
+          >
+            <UtensilsCrossed className="w-4 h-4 text-orange-500" />
+            <span>Foods</span>
+          </Link>
+
+          {/* DELIVERYMAN MANAGEMENT */}
+          <div className="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+            Deliveryman Management
+          </div>
+
+          <Link 
+            to="/admin/delivery/list" 
+            onClick={closeSidebar}
+            className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-gray-800 hover:text-white transition"
+          >
+            <Bike className="w-4 h-4 text-orange-500" />
+            <span>Deliveryman</span>
+          </Link>
+
+          {/* EMPLOYEE MANAGEMENT */}
+          <div className="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+            Employee Management
+          </div>
+
+          <Link 
+            to="/admin/employees/roles" 
+            onClick={closeSidebar}
+            className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-gray-800 hover:text-white transition"
+          >
+            <ShieldCheck className="w-4 h-4 text-orange-500" />
+            <span>Employee Role</span>
+          </Link>
+
+          <Link 
+            to="/admin/employees/list" 
+            onClick={closeSidebar}
+            className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-gray-800 hover:text-white transition"
+          >
+            <ShieldCheck className="w-4 h-4 text-orange-500" />
+            <span>Employees List</span>
+          </Link>
+
+          {/* CUSTOMER MANAGEMENT */}
+          <div className="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+            Customer Management
+          </div>
+
+          <Link 
+            to="/admin/customers" 
+            onClick={closeSidebar}
+            className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-gray-800 hover:text-white transition"
+          >
+            <Users className="w-4 h-4 text-orange-500" />
+            <span>Customers</span>
+          </Link>
+
+          <Link 
+            to="/admin/reviews" 
+            onClick={closeSidebar}
+            className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-gray-800 hover:text-white transition"
+          >
+            <Star className="w-4 h-4 text-orange-500" />
+            <span>Review Management</span>
+          </Link>
+
+          {/* HELP & SUPPORT */}
+          <div className="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+            Help & Support
+          </div>
+
+          <Link 
+            to="/admin/support/messages" 
+            onClick={closeSidebar}
+            className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-gray-800 hover:text-white transition"
+          >
+            <MessageSquare className="w-4 h-4 text-orange-500" />
+            <span>Contact Messages</span>
+          </Link>
+
+          <Link 
+            to="/admin/support/chat" 
+            onClick={closeSidebar}
+            className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-gray-800 hover:text-white transition"
+          >
+            <Headphones className="w-4 h-4 text-orange-500" />
+            <span>Live Support Chat</span>
+          </Link>
+
+          {/* SYSTEM SETUP */}
+          <div className="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+            System Setup
+          </div>
+
+          <Link 
+            to="/admin/settings" 
+            onClick={closeSidebar}
+            className="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl hover:bg-gray-800 hover:text-white transition"
+          >
+            <Settings className="w-4 h-4 text-orange-500" />
+            <span>Business Setup</span>
+          </Link>
         </div>
       </aside>
       
