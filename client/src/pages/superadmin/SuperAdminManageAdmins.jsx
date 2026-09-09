@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Edit, Trash2, Search, Shield, Crown, Mail, Phone, Store } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Search, Shield, Crown, Mail, Phone, Store, Eye, EyeOff } from 'lucide-react';
 import showToast from '../../components/Toast';
 import API from '../../services/api';
 
@@ -10,6 +10,7 @@ export default function SuperAdminManageAdmins() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -132,7 +133,7 @@ export default function SuperAdminManageAdmins() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="bg-gradient-to-br from-purple-500 to-purple-700 text-white p-4 rounded-2xl shadow-lg">
+              <div className="bg-gradient-to-br from-orange-500 to-orange-700 text-white p-4 rounded-2xl shadow-lg">
                 <Crown className="w-8 h-8" />
               </div>
               <div>
@@ -146,7 +147,7 @@ export default function SuperAdminManageAdmins() {
                 setFormData({ name: '', email: '', password: '', phone: '', restaurantId: '' });
                 setShowModal(true);
               }}
-              className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg hover:shadow-xl"
+              className="flex items-center space-x-2 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg hover:shadow-xl"
             >
               <Plus className="w-5 h-5" />
               <span>Add New Admin</span>
@@ -163,7 +164,7 @@ export default function SuperAdminManageAdmins() {
               placeholder="Search admins by name or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-medium"
+              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm font-medium"
             />
           </div>
         </div>
@@ -172,7 +173,7 @@ export default function SuperAdminManageAdmins() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           {loading ? (
             <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent"></div>
             </div>
           ) : filteredAdmins.length === 0 ? (
             <div className="text-center py-12">
@@ -185,26 +186,26 @@ export default function SuperAdminManageAdmins() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gradient-to-r from-purple-50 to-purple-100 border-b border-purple-200">
+                <thead className="bg-gradient-to-r from-orange-50 to-orange-100 border-b border-orange-200">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Admin</th>
-                    <th className="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Contact</th>
-                    <th className="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Restaurant</th>
-                    <th className="px-6 py-4 text-left text-xs font-black text-purple-900 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-right text-xs font-black text-purple-900 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-orange-900 uppercase tracking-wider">Admin</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-orange-900 uppercase tracking-wider">Contact</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-orange-900 uppercase tracking-wider">Restaurant</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-orange-900 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-right text-xs font-black text-orange-900 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {filteredAdmins.map((admin) => (
-                    <tr key={admin.id} className="hover:bg-purple-50/30 transition">
+                    <tr key={admin.id} className="hover:bg-orange-50/30 transition">
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-3">
-                          <div className="bg-gradient-to-br from-purple-500 to-purple-700 text-white w-10 h-10 rounded-xl flex items-center justify-center font-bold shadow-sm">
+                          <div className="bg-gradient-to-br from-orange-500 to-orange-700 text-white w-10 h-10 rounded-xl flex items-center justify-center font-bold shadow-sm">
                             {admin.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
                             <p className="font-bold text-gray-900">{admin.name}</p>
-                            <div className="flex items-center space-x-1 text-xs text-purple-600">
+                            <div className="flex items-center space-x-1 text-xs text-orange-600">
                               <Shield className="w-3 h-3" />
                               <span>Admin</span>
                             </div>
@@ -318,16 +319,29 @@ export default function SuperAdminManageAdmins() {
                 <label className="block text-sm font-bold text-gray-700 mb-2">
                   Password {!editingAdmin && '*'}
                 </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required={!editingAdmin}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-medium"
-                  placeholder={editingAdmin ? 'Leave blank to keep current password' : 'Enter password (min 6 characters)'}
-                  minLength="6"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    required={!editingAdmin}
+                    className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm font-medium"
+                    placeholder={editingAdmin ? 'Leave blank to keep current password' : 'Enter password (min 6 characters)'}
+                    minLength="6"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
               </div>
 
               {/* Phone */}

@@ -83,7 +83,7 @@ export default function WaiterSidebar({ isMobileOpen, onClose }) {
       </div>
 
       {/* Navigation Menu */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3">
+      <nav className="flex-1 overflow-y-auto py-4 px-3" style={{ overflowAnchor: 'none' }}>
         <div className="space-y-1">
           {menuItems.map((item, index) => (
             <div key={index}>
