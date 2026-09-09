@@ -4,12 +4,14 @@ import { MapPin, Clock, Star, Bike, Phone, ArrowLeft, Eye, MessageSquare, Shoppi
 import Navbar from '../../components/Navbar';
 import API from '../../services/api';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { getRestaurantImageUrl, getFoodImageUrl } from '../../utils/imageUtils';
 
 export default function RestaurantDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { t } = useLanguage();
   const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
