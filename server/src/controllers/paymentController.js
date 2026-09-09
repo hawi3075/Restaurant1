@@ -6,7 +6,7 @@ const getBaseUrls = () => {
   // Always use production URLs if BACKEND_URL/FRONTEND_URL env vars are set,
   // otherwise check NODE_ENV, with hardcoded production URLs as fallback
   const backend = process.env.BACKEND_URL || 
-                  (process.env.NODE_ENV === 'production' ? 'https://restaurant1-qm7p.onrender.com' : 'http://localhost:5000');
+                  (process.env.NODE_ENV === 'production' ? 'https://backend.emerald-import-export.com' : 'http://localhost:5000');
   
   const frontend = process.env.FRONTEND_URL || 
                    (process.env.NODE_ENV === 'production' ? 'https://maad.emerald-import-export.com' : 'http://localhost:5173');
