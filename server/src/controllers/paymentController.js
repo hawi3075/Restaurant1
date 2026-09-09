@@ -70,10 +70,9 @@ const initializeChapaPayment = async (req, res) => {
         last_name: customerLastName,
         phone_number: customerPhone,
         tx_ref,
-        // MUST be a clean base URL without dynamic path variables or query parameters to pass Chapa's URL validation
-        callback_url: `${urls.backend}/api/payments/callback`,
-        // Query parameters are fine for return_url (browser redirect)
-        return_url: `${urls.frontend}/order-success?tx_ref=${tx_ref}&orderId=${orderId}`,
+        // Hardcoded clean URL to completely avoid environment variable template parsing bugs
+        callback_url: 'https://backend.emerald-import-export.com/api/payments/callback',
+        return_url: `https://maad.emerald-import-export.com/order-success?tx_ref=${tx_ref}&orderId=${orderId}`,
         customization: {
           title: "Maad Payment",
           description: `Order ${orderId}`
@@ -134,7 +133,6 @@ const initializeChapaPayment = async (req, res) => {
 // Chapa Callback Handler (Called by Chapa after payment)
 const handleChapaCallback = async (req, res) => {
   try {
-    // Chapa sends tx_ref either via query string or body payload
     const tx_ref = req.query.tx_ref || req.body?.tx_ref || req.params.tx_ref;
 
     console.log(`📥 Chapa Callback received for tx_ref: ${tx_ref}`);
