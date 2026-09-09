@@ -3,16 +3,10 @@ const prisma = require('../config/prisma');
 
 // Get base URLs from environment or use defaults
 const getBaseUrls = () => {
-  // Always use production URLs if BACKEND_URL/FRONTEND_URL env vars are set,
-  // otherwise check NODE_ENV, with hardcoded production URLs as fallback
-  const backend = process.env.BACKEND_URL || 
-                  (process.env.NODE_ENV === 'production' ? 'https://backend.emerald-import-export.com' : 'http://localhost:5000');
+  const backend = process.env.BACKEND_URL || 'https://backend.emerald-import-export.com';
+  const frontend = process.env.FRONTEND_URL || 'https://maad.emerald-import-export.com';
   
-  const frontend = process.env.FRONTEND_URL || 
-                   (process.env.NODE_ENV === 'production' ? 'https://maad.emerald-import-export.com' : 'http://localhost:5173');
-  
-  console.log('🔗 Payment URLs:', { backend, frontend, env: process.env.NODE_ENV });
-  
+  console.log('🔗 Payment URLs:', { backend, frontend });
   return { backend, frontend };
 };
 
@@ -36,6 +30,19 @@ const initializeChapaPayment = async (req, res) => {
     if (!secretKey) {
       return res.status(400).json({ error: 'Chapa Secret Key is not configured on the server.' });
     }
+
+    // Save pending payment record so we can map tx_ref to orderId in the callback without query params
+    await prisma.payment.upsert({
+      where: { orderId },
+      update: { transactionId: tx_ref, status: 'PENDING', amount: parseFloat(amount) },
+      create: {
+        orderId,
+        amount: parseFloat(amount),
+        method: 'CHAPA',
+        status: 'PENDING',
+        transactionId: tx_ref,
+      },
+    });
 
     // Clean and validate inputs for Chapa
     let customerEmail = (email || '').trim();
@@ -63,7 +70,9 @@ const initializeChapaPayment = async (req, res) => {
         last_name: customerLastName,
         phone_number: customerPhone,
         tx_ref,
-        callback_url: `${urls.backend}/api/payments/callback/${tx_ref}?orderId=${orderId}`,
+        // MUST NOT contain query parameters to pass Chapa's URL validation
+        callback_url: `${urls.backend}/api/payments/callback/${tx_ref}`,
+        // Query parameters are fine for return_url (browser redirect)
         return_url: `${urls.frontend}/order-success?tx_ref=${tx_ref}&orderId=${orderId}`,
         customization: {
           title: "Maad Payment",
@@ -126,9 +135,15 @@ const initializeChapaPayment = async (req, res) => {
 const handleChapaCallback = async (req, res) => {
   try {
     const { tx_ref } = req.params;
-    const orderId = req.query.orderId || req.body?.orderId;
 
-    console.log(`📥 Chapa Callback received for tx_ref: ${tx_ref}, orderId: ${orderId}`);
+    console.log(`📥 Chapa Callback received for tx_ref: ${tx_ref}`);
+
+    // Look up orderId using tx_ref from database
+    const paymentRecord = await prisma.payment.findFirst({
+      where: { transactionId: tx_ref },
+    });
+
+    const orderId = paymentRecord ? paymentRecord.orderId : (req.query.orderId || req.body?.orderId);
 
     const secretKey = (process.env.CHAPA_SECRET_KEY || '').trim();
     const verifyConfig = {
@@ -144,44 +159,36 @@ const handleChapaCallback = async (req, res) => {
       console.log(`✅ Payment verified successfully for tx_ref: ${tx_ref}`);
       
       if (orderId) {
-        // Check if payment already exists
-        const existingPayment = await prisma.payment.findUnique({ where: { orderId } });
-        
-        if (!existingPayment) {
-          // Create payment record
-          await prisma.payment.create({
-            data: {
-              orderId,
-              amount: parseFloat(response.data.data?.amount || 0),
-              method: 'CHAPA',
-              status: 'COMPLETED',
-              transactionId: tx_ref,
-            },
-          });
+        // Update payment record to COMPLETED
+        await prisma.payment.updateMany({
+          where: { orderId },
+          data: {
+            status: 'COMPLETED',
+            transactionId: tx_ref,
+            amount: parseFloat(response.data.data?.amount || 0),
+          },
+        });
 
-          // Update order status to CONFIRMED
-          const updatedOrder = await prisma.order.update({
-            where: { id: orderId },
-            data: { status: 'CONFIRMED' },
-            include: {
-              items: { include: { food: true } },
-              customer: { select: { name: true, phone: true, email: true } },
-              restaurant: true,
-              address: true,
-            },
-          });
+        // Update order status to CONFIRMED
+        const updatedOrder = await prisma.order.update({
+          where: { id: orderId },
+          data: { status: 'CONFIRMED' },
+          include: {
+            items: { include: { food: true } },
+            customer: { select: { name: true, phone: true, email: true } },
+            restaurant: true,
+            address: true,
+          },
+        });
 
-          // Broadcast real-time notification via Socket.IO
-          const io = req.app.get('io');
-          if (io && updatedOrder) {
-            io.to(updatedOrder.restaurantId).emit('new_order', updatedOrder);
-            io.to('admin_global').emit('new_order', updatedOrder);
-          }
-
-          console.log(`✅ Order ${orderId} confirmed and notification sent`);
-        } else {
-          console.log(`ℹ️  Payment already exists for order ${orderId}`);
+        // Broadcast real-time notification via Socket.IO
+        const io = req.app.get('io');
+        if (io && updatedOrder) {
+          io.to(updatedOrder.restaurantId).emit('new_order', updatedOrder);
+          io.to('admin_global').emit('new_order', updatedOrder);
         }
+
+        console.log(`✅ Order ${orderId} confirmed and notification sent`);
       }
 
       return res.status(200).json({ 
@@ -210,8 +217,12 @@ const handleChapaCallback = async (req, res) => {
 const verifyChapaPayment = async (req, res) => {
   try {
     const { tx_ref } = req.params;
-    const orderId = req.query.orderId || req.body?.orderId;
     const wantsJson = req.query.format === 'json' || req.headers.accept?.includes('application/json');
+
+    const paymentRecord = await prisma.payment.findFirst({
+      where: { transactionId: tx_ref },
+    });
+    const orderId = req.query.orderId || req.body?.orderId || (paymentRecord ? paymentRecord.orderId : null);
 
     console.log(`🔍 Verifying payment: tx_ref=${tx_ref}, orderId=${orderId}`);
 
@@ -227,21 +238,15 @@ const verifyChapaPayment = async (req, res) => {
     if (response.data.status === 'success' || response.data.data?.status === 'success') {
       let updatedOrder = null;
       if (orderId) {
-        // Record payment in database if not already created
-        const existingPayment = await prisma.payment.findUnique({ where: { orderId } });
-        if (!existingPayment) {
-          await prisma.payment.create({
-            data: {
-              orderId,
-              amount: parseFloat(response.data.data?.amount || 0),
-              method: 'CHAPA',
-              status: 'COMPLETED',
-              transactionId: tx_ref,
-            },
-          });
-        }
+        await prisma.payment.updateMany({
+          where: { orderId },
+          data: {
+            status: 'COMPLETED',
+            transactionId: tx_ref,
+            amount: parseFloat(response.data.data?.amount || 0),
+          },
+        });
 
-        // Update order status to CONFIRMED
         updatedOrder = await prisma.order.update({
           where: { id: orderId },
           data: { status: 'CONFIRMED' },
@@ -253,7 +258,6 @@ const verifyChapaPayment = async (req, res) => {
           },
         });
 
-        // Broadcast real-time notification to Chef and Staff via Socket.IO
         const io = req.app.get('io');
         if (io && updatedOrder) {
           io.to(updatedOrder.restaurantId).emit('new_order', updatedOrder);
@@ -304,18 +308,16 @@ const createPayment = async (req, res) => {
       return res.status(404).json({ error: 'Associated order not found.' });
     }
 
-    // Create payment record in Neon database
     const payment = await prisma.payment.create({
       data: {
         orderId,
         amount: parseFloat(amount),
-        method, // e.g., 'CASH', 'TELEBIRR'
+        method,
         status: 'COMPLETED',
         transactionId: transactionId || `TXN-${Date.now()}`,
       },
     });
 
-    // Automatically update order confirmation if payment is completed
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
       data: { status: 'CONFIRMED' },
@@ -327,7 +329,6 @@ const createPayment = async (req, res) => {
       },
     });
 
-    // Broadcast real-time notification to Chef and Staff via Socket.IO
     const io = req.app.get('io');
     if (io && updatedOrder) {
       io.to(updatedOrder.restaurantId).emit('new_order', updatedOrder);
