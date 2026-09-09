@@ -10,6 +10,113 @@ const getBaseUrls = () => {
   return { backend, frontend };
 };
 
+// Temporary storage for pending orders (in production, use Redis or database)
+const pendingOrders = new Map();
+
+// Initialize Chapa Payment WITH Order Data (Order created after payment)
+const initializeChapaPaymentWithOrder = async (req, res) => {
+  try {
+    const { orderData, amount, email, first_name, last_name, phone_number } = req.body;
+
+    if (!orderData || !amount) {
+      return res.status(400).json({ error: 'Please provide order data and amount.' });
+    }
+
+    const tx_ref = `TX-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const secretKey = (process.env.CHAPA_SECRET_KEY || '').trim();
+
+    if (!secretKey) {
+      return res.status(400).json({ error: 'Chapa Secret Key is not configured on the server.' });
+    }
+
+    // Store order data temporarily (will be created after payment succeeds)
+    pendingOrders.set(tx_ref, orderData);
+
+    // Clean and validate inputs for Chapa
+    let customerEmail = (email || '').trim();
+    if (!customerEmail || customerEmail.toLowerCase().endsWith('@example.com') || customerEmail.toLowerCase().endsWith('@test.com')) {
+      customerEmail = 'customer@gmail.com';
+    }
+
+    const customerFirstName = (first_name || '').trim() || 'Valued';
+    const customerLastName = (last_name || '').trim() || customerFirstName;
+    
+    let customerPhone = (phone_number || '').trim().replace(/[\s-]/g, '');
+    if (!customerPhone || customerPhone.length < 9) {
+      customerPhone = '0912345678';
+    }
+
+    const urls = getBaseUrls();
+
+    const response = await axios.post(
+      'https://api.chapa.co/v1/transaction/initialize',
+      {
+        amount: parseFloat(amount).toFixed(2),
+        currency: 'ETB',
+        email: customerEmail,
+        first_name: customerFirstName,
+        last_name: customerLastName,
+        phone_number: customerPhone,
+        tx_ref,
+        callback_url: `${urls.backend}/api/payments/callback/${tx_ref}`,
+        return_url: `${urls.frontend}/order-success?tx_ref=${tx_ref}`,
+        customization: {
+          title: "Maad Payment",
+          description: `Order Payment`
+        }
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${secretKey}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (response.data && response.data.status === 'success' && response.data.data?.checkout_url) {
+      return res.status(200).json({
+        success: true,
+        checkout_url: response.data.data.checkout_url,
+        tx_ref,
+      });
+    }
+
+    res.status(400).json({
+      error: response.data?.message || 'Chapa initialization failed',
+      details: response.data,
+    });
+  } catch (error) {
+    console.error('Chapa Initialization Error:', error.response?.data || error.message);
+    
+    let errMsg = 'Payment initialization failed.';
+    const responseMessage = error.response?.data?.message;
+
+    if (responseMessage) {
+      if (typeof responseMessage === 'string') {
+        errMsg = responseMessage;
+      } else if (typeof responseMessage === 'object') {
+        if (responseMessage.email) {
+          errMsg = 'Invalid email address provided for payment. Please use a valid email address (e.g. user@gmail.com).';
+        } else if (responseMessage.phone_number) {
+          errMsg = 'Invalid phone number provided for payment. Please use a valid Ethiopian phone number (e.g. 0912345678).';
+        } else {
+          errMsg = Object.values(responseMessage).flat().join(', ');
+        }
+      }
+    } else if (error.response?.data?.error) {
+      errMsg = typeof error.response.data.error === 'string' ? error.response.data.error : JSON.stringify(error.response.data.error);
+    } else if (error.message) {
+      errMsg = error.message;
+    }
+
+    const statusCode = error.response?.status && error.response.status >= 400 && error.response.status < 600
+      ? error.response.status
+      : 500;
+
+    res.status(statusCode).json({ error: errMsg });
+  }
+};
+
 // Initialize Chapa Payment
 const initializeChapaPayment = async (req, res) => {
   try {
@@ -369,7 +476,8 @@ const getPaymentByOrderId = async (req, res) => {
 };
 
 module.exports = { 
-  initializeChapaPayment, 
+  initializeChapaPayment,
+  initializeChapaPaymentWithOrder,
   handleChapaCallback,
   verifyChapaPayment, 
   createPayment, 

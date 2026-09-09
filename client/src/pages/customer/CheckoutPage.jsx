@@ -870,15 +870,15 @@ export default function CheckoutPage() {
         contactPhone: contactInfo.phone.trim(),
       };
 
-      // 1. Create Order
-      const orderResponse = await API.post('/orders', orderData);
-      const createdOrder = orderResponse.data.order;
-
-      // 2. Handle Payment Method Selection
+      // Handle Payment Method Selection
       if (paymentMethod === 'CHAPA') {
+        // For Chapa: Create order WITH payment first, then redirect
+        // The order will be created AFTER successful payment via callback
         const cleanAmount = parseFloat((total || 0).toFixed(2));
-        const chapaResponse = await API.post('/payments/initialize', {
-          orderId: createdOrder.id,
+        
+        // Send order data to backend for temporary storage
+        const chapaResponse = await API.post('/payments/initialize-with-order', {
+          orderData,
           amount: cleanAmount,
           email: contactInfo.email.trim(),
           first_name: firstName,
@@ -887,16 +887,16 @@ export default function CheckoutPage() {
         });
 
         if (chapaResponse.data && chapaResponse.data.checkout_url) {
-          // Only clear the items that were actually checked out — anything
-          // left unselected should remain in the cart for later.
-          selectedCartItems.forEach((item) => {
-            if (typeof removeFromCart === 'function') removeFromCart(item.id);
-          });
-          if (selectedCartItems.length === cart.length) clearCart();
+          // Clear cart ONLY after redirecting (items will be removed on payment success)
+          sessionStorage.setItem('pendingOrderItems', JSON.stringify(selectedCartItems.map(i => i.id)));
           window.location.href = chapaResponse.data.checkout_url;
           return;
         }
       } else {
+        // For other payment methods (CASH, TELEBIRR): Create order first, then payment
+        const orderResponse = await API.post('/orders', orderData);
+        const createdOrder = orderResponse.data.order;
+        
         await API.post('/payments', {
           orderId: createdOrder.id,
           amount: total,

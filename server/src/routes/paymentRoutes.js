@@ -4,6 +4,7 @@ const {
   createPayment, 
   getPaymentByOrderId, 
   initializeChapaPayment,
+  initializeChapaPaymentWithOrder,
   handleChapaCallback, 
   verifyChapaPayment 
 } = require('../controllers/paymentController');
@@ -11,6 +12,7 @@ const { verifyToken } = require('../middleware/auth');
 
 // Chapa Payment Routes
 router.post('/initialize', verifyToken, initializeChapaPayment);
+router.post('/initialize-with-order', verifyToken, initializeChapaPaymentWithOrder);
 
 // Chapa Webhook Callbacks (Chapa posts to the clean base URL)
 router.post('/callback', handleChapaCallback);
