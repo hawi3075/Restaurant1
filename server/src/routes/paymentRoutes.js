@@ -11,8 +11,12 @@ const { verifyToken } = require('../middleware/auth');
 
 // Chapa Payment Routes
 router.post('/initialize', verifyToken, initializeChapaPayment);
-router.post('/callback/:tx_ref', handleChapaCallback); // Chapa callback endpoint
-router.get('/callback/:tx_ref', handleChapaCallback);  // Chapa callback endpoint (GET)
+
+// Chapa Webhook Callbacks (Chapa posts to the clean base URL)
+router.post('/callback', handleChapaCallback);
+router.post('/callback/:tx_ref', handleChapaCallback); // Optional fallback if tx_ref is in path
+router.get('/callback/:tx_ref', handleChapaCallback);  // Fallback GET callback
+
 router.get('/verify/:tx_ref', verifyChapaPayment);     // Manual verification or return URL
 
 // Existing Payment Routes

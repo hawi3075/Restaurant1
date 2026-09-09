@@ -70,8 +70,8 @@ const initializeChapaPayment = async (req, res) => {
         last_name: customerLastName,
         phone_number: customerPhone,
         tx_ref,
-        // MUST NOT contain query parameters to pass Chapa's URL validation
-        callback_url: `${urls.backend}/api/payments/callback/${tx_ref}`,
+        // MUST be a clean base URL without dynamic path variables or query parameters to pass Chapa's URL validation
+        callback_url: `${urls.backend}/api/payments/callback`,
         // Query parameters are fine for return_url (browser redirect)
         return_url: `${urls.frontend}/order-success?tx_ref=${tx_ref}&orderId=${orderId}`,
         customization: {
@@ -134,9 +134,14 @@ const initializeChapaPayment = async (req, res) => {
 // Chapa Callback Handler (Called by Chapa after payment)
 const handleChapaCallback = async (req, res) => {
   try {
-    const { tx_ref } = req.params;
+    // Chapa sends tx_ref either via query string or body payload
+    const tx_ref = req.query.tx_ref || req.body?.tx_ref || req.params.tx_ref;
 
     console.log(`📥 Chapa Callback received for tx_ref: ${tx_ref}`);
+
+    if (!tx_ref) {
+      return res.status(400).json({ success: false, error: 'Missing transaction reference' });
+    }
 
     // Look up orderId using tx_ref from database
     const paymentRecord = await prisma.payment.findFirst({
