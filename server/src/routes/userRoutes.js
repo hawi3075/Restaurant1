@@ -27,11 +27,11 @@ router.get('/addresses', verifyToken, getAddresses);
 router.put('/addresses/:id', verifyToken, updateAddress);
 router.delete('/addresses/:id', verifyToken, deleteAddress);
 
-// Admin routes
-router.get('/customers', verifyToken, verifyRole(['ADMIN']), getAllCustomers);
-router.delete('/customers/:id', verifyToken, verifyRole(['ADMIN']), deleteCustomer);
-router.get('/staff', verifyToken, verifyRole(['ADMIN']), getAllStaff);
-router.post('/staff', verifyToken, verifyRole(['ADMIN']), createStaff);
-router.delete('/staff/:id', verifyToken, verifyRole(['ADMIN']), deleteStaff);
+// Admin and Super Admin routes
+router.get('/customers', verifyToken, verifyRole(['ADMIN', 'SUPER_ADMIN']), getAllCustomers);
+router.delete('/customers/:id', verifyToken, verifyRole(['ADMIN', 'SUPER_ADMIN']), deleteCustomer);
+router.get('/staff', verifyToken, verifyRole(['ADMIN', 'SUPER_ADMIN']), getAllStaff);
+router.post('/staff', verifyToken, verifyRole(['ADMIN', 'SUPER_ADMIN']), createStaff);
+router.delete('/staff/:id', verifyToken, verifyRole(['ADMIN', 'SUPER_ADMIN']), deleteStaff);
 
 module.exports = router;

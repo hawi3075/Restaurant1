@@ -17,8 +17,8 @@ const {
 // Public settings endpoint for customer & staff dashboards
 router.get('/settings', getSettings);
 
-// All subsequent endpoints require admin access
-router.use(verifyToken, verifyRole(['ADMIN']));
+// All subsequent endpoints require admin or super admin access
+router.use(verifyToken, verifyRole(['ADMIN', 'SUPER_ADMIN']));
 
 // Settings update (Admin only)
 router.put('/settings', updateSettings);

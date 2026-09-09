@@ -29,8 +29,15 @@ const initializeChapaPaymentWithOrder = async (req, res) => {
       return res.status(400).json({ error: 'Chapa Secret Key is not configured on the server.' });
     }
 
-    // Store order data temporarily in memory (created in DB after payment verification)
-    pendingOrders.set(tx_ref, orderData);
+    // Add customerId from authenticated user and store temporarily
+    const completeOrderData = {
+      ...orderData,
+      customerId: req.user.id,  // Add customer ID from authenticated user
+      total: amount,
+    };
+    
+    pendingOrders.set(tx_ref, completeOrderData);
+    console.log(`💾 Stored pending order for tx_ref: ${tx_ref}, customerId: ${req.user.id}`);
 
     // Clean and validate inputs for Chapa
     let customerEmail = (email || '').trim();

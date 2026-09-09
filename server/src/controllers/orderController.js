@@ -164,10 +164,10 @@ const getOrders = async (req, res) => {
       filters.customerId = userId;
     } else if (['CHEF', 'WAITER'].includes(role) && restaurantId) {
       filters.restaurantId = restaurantId;
-    } else if (role !== 'ADMIN' && !['CHEF', 'WAITER', 'DRIVER'].includes(role)) {
+    } else if (!['ADMIN', 'SUPER_ADMIN', 'CHEF', 'WAITER', 'DRIVER'].includes(role)) {
       return res.status(403).json({ error: 'Unauthorized access to orders.' });
     }
-    // ADMIN, DRIVER, or staff without restaurantId see all orders
+    // ADMIN, SUPER_ADMIN, DRIVER, or staff without restaurantId see all orders
 
     const orders = await prisma.order.findMany({
       where: filters,

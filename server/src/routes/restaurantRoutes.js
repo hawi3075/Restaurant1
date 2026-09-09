@@ -28,9 +28,9 @@ router.get('/:id/tables', async (req, res) => {
   }
 });
 
-// Admin only routes
-router.post('/', verifyToken, verifyRole(['ADMIN']), createRestaurant);
-router.put('/:id', verifyToken, verifyRole(['ADMIN']), updateRestaurant);
-router.delete('/:id', verifyToken, verifyRole(['ADMIN']), deleteRestaurant);
+// Admin and Super Admin only routes
+router.post('/', verifyToken, verifyRole(['ADMIN', 'SUPER_ADMIN']), createRestaurant);
+router.put('/:id', verifyToken, verifyRole(['ADMIN', 'SUPER_ADMIN']), updateRestaurant);
+router.delete('/:id', verifyToken, verifyRole(['ADMIN', 'SUPER_ADMIN']), deleteRestaurant);
 
 module.exports = router;
