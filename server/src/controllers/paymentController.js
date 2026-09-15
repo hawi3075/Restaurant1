@@ -18,8 +18,24 @@ const initializeChapaPaymentWithOrder = async (req, res) => {
   try {
     const { orderData, amount, email, first_name, last_name, phone_number } = req.body;
 
+    console.log('🔍 Payment initialization with order data:');
+    console.log('📦 orderData:', JSON.stringify(orderData, null, 2));
+    console.log('💰 amount:', amount);
+    console.log('👤 user:', req.user?.id);
+
     if (!orderData || !amount) {
       return res.status(400).json({ error: 'Please provide order data and amount.' });
+    }
+
+    // Validate essential order fields
+    if (!orderData.restaurantId) {
+      console.log('❌ Missing restaurantId in orderData');
+      return res.status(400).json({ error: 'Restaurant ID is required in order data.' });
+    }
+
+    if (!orderData.items || !Array.isArray(orderData.items) || orderData.items.length === 0) {
+      console.log('❌ Missing or empty items in orderData');
+      return res.status(400).json({ error: 'Order items are required.' });
     }
 
     const tx_ref = `TX-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -33,11 +49,23 @@ const initializeChapaPaymentWithOrder = async (req, res) => {
     const completeOrderData = {
       ...orderData,
       customerId: req.user.id,  // Add customer ID from authenticated user
-      total: amount,
+      totalAmount: amount,
+      deliveryFee: orderData.deliveryFee || 0,
     };
+    
+    // Ensure items have proper field names for database
+    if (completeOrderData.items) {
+      completeOrderData.items = completeOrderData.items.map(item => ({
+        foodId: item.foodId,
+        quantity: item.quantity || 1,
+        price: item.price || item.unitPrice || 0,  // Support both price and unitPrice
+        name: item.name || 'Item'
+      }));
+    }
     
     pendingOrders.set(tx_ref, completeOrderData);
     console.log(`💾 Stored pending order for tx_ref: ${tx_ref}, customerId: ${req.user.id}`);
+    console.log(`📋 Complete order data:`, JSON.stringify(completeOrderData, null, 2));
 
     // Clean and validate inputs for Chapa
     let customerEmail = (email || '').trim();
@@ -216,19 +244,61 @@ const initializeChapaPayment = async (req, res) => {
 // Helper function to create order in DB after payment verification succeeds
 const createOrderFromPendingData = async (tx_ref, verifiedAmount) => {
   const orderPayload = pendingOrders.get(tx_ref);
-  if (!orderPayload) return null;
+  console.log(`🔍 Debug: Attempting to create order for tx_ref: ${tx_ref}`);
+  console.log(`🔍 Debug: Order payload:`, orderPayload);
+  
+  if (!orderPayload) {
+    console.log(`❌ No order payload found for tx_ref: ${tx_ref}`);
+    return null;
+  }
 
   try {
+    // Validate required fields
+    if (!orderPayload.customerId) {
+      console.log(`❌ Missing customerId in order payload`);
+      return null;
+    }
+
+    if (!orderPayload.restaurantId) {
+      console.log(`❌ Missing restaurantId in order payload`);
+      return null;
+    }
+
+    if (!orderPayload.items || orderPayload.items.length === 0) {
+      console.log(`❌ Missing or empty items in order payload`);
+      return null;
+    }
+
+    // Calculate total amount from items and delivery
+    let calculatedTotal = 0;
+    orderPayload.items.forEach(item => {
+      calculatedTotal += (item.price || 0) * (item.quantity || 0);
+    });
+    calculatedTotal += (orderPayload.deliveryFee || 0);
+
+    console.log(`🔍 Debug: Creating order with customerId: ${orderPayload.customerId}, restaurantId: ${orderPayload.restaurantId}`);
+    console.log(`🔍 Debug: Order items:`, orderPayload.items);
+
     // Create the order with status PENDING since it's a new order awaiting chef acceptance
     const newOrder = await prisma.order.create({
       data: {
-        ...orderPayload,
+        customerId: orderPayload.customerId,
+        restaurantId: orderPayload.restaurantId,
+        orderType: orderPayload.orderType || 'DELIVERY',
+        totalAmount: calculatedTotal,
+        deliveryFee: orderPayload.deliveryFee || 0,
+        discount: orderPayload.discount || 0,
+        specialInstructions: orderPayload.specialInstructions || null,
+        addressId: orderPayload.addressId || null,
+        deliveryAddress: orderPayload.deliveryAddress || null,
+        latitude: orderPayload.latitude ? parseFloat(orderPayload.latitude) : null,
+        longitude: orderPayload.longitude ? parseFloat(orderPayload.longitude) : null,
         status: 'PENDING',  // Changed from CONFIRMED to PENDING for chef acceptance workflow
         items: {
           create: orderPayload.items?.map(item => ({
             foodId: item.foodId,
             quantity: item.quantity,
-            price: item.price,
+            unitPrice: item.price,  // Make sure to use unitPrice field name
           })) || []
         }
       },
@@ -239,6 +309,8 @@ const createOrderFromPendingData = async (tx_ref, verifiedAmount) => {
         address: true,
       },
     });
+
+    console.log(`✅ Order created successfully with ID: ${newOrder.id}`);
 
     // Create completed payment record linked to this order
     await prisma.payment.create({
@@ -251,11 +323,14 @@ const createOrderFromPendingData = async (tx_ref, verifiedAmount) => {
       }
     });
 
+    console.log(`✅ Payment record created for order: ${newOrder.id}`);
+
     // Clear from memory map
     pendingOrders.delete(tx_ref);
     return newOrder;
   } catch (err) {
-    console.error('Error creating order from pending cache:', err);
+    console.error('❌ Error creating order from pending cache:', err);
+    console.error('❌ Error details:', err.message);
     return null;
   }
 };
