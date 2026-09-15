@@ -104,11 +104,11 @@ export default function ChefOrdersNew() {
     const minutes = Math.floor((Date.now() - new Date(createdAt)) / 60000);
     if (minutes < 5) return 'normal';
     if (minutes < 15) return 'warning';
-    return 'urgent';
+    return 'attention';  // Changed from 'urgent' to 'attention'
   };
 
   const getUrgencyBadge = (urgency) => {
-    if (urgency === 'urgent') return 'bg-red-100 text-red-800 border-red-300';
+    if (urgency === 'attention') return 'bg-red-100 text-red-800 border-red-300';
     if (urgency === 'warning') return 'bg-yellow-100 text-yellow-800 border-yellow-300';
     return 'bg-green-100 text-green-800 border-green-300';
   };
@@ -171,15 +171,15 @@ export default function ChefOrdersNew() {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Urgent Alert */}
-            {orders.some(o => getUrgencyLevel(o.createdAt) === 'urgent') && (
+            {/* Attention Alert */}
+            {orders.some(o => getUrgencyLevel(o.createdAt) === 'attention') && (
               <div className="bg-red-500 text-white rounded-2xl p-5 shadow-lg">
                 <div className="flex items-center space-x-3">
                   <AlertCircle className="w-7 h-7 shrink-0" />
                   <div>
-                    <h3 className="font-black text-base">⚠️ URGENT: Orders Waiting Too Long!</h3>
+                    <h3 className="font-black text-base">⚠️ ATTENTION: Orders Waiting Too Long!</h3>
                     <p className="text-xs opacity-90">
-                      {orders.filter(o => getUrgencyLevel(o.createdAt) === 'urgent').length} order(s) need immediate attention
+                      {orders.filter(o => getUrgencyLevel(o.createdAt) === 'attention').length} order(s) need immediate attention
                     </p>
                   </div>
                 </div>
@@ -210,7 +210,7 @@ export default function ChefOrdersNew() {
                   <div
                     key={order.id}
                     className={`bg-white rounded-2xl shadow-sm border-2 p-4 lg:py-3 lg:px-5 hover:shadow-md transition-all ${
-                      urgency === 'urgent'
+                      urgency === 'attention'
                         ? 'border-red-400'
                         : urgency === 'warning'
                         ? 'border-yellow-300'
@@ -248,7 +248,7 @@ export default function ChefOrdersNew() {
                           <div className="flex items-center gap-1 mt-0.5">
                             <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                             <span className={`text-xs font-bold whitespace-nowrap ${
-                              urgency === 'urgent'
+                              urgency === 'attention'
                                 ? 'text-red-600'
                                 : urgency === 'warning'
                                 ? 'text-yellow-700'
@@ -260,7 +260,7 @@ export default function ChefOrdersNew() {
                         </div>
                         {/* Urgency shown here on mobile */}
                         <span className={`lg:hidden px-3 py-1 rounded-full text-xs font-bold border-2 ${getUrgencyBadge(urgency)}`}>
-                          {urgency === 'urgent' ? 'URGENT' : urgency === 'warning' ? 'ATTENTION' : 'NEW'}
+                          {urgency === 'attention' ? 'ATTENTION' : urgency === 'warning' ? 'WARNING' : 'NEW'}
                         </span>
                       </div>
 
@@ -333,7 +333,7 @@ export default function ChefOrdersNew() {
                       {/* Urgency badge — desktop only (mobile shown above next to Order ID) */}
                       <div className="hidden lg:block">
                         <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold border-2 whitespace-nowrap ${getUrgencyBadge(urgency)}`}>
-                          {urgency === 'urgent' ? 'URGENT' : urgency === 'warning' ? 'ATTENTION' : 'NEW'}
+                          {urgency === 'attention' ? 'ATTENTION' : urgency === 'warning' ? 'WARNING' : 'NEW'}
                         </span>
                       </div>
 
@@ -342,7 +342,7 @@ export default function ChefOrdersNew() {
                         <button
                           onClick={() => acceptOrder(order.id)}
                           className={`w-full py-2 rounded-xl font-bold text-xs transition-all hover:shadow-md flex items-center justify-center gap-1.5 whitespace-nowrap ${
-                            urgency === 'urgent'
+                            urgency === 'attention'
                               ? 'bg-red-600 hover:bg-red-700 text-white'
                               : 'bg-green-600 hover:bg-green-700 text-white'
                           }`}

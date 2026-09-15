@@ -121,7 +121,8 @@ export default function DashboardHeader({ title }) {
           {/* Profile Button */}
           <button
             onClick={() => {
-              const basePath = user.role === 'ADMIN' ? '/admin' : 
+              const basePath = user.role === 'SUPER_ADMIN' ? '/superadmin' :
+                             user.role === 'ADMIN' ? '/admin' : 
                              user.role === 'CHEF' ? '/chef' : 
                              user.role === 'WAITER' ? '/waiter' : 
                              user.role === 'DRIVER' ? '/driver' : '/';

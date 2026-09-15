@@ -678,7 +678,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* User Profile */}
-            <div className="flex items-center space-x-3">
+            <Link to="/admin/profile" className="flex items-center space-x-3 hover:bg-gray-100 p-2 rounded-xl transition cursor-pointer">
               <div className="text-right">
                 <p className="text-sm font-bold text-gray-900">{user.name}</p>
                 <p className="text-xs text-gray-500">{user.role}</p>
@@ -686,7 +686,7 @@ export default function AdminDashboard() {
               <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-bold">
                 {user.name.charAt(0)}
               </div>
-            </div>
+            </Link>
 
             {/* Logout */}
             <button

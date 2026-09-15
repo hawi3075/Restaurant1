@@ -219,11 +219,11 @@ const createOrderFromPendingData = async (tx_ref, verifiedAmount) => {
   if (!orderPayload) return null;
 
   try {
-    // Create the order with status CONFIRMED since payment is verified
+    // Create the order with status PENDING since it's a new order awaiting chef acceptance
     const newOrder = await prisma.order.create({
       data: {
         ...orderPayload,
-        status: 'CONFIRMED',
+        status: 'PENDING',  // Changed from CONFIRMED to PENDING for chef acceptance workflow
         items: {
           create: orderPayload.items?.map(item => ({
             foodId: item.foodId,
@@ -294,7 +294,7 @@ const handleChapaCallback = async (req, res) => {
         });
         updatedOrder = await prisma.order.update({
           where: { id: orderId },
-          data: { status: 'CONFIRMED' },
+          data: { status: 'PENDING' },  // Changed from CONFIRMED to PENDING for chef workflow
           include: {
             items: { include: { food: true } },
             customer: { select: { name: true, phone: true, email: true } },
@@ -347,7 +347,7 @@ const verifyChapaPayment = async (req, res) => {
         });
         updatedOrder = await prisma.order.update({
           where: { id: orderId },
-          data: { status: 'CONFIRMED' },
+          data: { status: 'PENDING' },  // Changed from CONFIRMED to PENDING for chef workflow
           include: {
             items: { include: { food: true } },
             customer: { select: { name: true, phone: true, email: true } },

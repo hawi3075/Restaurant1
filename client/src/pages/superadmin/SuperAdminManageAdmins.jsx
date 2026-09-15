@@ -293,7 +293,7 @@ export default function SuperAdminManageAdmins() {
                   value={formData.name}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-medium"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm font-medium"
                   placeholder="Enter full name"
                 />
               </div>
@@ -309,7 +309,7 @@ export default function SuperAdminManageAdmins() {
                   value={formData.email}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-medium"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm font-medium"
                   placeholder="admin@example.com"
                 />
               </div>
@@ -354,7 +354,7 @@ export default function SuperAdminManageAdmins() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-medium"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm font-medium"
                   placeholder="+251 900 000 000"
                 />
               </div>
@@ -368,7 +368,7 @@ export default function SuperAdminManageAdmins() {
                   name="restaurantId"
                   value={formData.restaurantId}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-medium"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm font-medium"
                 >
                   <option value="">All Restaurants (System-wide Admin)</option>
                   {restaurants.map((restaurant) => (
@@ -386,7 +386,7 @@ export default function SuperAdminManageAdmins() {
               <div className="flex space-x-3 pt-4">
                 <button
                   type="submit"
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg hover:shadow-xl"
+                  className="flex-1 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg hover:shadow-xl"
                 >
                   {editingAdmin ? 'Update Admin' : 'Create Admin'}
                 </button>
