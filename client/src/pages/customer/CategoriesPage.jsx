@@ -272,7 +272,7 @@ export default function CategoriesPage() {
                               navigate('/login');
                             } else {
                               if (qtyInCart === 0) {
-                                addToCart(item, 1, [], '');
+                                addToCart(food, 1, [], '');
                               }
                               navigate('/checkout');
                             }
