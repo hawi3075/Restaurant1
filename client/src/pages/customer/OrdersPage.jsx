@@ -23,9 +23,12 @@ export default function OrdersPage() {
 
   useEffect(() => {
     if (user) {
+      // Always refetch orders when user changes or component mounts
+      // This ensures fresh data for the logged-in user
+      setOrders([]); // Clear any existing orders first
       fetchOrders();
     }
-  }, [user]);
+  }, [user?.id]); // Depend on user.id to trigger refetch when user changes
 
   // Real-time: listen for order status updates from chef/driver/waiter
   useEffect(() => {
@@ -76,9 +79,22 @@ export default function OrdersPage() {
     try {
       setLoading(true);
       const response = await API.get('/orders');
-      setOrders(response.data);
+      
+      // Additional safety check: verify orders belong to current user
+      const userOrders = response.data.filter(order => {
+        // Only include orders that belong to the current user
+        // This is a backup check in case of any token/session issues
+        return !user?.id || order.customerId === user.id;
+      });
+      
+      setOrders(userOrders);
     } catch (error) {
       console.error('Error fetching orders:', error);
+      // If there's an auth error, clear the session
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        localStorage.clear();
+        window.location.reload();
+      }
     } finally {
       setLoading(false);
     }

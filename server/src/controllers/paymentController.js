@@ -3,8 +3,8 @@ const prisma = require('../config/prisma');
 
 // Get base URLs from environment or use defaults
 const getBaseUrls = () => {
-  const backend = process.env.BACKEND_URL || 'https://backend.emerald-import-export.com';
-  const frontend = process.env.FRONTEND_URL || 'https://maad.emerald-import-export.com';
+  const backend = process.env.BACKEND_URL || 'https://abdupower.com';
+  const frontend = process.env.FRONTEND_URL || 'https://maad.abdupower.com';
   
   console.log('🔗 Payment URLs:', { backend, frontend });
   return { backend, frontend };
@@ -91,9 +91,9 @@ const initializeChapaPaymentWithOrder = async (req, res) => {
         last_name: customerLastName,
         phone_number: customerPhone,
         tx_ref,
-        // Hardcoded clean URL to completely avoid validation errors
-        callback_url: 'https://backend.emerald-import-export.com/api/payments/callback',
-        return_url: `https://maad.emerald-import-export.com/order-success?tx_ref=${tx_ref}`,
+        // Use dynamic URLs instead of hardcoded ones
+        callback_url: `${process.env.BACKEND_URL || 'https://abdupower.com'}/api/payments/callback`,
+        return_url: `${process.env.FRONTEND_URL || 'https://maad.abdupower.com'}/order-success?tx_ref=${tx_ref}`,
         customization: {
           title: "Maad Payment",
           description: `Order Payment`
@@ -207,8 +207,8 @@ const initializeChapaPayment = async (req, res) => {
         last_name: customerLastName,
         phone_number: customerPhone,
         tx_ref,
-        callback_url: 'https://backend.emerald-import-export.com/api/payments/callback',
-        return_url: `https://maad.emerald-import-export.com/order-success?tx_ref=${tx_ref}&orderId=${orderId}`,
+        callback_url: `${process.env.BACKEND_URL || 'https://abdupower.com'}/api/payments/callback`,
+        return_url: `${process.env.FRONTEND_URL || 'https://maad.abdupower.com'}/order-success?tx_ref=${tx_ref}&orderId=${orderId}`,
         customization: {
           title: "Maad Payment",
           description: `Order ${orderId}`
