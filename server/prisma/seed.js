@@ -6,31 +6,51 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting database seeding...');
 
-  // Clear existing data
-  console.log('🗑️  Clearing existing data...');
-  await prisma.review.deleteMany();
-  await prisma.address.deleteMany();
-  await prisma.orderStatusHistory.deleteMany();
-  await prisma.payment.deleteMany();
-  await prisma.orderItem.deleteMany();
-  await prisma.order.deleteMany();
-  await prisma.foodAddon.deleteMany();
-  await prisma.food.deleteMany();
-  await prisma.foodCategory.deleteMany();
-  await prisma.inventory.deleteMany();
-  await prisma.table.deleteMany();
-  await prisma.user.deleteMany();
-  await prisma.restaurant.deleteMany();
+  // Check if data already exists
+  const existingRestaurants = await prisma.restaurant.count();
+  const existingCategories = await prisma.foodCategory.count(); 
+  const existingFoods = await prisma.food.count();
+  
+  console.log('� Current data count:');
+  console.log('  - Restaurants:', existingRestaurants);
+  console.log('  - Categories:', existingCategories);  
+  console.log('  - Foods:', existingFoods);
+
+  // Only clear and reseed if database is completely empty
+  const shouldClearAndReseed = existingRestaurants === 0 && existingCategories === 0 && existingFoods === 0;
+  
+  if (shouldClearAndReseed) {
+    console.log('🗑️  Database is empty, performing full reseed...');
+    
+    // Clear existing data only if needed
+    await prisma.review.deleteMany();
+    await prisma.address.deleteMany();
+    await prisma.orderStatusHistory.deleteMany();
+    await prisma.payment.deleteMany();
+    await prisma.orderItem.deleteMany();
+    await prisma.order.deleteMany();
+    await prisma.foodAddon.deleteMany();
+    await prisma.food.deleteMany();
+    await prisma.foodCategory.deleteMany();
+    await prisma.inventory.deleteMany();
+    await prisma.table.deleteMany();
+    await prisma.user.deleteMany();
+    await prisma.restaurant.deleteMany();
+  } else {
+    console.log('📋 Database has existing data, adding sample data without clearing...');
+  }
 
   // Hash password for all users
   const hashedPassword = await bcrypt.hash('password123', 10);
 
-  // 1. Create Users
-  console.log('👥 Creating users...');
+  // 1. Create Users (using upsert to avoid conflicts)
+  console.log('👥 Creating/updating users...');
   
   // Create Super Admin
-  const superAdmin = await prisma.user.create({
-    data: {
+  const superAdmin = await prisma.user.upsert({
+    where: { email: 'superadmin@maad.com' },
+    update: {},
+    create: {
       name: 'Super Admin',
       email: 'superadmin@maad.com',
       password: hashedPassword,
@@ -39,8 +59,10 @@ async function main() {
     },
   });
   
-  const admin = await prisma.user.create({
-    data: {
+  const admin = await prisma.user.upsert({
+    where: { email: 'admin@maad.com' },
+    update: {},
+    create: {
       name: 'Admin User',
       email: 'admin@maad.com',
       password: hashedPassword,
@@ -49,8 +71,10 @@ async function main() {
     },
   });
 
-  const customer1 = await prisma.user.create({
-    data: {
+  const customer1 = await prisma.user.upsert({
+    where: { email: 'abebe@example.com' },
+    update: {},
+    create: {
       name: 'Abebe Kebede',
       email: 'abebe@example.com',
       password: hashedPassword,
@@ -59,8 +83,10 @@ async function main() {
     },
   });
 
-  const customer2 = await prisma.user.create({
-    data: {
+  const customer2 = await prisma.user.upsert({
+    where: { email: 'hawi@example.com' },
+    update: {},
+    create: {
       name: 'Hawi Girma',
       email: 'hawi@example.com',
       password: hashedPassword,
