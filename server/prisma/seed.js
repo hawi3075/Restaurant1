@@ -27,6 +27,18 @@ async function main() {
 
   // 1. Create Users
   console.log('👥 Creating users...');
+  
+  // Create Super Admin
+  const superAdmin = await prisma.user.create({
+    data: {
+      name: 'Super Admin',
+      email: 'superadmin@maad.com',
+      password: hashedPassword,
+      phone: '+251900000000',
+      role: 'SUPER_ADMIN',
+    },
+  });
+  
   const admin = await prisma.user.create({
     data: {
       name: 'Admin User',
@@ -421,6 +433,7 @@ async function main() {
 
   console.log('✅ Database seeding completed successfully!');
   console.log('\n📝 Test Accounts:');
+  console.log('   Super Admin: superadmin@maad.com / password123');
   console.log('   Admin: admin@maad.com / password123');
   console.log('   Customer 1: abebe@example.com / password123');
   console.log('   Customer 2: hawi@example.com / password123');
