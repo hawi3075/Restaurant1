@@ -1,190 +1,57 @@
-# ✅ Chapa Payment Integration - Updated
+# Chapa Payment Configuration Update
 
-## 🔧 What Was Fixed
+## Issue
+Chapa test credentials expire quickly and have limited functionality, causing payment failures.
 
-### 1. Updated Chapa Credentials ✅
-Your new Chapa API keys have been added to `server/.env`:
+## Solution
+Replace TEST credentials with LIVE/PRODUCTION credentials from your Chapa dashboard.
 
+## Steps to Update
+
+### 1. Get Live Credentials
+- Visit [Chapa Dashboard](https://dashboard.chapa.co/)
+- Log in to your account
+- Navigate to **API Keys** section
+- Copy your **LIVE** credentials (not test)
+
+### 2. Update Server Environment (.env)
 ```env
-CHAPA_SECRET_KEY=CHASECK_TEST-RVjgKvadfTh2Whj9zH0ZbUTErntbmbO5
-CHAPA_PUBLIC_KEY=CHAPUBK_TEST-R2br7ZRhCnJLIg9YWfcZsOv7JdMPV4TD
-CHAPA_ENCRYPTION_KEY=Dmn8In1E7qciOYs9v9pfFDTK
-CHAPA_URL=https://api.chapa.co/v1/transaction/initialize
+# Replace these with your LIVE credentials:
+CHAPA_SECRET_KEY=CHASECK_LIVE-your_actual_live_secret_key
+CHAPA_PUBLIC_KEY=CHAPUBK_LIVE-your_actual_live_public_key
+CHAPA_ENCRYPTION_KEY=your_actual_live_encryption_key
 ```
 
-### 2. Fixed Email Configuration ✅
-Removed space in email address:
-- **Before**: `hawig3521 @gmail.com` ❌
-- **After**: `hawig3521@gmail.com` ✅
-
-Your forgot password emails should now work properly!
-
-### 3. Added Chapa Callback & Return URL Handling ✅
-
-#### New Callback Endpoint:
-```
-POST/GET /api/payments/callback/:tx_ref
-```
-- Called automatically by Chapa after payment completion
-- Updates order status to CONFIRMED
-- Creates payment record in database
-- Sends real-time notification to restaurant staff
-
-#### Updated Return URL:
-- Users are now redirected to your frontend after payment
-- **Local**: `http://localhost:5173/order-success`
-- **Production**: `https://restaurant1-rust-ten.vercel.app/order-success`
-
----
-
-## 🔄 How It Works Now
-
-### Payment Flow:
-
-```
-1. Customer clicks "Pay with Chapa"
-   ↓
-2. Backend initializes payment with Chapa
-   - Sets callback_url: https://your-backend.com/api/payments/callback/TX-123
-   - Sets return_url: https://your-frontend.com/order-success?tx_ref=TX-123
-   ↓
-3. Customer redirected to Chapa payment page
-   ↓
-4. Customer completes payment
-   ↓
-5. Chapa sends webhook to callback_url (server processes in background)
-   - Verifies payment with Chapa API
-   - Updates order status to CONFIRMED
-   - Creates payment record
-   - Sends notification to restaurant staff
-   ↓
-6. Customer redirected to return_url (order success page)
-   - Shows order confirmation
-   - Displays transaction reference
+### 3. Update Client Environment (client/.env)
+```env
+# Replace with your LIVE secret key:
+CHAPA_SECRET_KEY="CHASECK_LIVE-your_actual_live_secret_key"
 ```
 
----
+### 4. Restart Services
+```bash
+# Restart server
+cd server
+npm restart
 
-## 📝 Files Modified
-
-### Backend:
-1. **`server/.env`**
-   - Updated Chapa credentials
-   - Fixed email address (removed space)
-
-2. **`server/src/controllers/paymentController.js`**
-   - Added `handleChapaCallback()` function
-   - Updated `initializeChapaPayment()` with proper callback/return URLs
-   - Added `getBaseUrls()` helper for environment-aware URLs
-   - Improved logging and error handling
-
-3. **`server/src/routes/paymentRoutes.js`**
-   - Added `POST /api/payments/callback/:tx_ref` endpoint
-   - Added `GET /api/payments/callback/:tx_ref` endpoint
-
-### Frontend:
-- Client built successfully ✅
-
----
-
-## 🧪 Testing
-
-### Test Forgot Password:
-1. Go to login page
-2. Click "Forgot Password"
-3. Enter email: (any registered email)
-4. Check inbox - you should receive reset code email ✅
-
-### Test Chapa Payment:
-1. Add items to cart
-2. Go to checkout
-3. Click "Pay with Chapa"
-4. Complete test payment on Chapa page
-5. After payment:
-   - Chapa calls callback URL (backend processes payment)
-   - You're redirected to order success page
-   - Order status changed to CONFIRMED
-   - Restaurant staff receives notification ✅
-
----
-
-## 🌐 Render Deployment
-
-To deploy these changes to Render, update your environment variables:
-
-### Add/Update in Render Dashboard:
-
-```
-CHAPA_SECRET_KEY=CHASECK_TEST-RVjgKvadfTh2Whj9zH0ZbUTErntbmbO5
-CHAPA_PUBLIC_KEY=CHAPUBK_TEST-R2br7ZRhCnJLIg9YWfcZsOv7JdMPV4TD
-CHAPA_ENCRYPTION_KEY=Dmn8In1E7qciOYs9v9pfFDTK
-EMAIL_USER=hawig3521@gmail.com
-EMAIL_PASSWORD=hojz opgn rvio aplk
-NODE_ENV=production
+# Restart client
+cd client
+npm run dev
 ```
 
-**Don't forget the Cloudinary credentials too**:
-```
-CLOUDINARY_CLOUD_NAME=kyxsb3dn
-CLOUDINARY_API_KEY=181665761674566
-CLOUDINARY_API_SECRET=jKd1LbGxxALY6iE59Umfd8--oX0
-```
+## Key Differences: TEST vs LIVE
 
----
+| Feature | TEST | LIVE |
+|---------|------|------|
+| Expiry | Quick (hours/days) | Long-term |
+| Transactions | Simulated | Real money |
+| Limits | Low amounts | Full limits |
+| Reliability | Limited | Production-ready |
 
-## 📊 Chapa Webhook Configuration
+## Current Status
+- ❌ Currently using TEST credentials (will expire)
+- ✅ Need to update to LIVE credentials for production
 
-### Important for Production:
-
-1. **Login to Chapa Dashboard**: https://dashboard.chapa.co/
-2. Go to **Settings** → **Webhooks**
-3. **Add Webhook URL**: `https://restaurant1-qm7p.onrender.com/api/payments/callback/:tx_ref`
-4. **Select Events**: Payment Success, Payment Failed
-5. Save
-
-This ensures Chapa notifies your backend immediately after payment completion.
-
----
-
-## 🐛 Troubleshooting
-
-### Email not received?
-1. Check spam folder
-2. Verify `EMAIL_USER` has no spaces: `hawig3521@gmail.com`
-3. Check server logs for email sending errors
-4. In development mode, reset code is logged to console
-
-### Payment callback not working?
-1. Check Render logs: Dashboard → Your Service → Logs
-2. Search for: `📥 Chapa Callback received`
-3. Verify Chapa webhook is configured in Chapa dashboard
-4. Check callback URL is correct: `https://your-backend.onrender.com/api/payments/callback/:tx_ref`
-
-### Return URL not working?
-1. Check if customer is redirected after payment
-2. Verify frontend URL in `server/.env`:
-   - Local: `http://localhost:5173`
-   - Production: `https://restaurant1-rust-ten.vercel.app`
-
----
-
-## ✅ Summary
-
-| Feature | Status |
-|---------|--------|
-| Chapa credentials updated | ✅ Done |
-| Email configuration fixed | ✅ Done |
-| Callback endpoint added | ✅ Done |
-| Return URL configured | ✅ Done |
-| Environment-aware URLs | ✅ Done |
-| Real-time notifications | ✅ Done |
-| Client built | ✅ Done |
-
-### Next Steps:
-1. Test forgot password locally ✅
-2. Test Chapa payment locally ✅
-3. Deploy to Render with updated env vars ⏳
-4. Configure Chapa webhook in dashboard ⏳
-5. Test payment on production ⏳
-
-Your payment system is now fully configured with proper callback and return URL handling! 🎉
+## Support
+- [Chapa Documentation](https://developer.chapa.co/)
+- [API Reference](https://developer.chapa.co/docs/api-reference)

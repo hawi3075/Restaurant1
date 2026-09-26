@@ -121,7 +121,8 @@ function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
       setSuccess('Signed in with Google!');
       setTimeout(() => {
         onClose();
-        if (result.role === 'ADMIN') navigate('/admin');
+        if (result.role === 'SUPER_ADMIN') navigate('/superadmin');
+        else if (result.role === 'ADMIN') navigate('/admin');
         else if (result.role === 'CHEF') navigate('/chef');
         else if (result.role === 'WAITER') navigate('/waiter');
         else if (result.role === 'DRIVER') navigate('/driver');
@@ -153,7 +154,9 @@ function AuthModal({ isOpen, onClose, initialMode = 'login' }) {
             onClose();
 
             // Redirect based on role
-            if (result.role === 'ADMIN') {
+            if (result.role === 'SUPER_ADMIN') {
+              navigate('/superadmin');
+            } else if (result.role === 'ADMIN') {
               navigate('/admin');
             } else if (result.role === 'CHEF') {
               navigate('/chef');
@@ -687,7 +690,11 @@ export default function Navbar() {
 
           {/* Profile */}
           <Link
-            to="/profile"
+            to={user?.role === 'SUPER_ADMIN' ? '/superadmin/profile' : 
+                user?.role === 'ADMIN' ? '/admin/profile' :
+                user?.role === 'CHEF' ? '/chef/profile' :
+                user?.role === 'WAITER' ? '/waiter/profile' :
+                user?.role === 'DRIVER' ? '/driver/profile' : '/profile'}
             onClick={() => setMenuOpen(false)}
             className="flex items-center space-x-4 p-3 rounded-2xl border border-transparent hover:bg-orange-50 dark:hover:bg-gray-800 hover:border-orange-100 dark:hover:border-gray-700 hover:text-orange-600 dark:hover:text-orange-500 hover:translate-x-1 hover:shadow-sm group transition-all duration-300"
           >
