@@ -39,8 +39,11 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      console.log('AuthContext: Starting login for email:', email);
       const response = await API.post('/auth/login', { email, password });
       const { token: newToken, user: userData } = response.data;
+      
+      console.log('AuthContext: Login response received:', { token: !!newToken, user: userData });
 
       // Clear any existing user data first to prevent cross-user contamination
       localStorage.clear();
@@ -50,8 +53,12 @@ export const AuthProvider = ({ children }) => {
       setToken(newToken);
       setUser(userData);
       
+      console.log('AuthContext: User state set to:', userData);
+      console.log('AuthContext: Returning success with role:', userData.role);
+      
       return { success: true, role: userData.role };
     } catch (error) {
+      console.error('AuthContext: Login error:', error);
       return {
         success: false,
         error: error.response?.data?.error || 'Login failed. Please check your credentials.',
@@ -100,8 +107,17 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    // Preserve theme preference before clearing localStorage
+    const currentTheme = localStorage.getItem('theme');
+    
     // Clear all localStorage data to prevent data leakage
     localStorage.clear();
+    
+    // Restore theme preference
+    if (currentTheme) {
+      localStorage.setItem('theme', currentTheme);
+    }
+    
     setToken(null);
     setUser(null);
     

@@ -448,10 +448,16 @@ function SuperAdminSidebar() {
 export default function SuperAdminDashboard() {
   const { user } = useAuth();
 
+  console.log('SuperAdminDashboard: Current user:', user);
+  console.log('SuperAdminDashboard: User role:', user?.role);
+
   // Check if user is SUPER_ADMIN
   if (user?.role !== 'SUPER_ADMIN') {
+    console.log('SuperAdminDashboard: Access denied, redirecting to login. User role:', user?.role);
     return <Navigate to="/login" replace />;
   }
+
+  console.log('SuperAdminDashboard: Access granted for SUPER_ADMIN');
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">

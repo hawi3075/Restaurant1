@@ -32,34 +32,39 @@ export default function Login() {
 
     if (result.success) {
       console.log('Login successful! Role:', result.role);
-      // Redirect based on user role
-      switch (result.role) {
-        case 'SUPER_ADMIN':
-          console.log('Redirecting to super admin dashboard');
-          navigate('/superadmin');
-          break;
-        case 'ADMIN':
-          console.log('Redirecting to admin dashboard');
-          navigate('/admin');
-          break;
-        case 'CHEF':
-          console.log('Redirecting to chef dashboard');
-          navigate('/chef');
-          break;
-        case 'WAITER':
-          console.log('Redirecting to waiter dashboard');
-          navigate('/waiter');
-          break;
-        case 'DRIVER':
-          console.log('Redirecting to driver dashboard');
-          navigate('/driver');
-          break;
-        case 'CUSTOMER':
-        default:
-          console.log('Redirecting to home');
-          navigate('/');
-          break;
-      }
+      console.log('User data set in context, preparing navigation...');
+      
+      // Add a small delay to ensure user context is fully updated
+      setTimeout(() => {
+        // Redirect based on user role
+        switch (result.role) {
+          case 'SUPER_ADMIN':
+            console.log('Navigating to super admin dashboard');
+            navigate('/superadmin');
+            break;
+          case 'ADMIN':
+            console.log('Navigating to admin dashboard');
+            navigate('/admin');
+            break;
+          case 'CHEF':
+            console.log('Navigating to chef dashboard');
+            navigate('/chef');
+            break;
+          case 'WAITER':
+            console.log('Navigating to waiter dashboard');
+            navigate('/waiter');
+            break;
+          case 'DRIVER':
+            console.log('Navigating to driver dashboard');
+            navigate('/driver');
+            break;
+          case 'CUSTOMER':
+          default:
+            console.log('Navigating to home page');
+            navigate('/');
+            break;
+        }
+      }, 100); // Small delay to ensure context is updated
     } else {
       console.error('Login failed:', result.error);
       setError(result.error);
@@ -74,28 +79,34 @@ export default function Login() {
     setLoading(false);
 
     if (result.success) {
-      // Redirect based on user role
-      switch (result.role) {
-        case 'SUPER_ADMIN':
-          navigate('/superadmin');
-          break;
-        case 'ADMIN':
-          navigate('/admin');
-          break;
-        case 'CHEF':
-          navigate('/chef');
-          break;
-        case 'WAITER':
-          navigate('/waiter');
-          break;
-        case 'DRIVER':
-          navigate('/driver');
-          break;
-        case 'CUSTOMER':
-        default:
-          navigate('/');
-          break;
-      }
+      console.log('Google login successful! Role:', result.role);
+      
+      // Add a small delay to ensure user context is fully updated
+      setTimeout(() => {
+        // Redirect based on user role
+        switch (result.role) {
+          case 'SUPER_ADMIN':
+            console.log('Navigating to super admin dashboard via Google');
+            navigate('/superadmin');
+            break;
+          case 'ADMIN':
+            navigate('/admin');
+            break;
+          case 'CHEF':
+            navigate('/chef');
+            break;
+          case 'WAITER':
+            navigate('/waiter');
+            break;
+          case 'DRIVER':
+            navigate('/driver');
+            break;
+          case 'CUSTOMER':
+          default:
+            navigate('/');
+            break;
+        }
+      }, 100);
     } else {
       setError(result.error);
     }

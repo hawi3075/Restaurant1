@@ -6,7 +6,7 @@ function getInitialTheme() {
   if (typeof window === 'undefined') return 'light';
   const saved = localStorage.getItem('theme');
   if (saved === 'light' || saved === 'dark') return saved;
-  if (window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
+  // Default to light mode instead of following system preference
   return 'light';
 }
 
