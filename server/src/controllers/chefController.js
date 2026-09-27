@@ -128,9 +128,11 @@ const submitFood = async (req, res) => {
       isAvailable: false, // Not available until approved
     };
 
-    // Add image path if uploaded, or use URL
+    // Add image URL if uploaded via Cloudinary, or use provided URL
     if (req.file) {
-      foodData.image = `/uploads/foods/${req.file.filename}`;
+      // Cloudinary returns full URL in req.file.path
+      foodData.image = req.file.path;
+      console.log('Cloudinary image URL:', foodData.image);
     } else if (imageUrl) {
       foodData.image = imageUrl;
     }

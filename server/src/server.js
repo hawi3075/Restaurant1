@@ -148,18 +148,20 @@ io.on('connection', (socket) => {
 
   // AI-Powered Chat message handler & Live Support
   socket.on('send_message', async (data) => {
-    if (!data.useAi && data.senderId && data.text) {
+    // Save non-AI messages (contact messages and admin responses) to database
+    if (data.senderId && data.text && !data.useAi) {
       try {
         await prisma.supportMessage.create({
           data: {
-            senderId: data.senderId,
+            senderId: String(data.senderId), // Ensure senderId is string
             senderName: data.senderName || data.sender || 'Unknown',
             senderRole: data.userRole || data.senderRole || 'CUSTOMER',
             text: data.text,
             recipientId: data.recipientId || null,
-            isFromAdmin: data.userRole === 'ADMIN' || data.sender === 'admin',
+            isFromAdmin: data.userRole === 'ADMIN' || data.isFromAdmin || false,
           },
         });
+        console.log(`✓ Message saved for senderId: ${data.senderId}, senderName: ${data.senderName}`);
       } catch (e) {
         console.error('Failed to persist support message:', e.message);
       }

@@ -45,6 +45,9 @@ const initializeChapaPaymentWithOrder = async (req, res) => {
       return res.status(400).json({ error: 'Chapa Secret Key is not configured on the server.' });
     }
 
+    // Get base URLs
+    const { backend, frontend } = getBaseUrls();
+
     // Add customerId from authenticated user and store temporarily
     const completeOrderData = {
       ...orderData,
@@ -171,6 +174,9 @@ const initializeChapaPayment = async (req, res) => {
     if (!secretKey) {
       return res.status(400).json({ error: 'Chapa Secret Key is not configured on the server.' });
     }
+
+    // Get base URLs
+    const { backend, frontend } = getBaseUrls();
 
     await prisma.payment.upsert({
       where: { orderId },
