@@ -71,8 +71,12 @@ const io = new Server(server, {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Serve static files (uploads)
-app.use('/uploads', express.static('uploads'));
+// Serve static files (uploads) with proper CORS headers
+app.use('/uploads', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET');
+  next();
+}, express.static('uploads'));
 
 // Make io available to routes
 app.set('io', io);

@@ -91,9 +91,9 @@ const initializeChapaPaymentWithOrder = async (req, res) => {
         last_name: customerLastName,
         phone_number: customerPhone,
         tx_ref,
-        // Use dynamic URLs instead of hardcoded ones
-        callback_url: `${process.env.BACKEND_URL || 'https://abdupower.com'}/api/payments/callback`,
-        return_url: `${process.env.FRONTEND_URL || 'https://maad.abdupower.com'}/order-success?tx_ref=${tx_ref}`,
+        // Use dynamic URLs with proper formatting
+        callback_url: `${backend}/api/payments/callback`,
+        return_url: `${frontend}/order-success?tx_ref=${tx_ref}`,
         customization: {
           title: "Maad Payment",
           description: `Order Payment`

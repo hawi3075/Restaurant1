@@ -4,7 +4,7 @@ import API from '../services/api';
  * Get full image URL for display
  * Handles Cloudinary URLs, uploaded images, public folder images, and external URLs
  */
-export const getImageUrl = (imagePath, fallback = '/m1.webp') => {
+export const getImageUrl = (imagePath, fallback = 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400') => {
   if (!imagePath) return fallback;
   
   // External URL or Cloudinary URL - use as is
@@ -26,7 +26,7 @@ export const getImageUrl = (imagePath, fallback = '/m1.webp') => {
  * Get restaurant cover image URL with appropriate fallback
  */
 export const getRestaurantImageUrl = (imagePath) => {
-  return getImageUrl(imagePath, '/mg1.webp');
+  return getImageUrl(imagePath, 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400');
 };
 
 /**
