@@ -165,8 +165,8 @@ export default function AdminProfile() {
             {/* Upload Section */}
             <div className="flex-1">
               <ImageUpload
-                currentImage={formData.profileImage}
-                onImageUpload={handleImageUpload}
+                value={formData.profileImage}
+                onChange={handleImageUpload}
                 label="Upload New Picture"
                 aspectRatio="1:1"
               />

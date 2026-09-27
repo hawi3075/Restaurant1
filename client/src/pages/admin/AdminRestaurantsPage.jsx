@@ -188,7 +188,7 @@ export default function AdminRestaurantsPage() {
                     </td>
                     <td className="p-4 text-right space-x-2">
                       <button
-                        onClick={() => navigate(`/admin/restaurants/edit/${res.id}`)}
+                        onClick={() => openEditModal(res)}
                         className="p-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition cursor-pointer"
                         title="Edit"
                       >

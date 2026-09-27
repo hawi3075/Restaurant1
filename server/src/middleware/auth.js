@@ -20,8 +20,16 @@ const verifyToken = (req, res, next) => {
 
 const verifyRole = (allowedRoles) => {
   return (req, res, next) => {
-    if (!req.user || !allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Access forbidden: Insufficient permissions.' });
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required.' });
+    }
+    
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ 
+        error: 'Access forbidden: Insufficient permissions.',
+        userRole: req.user.role,
+        requiredRoles: allowedRoles
+      });
     }
     next();
   };
