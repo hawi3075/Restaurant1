@@ -8,6 +8,7 @@ const {
   getAllCustomers, 
   getAllStaff, 
   createStaff, 
+  updateStaff,
   deleteStaff,
   deleteCustomer,
   addAddress,
@@ -32,6 +33,7 @@ router.get('/customers', verifyToken, verifyRole(['ADMIN', 'SUPER_ADMIN']), getA
 router.delete('/customers/:id', verifyToken, verifyRole(['ADMIN', 'SUPER_ADMIN']), deleteCustomer);
 router.get('/staff', verifyToken, verifyRole(['ADMIN', 'SUPER_ADMIN']), getAllStaff);
 router.post('/staff', verifyToken, verifyRole(['ADMIN', 'SUPER_ADMIN']), createStaff);
+router.put('/staff/:id', verifyToken, verifyRole(['ADMIN', 'SUPER_ADMIN']), updateStaff);
 router.delete('/staff/:id', verifyToken, verifyRole(['ADMIN', 'SUPER_ADMIN']), deleteStaff);
 
 module.exports = router;

@@ -223,6 +223,72 @@ const createStaff = async (req, res) => {
   }
 };
 
+// Update staff member (Admin only)
+const updateStaff = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, password, phone, role, restaurantId } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !role || !restaurantId) {
+      return res.status(400).json({ error: 'Please provide all required fields.' });
+    }
+
+    if (!['CHEF', 'WAITER', 'DRIVER'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid staff role.' });
+    }
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      return res.status(404).json({ error: 'Staff member not found.' });
+    }
+
+    // Check if email is already taken by another user
+    if (email !== user.email) {
+      const existingEmail = await prisma.user.findUnique({ where: { email } });
+      if (existingEmail) {
+        return res.status(400).json({ error: 'Email already in use by another user.' });
+      }
+    }
+
+    // Prepare update data
+    const updateData = {
+      name,
+      email,
+      phone,
+      role,
+      restaurantId
+    };
+
+    // Hash password if provided
+    if (password && password.trim()) {
+      const salt = await bcrypt.genSalt(10);
+      updateData.password = await bcrypt.hash(password, salt);
+    }
+
+    // Update staff
+    const updatedStaff = await prisma.user.update({
+      where: { id },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        restaurantId: true,
+        restaurant: { select: { name: true } }
+      }
+    });
+
+    res.json({ message: 'Staff member updated successfully', ...updatedStaff });
+  } catch (error) {
+    console.error('Error updating staff:', error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+};
+
 // Delete staff member (Admin only)
 const deleteStaff = async (req, res) => {
   try {
@@ -448,7 +514,8 @@ module.exports = {
   changePassword,
   getAllCustomers, 
   getAllStaff, 
-  createStaff, 
+  createStaff,
+  updateStaff,
   deleteStaff,
   deleteCustomer,
   addAddress,
