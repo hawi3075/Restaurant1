@@ -100,21 +100,8 @@ export default function DashboardHeader({ title }) {
       <header className={`h-20 px-8 border-b flex items-center justify-between sticky top-0 z-10 transition-colors ${
         darkMode ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-200 text-gray-900'
       }`}>
-        {/* Page Context/Title */}
-        <div className="lg:pl-0 pl-12 flex flex-col justify-center">
-          {title && <h1 className="text-xl md:text-2xl font-black bg-gradient-to-r from-orange-600 to-amber-500 bg-clip-text text-transparent tracking-tight">{t(title) || title}</h1>}
-          {user && (
-            <div className="flex items-center space-x-2 mt-0.5">
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                {user.name}
-              </p>
-              <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400">
-                {user.role}
-              </span>
-            </div>
-          )}
-        </div>
+        {/* Page Context/Title removed — mobile black header already shows the page name */}
+        <div className="lg:pl-0 pl-12"></div>
 
         {/* Action Controls */}
         <div className="flex items-center space-x-3">
