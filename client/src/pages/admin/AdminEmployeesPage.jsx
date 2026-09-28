@@ -10,6 +10,7 @@ export default function AdminEmployeesPage() {
 
   // Modals state
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState(null); // Track editing
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -56,6 +57,7 @@ export default function AdminEmployeesPage() {
   );
 
   function openAddModal() {
+    setEditingEmployee(null);
     setForm({
       name: '',
       email: '',
@@ -69,27 +71,57 @@ export default function AdminEmployeesPage() {
 
   function closeModal() {
     setModalOpen(false);
+    setEditingEmployee(null);
   }
 
   async function handleSave(e) {
     e.preventDefault();
-    if (!form.name.trim() || !form.email.trim() || !form.password.trim() || !form.restaurantId) {
-      alert('Please fill in Name, Email, Password, and Restaurant assignment.');
+    if (!form.name.trim() || !form.email.trim() || !form.restaurantId) {
+      alert('Please fill in Name, Email, and Restaurant assignment.');
+      return;
+    }
+
+    // For new employees, password is required
+    if (!editingEmployee && !form.password.trim()) {
+      alert('Please fill in password for new employees.');
       return;
     }
 
     try {
       setSaving(true);
-      const response = await API.post('/users/staff', form);
-      const newEmployee = {
-        ...response.data.staff,
-        restaurant: restaurants.find(r => r.id === form.restaurantId)
-      };
-      setEmployees(prev => [newEmployee, ...prev]);
+      
+      if (editingEmployee) {
+        // EDIT existing employee
+        const updateData = {
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          role: form.role,
+          restaurantId: form.restaurantId
+        };
+        // Only include password if it's filled
+        if (form.password.trim()) {
+          updateData.password = form.password;
+        }
+        
+        const response = await API.put(`/users/staff/${editingEmployee.id}`, updateData);
+        setEmployees(prev => 
+          prev.map(emp => emp.id === editingEmployee.id ? { ...emp, ...response.data } : emp)
+        );
+      } else {
+        // ADD new employee
+        const response = await API.post('/users/staff', form);
+        const newEmployee = {
+          ...response.data.staff,
+          restaurant: restaurants.find(r => r.id === form.restaurantId)
+        };
+        setEmployees(prev => [newEmployee, ...prev]);
+      }
+      
       closeModal();
     } catch (error) {
-      console.error('Error creating employee:', error);
-      alert(error.response?.data?.error || 'Failed to create employee. Please try again.');
+      console.error('Error saving employee:', error);
+      alert(error.response?.data?.error || 'Failed to save employee. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -182,7 +214,27 @@ export default function AdminEmployeesPage() {
                     <td className="p-4 font-semibold text-orange-600 uppercase">{emp.role}</td>
                     <td className="p-4 text-gray-500">{emp.phone || '—'}</td>
                     <td className="p-4 font-semibold text-gray-700">{emp.restaurant?.name || '—'}</td>
-                    <td className="p-4 text-right">
+                    <td className="p-4 text-right space-x-2 flex justify-end">
+                      <button 
+                        onClick={() => {
+                          setEditingEmployee(emp);
+                          setForm({
+                            name: emp.name,
+                            email: emp.email,
+                            password: '', // Don't pre-fill password
+                            phone: emp.phone || '',
+                            role: emp.role,
+                            restaurantId: emp.restaurantId || restaurants[0]?.id || ''
+                          });
+                          setModalOpen(true);
+                        }}
+                        className="p-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition cursor-pointer"
+                        title="Edit Employee"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
                       <button 
                         onClick={() => setDeleteTarget(emp)}
                         className="p-2 bg-gray-100 hover:bg-rose-100 hover:text-rose-600 rounded-lg transition cursor-pointer"
@@ -198,12 +250,12 @@ export default function AdminEmployeesPage() {
         )}
       </div>
 
-      {/* Add Modal */}
+      {/* Add/Edit Modal */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <form onSubmit={handleSave} className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-black text-gray-900">Add New Employee</h2>
+              <h2 className="text-base font-black text-gray-900">{editingEmployee ? 'Edit Employee' : 'Add New Employee'}</h2>
               <button 
                 type="button"
                 onClick={closeModal} 
@@ -239,13 +291,13 @@ export default function AdminEmployeesPage() {
               </div>
 
               <div>
-                <label className="font-bold text-gray-500 uppercase tracking-wide">Password *</label>
+                <label className="font-bold text-gray-500 uppercase tracking-wide">Password {editingEmployee ? '(Leave blank to keep current)' : '*'}</label>
                 <input
                   type="password"
-                  required
+                  required={!editingEmployee}
                   value={form.password}
                   onChange={e => setForm({ ...form, password: e.target.value })}
-                  placeholder="At least 6 characters"
+                  placeholder={editingEmployee ? "Leave blank to keep current password" : "At least 6 characters"}
                   className="mt-1 w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-orange-500 transition"
                 />
               </div>
@@ -302,7 +354,7 @@ export default function AdminEmployeesPage() {
                 disabled={saving}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 disabled:opacity-50 shadow-lg shadow-orange-600/20 transition cursor-pointer"
               >
-                {saving ? 'Creating...' : 'Create Employee'}
+                {saving ? 'Saving...' : editingEmployee ? 'Save Changes' : 'Create Employee'}
               </button>
             </div>
           </form>
