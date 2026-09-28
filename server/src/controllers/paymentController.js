@@ -1,106 +1,201 @@
 const axios = require('axios');
 const prisma = require('../config/prisma');
 
-// Get base URLs from environment or use defaults
+/* -------------------------------------------------------------------------- */
+/* Helpers                                                                    */
+/* -------------------------------------------------------------------------- */
+
+// Remove whitespace/newlines, stray quotes and trailing slashes from env URLs
+const cleanUrl = (value, fallback) =>
+  String(value || fallback)
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .trim()
+    .replace(/\/+$/, '');
+
+// BACKEND_URL  = where THIS server lives (Render), without /api
+// FRONTEND_URL = where customers see the website (cPanel)
 const getBaseUrls = () => {
-  const backend = process.env.BACKEND_URL || 'https://abdupower.com';
-  const frontend = process.env.FRONTEND_URL || 'https://maad.abdupower.com';
-  
+  const backend = cleanUrl(process.env.BACKEND_URL, 'https://restaurant1-qm7p.onrender.com');
+  const frontend = cleanUrl(process.env.FRONTEND_URL, 'https://abdupower.com');
   console.log('🔗 Payment URLs:', { backend, frontend });
   return { backend, frontend };
 };
 
-// Temporary storage for pending order payloads keyed by tx_ref
+const ORDER_INCLUDE = {
+  items: { include: { food: true } },
+  customer: { select: { name: true, phone: true, email: true } },
+  restaurant: true,
+  address: true,
+};
+
+const buildCustomer = ({ email, first_name, last_name, phone_number }) => {
+  let customerEmail = (email || '').trim();
+  if (!customerEmail || /@(example|test)\.com$/i.test(customerEmail)) {
+    customerEmail = 'customer@gmail.com';
+  }
+
+  const first = (first_name || '').trim() || 'Valued';
+  const last = (last_name || '').trim() || first;
+
+  let phone = (phone_number || '').trim().replace(/[\s-]/g, '');
+  if (!phone || phone.length < 9) {
+    phone = '0912345678';
+  }
+
+  return { email: customerEmail, first_name: first, last_name: last, phone_number: phone };
+};
+
+const describeChapaError = (error) => {
+  let errMsg = 'Payment initialization failed.';
+  const responseMessage = error.response?.data?.message;
+
+  if (responseMessage) {
+    if (typeof responseMessage === 'string') {
+      errMsg = responseMessage;
+    } else if (typeof responseMessage === 'object') {
+      if (responseMessage.email) {
+        errMsg = 'Invalid email address provided for payment. Please use a valid email address (e.g. user@gmail.com).';
+      } else if (responseMessage.phone_number) {
+        errMsg = 'Invalid phone number provided for payment. Please use a valid Ethiopian phone number (e.g. 0912345678).';
+      } else {
+        errMsg = Object.values(responseMessage).flat().join(', ');
+      }
+    }
+  } else if (error.response?.data?.error) {
+    const e = error.response.data.error;
+    errMsg = typeof e === 'string' ? e : JSON.stringify(e);
+  } else if (error.message) {
+    errMsg = error.message;
+  }
+
+  const status =
+    error.response?.status && error.response.status >= 400 && error.response.status < 600
+      ? error.response.status
+      : 500;
+
+  return { errMsg, status };
+};
+
+/* -------------------------------------------------------------------------- */
+/* Pending order storage (in memory)                                          */
+/* -------------------------------------------------------------------------- */
+// NOTE: this is cleared whenever the server restarts or a redeploy happens.
+// Do not deploy while testing a payment. Long term, store these in the database.
+
 const pendingOrders = new Map();
+const PENDING_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
 
-// Initialize Chapa Payment WITH Order Data (Order created after payment succeeds)
+setInterval(() => {
+  const now = Date.now();
+  for (const [ref, data] of pendingOrders) {
+    if (now - (data._storedAt || 0) > PENDING_TTL_MS) pendingOrders.delete(ref);
+  }
+}, 30 * 60 * 1000).unref();
+
+// Requests currently being finalized, so the callback and the return URL
+// (which usually arrive together) never create the same order twice.
+const inflight = new Map();
+
+/* -------------------------------------------------------------------------- */
+/* Initialize payment WITH order data (order is created after payment)        */
+/* -------------------------------------------------------------------------- */
+
 const initializeChapaPaymentWithOrder = async (req, res) => {
+  let tx_ref = null;
+
   try {
-    const { orderData, amount, email, first_name, last_name, phone_number } = req.body;
+    const { orderData, email, first_name, last_name, phone_number } = req.body;
+    const clientAmount = parseFloat(req.body.amount);
 
-    console.log('🔍 Payment initialization with order data:');
-    console.log('📦 orderData:', JSON.stringify(orderData, null, 2));
-    console.log('💰 amount:', amount);
-    console.log('👤 user:', req.user?.id);
+    console.log('🔍 Payment initialization with order data, user:', req.user?.id);
 
-    if (!orderData || !amount) {
+    if (!orderData || !req.body.amount) {
       return res.status(400).json({ error: 'Please provide order data and amount.' });
     }
 
-    // Validate essential order fields
     if (!orderData.restaurantId) {
       console.log('❌ Missing restaurantId in orderData');
       return res.status(400).json({ error: 'Restaurant ID is required in order data.' });
     }
 
-    if (!orderData.items || !Array.isArray(orderData.items) || orderData.items.length === 0) {
+    if (!Array.isArray(orderData.items) || orderData.items.length === 0) {
       console.log('❌ Missing or empty items in orderData');
       return res.status(400).json({ error: 'Order items are required.' });
     }
 
-    const tx_ref = `TX-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const secretKey = (process.env.CHAPA_SECRET_KEY || '').trim();
-
     if (!secretKey) {
       return res.status(400).json({ error: 'Chapa Secret Key is not configured on the server.' });
     }
 
-    // Get base URLs
-    const { backend, frontend } = getBaseUrls();
+    // ---- Prices come from the database, never from the browser ----
+    const requested = orderData.items.map((i) => ({
+      foodId: i.foodId,
+      quantity: Math.max(1, parseInt(i.quantity, 10) || 1),
+    }));
 
-    // Add customerId from authenticated user and store temporarily
-    const completeOrderData = {
+    if (requested.some((i) => !i.foodId)) {
+      return res.status(400).json({ error: 'Every order item needs a foodId.' });
+    }
+
+    const foodIds = [...new Set(requested.map((i) => i.foodId))];
+    const foods = await prisma.food.findMany({
+      where: { id: { in: foodIds } },
+      select: { id: true, name: true, price: true },
+    });
+    const foodById = new Map(foods.map((f) => [f.id, f]));
+
+    if (foodIds.some((id) => !foodById.has(id))) {
+      return res.status(400).json({
+        error: 'One or more items in your cart are no longer available. Please refresh your cart.',
+      });
+    }
+
+    const items = requested.map((i) => {
+      const food = foodById.get(i.foodId);
+      return { foodId: i.foodId, quantity: i.quantity, price: food.price, name: food.name };
+    });
+
+    const deliveryFee = Math.max(0, parseFloat(orderData.deliveryFee) || 0);
+    const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const totalAmount = Math.round((subtotal + deliveryFee) * 100) / 100;
+
+    if (!Number.isNaN(clientAmount) && Math.abs(clientAmount - totalAmount) > 0.01) {
+      console.warn(`⚠️ Client amount ${clientAmount} differs from server total ${totalAmount}. Using server total.`);
+    }
+
+    tx_ref = `TX-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const { backend } = getBaseUrls();
+
+    pendingOrders.set(tx_ref, {
       ...orderData,
-      customerId: req.user.id,  // Add customer ID from authenticated user
-      totalAmount: amount,
-      deliveryFee: orderData.deliveryFee || 0,
-    };
-    
-    // Ensure items have proper field names for database
-    if (completeOrderData.items) {
-      completeOrderData.items = completeOrderData.items.map(item => ({
-        foodId: item.foodId,
-        quantity: item.quantity || 1,
-        price: item.price || item.unitPrice || 0,  // Support both price and unitPrice
-        name: item.name || 'Item'
-      }));
-    }
-    
-    pendingOrders.set(tx_ref, completeOrderData);
-    console.log(`💾 Stored pending order for tx_ref: ${tx_ref}, customerId: ${req.user.id}`);
-    console.log(`📋 Complete order data:`, JSON.stringify(completeOrderData, null, 2));
+      items,
+      customerId: req.user.id,
+      totalAmount,
+      deliveryFee,
+      _storedAt: Date.now(),
+    });
+    console.log(`💾 Stored pending order for tx_ref: ${tx_ref}, customerId: ${req.user.id}, total: ${totalAmount}`);
 
-    // Clean and validate inputs for Chapa
-    let customerEmail = (email || '').trim();
-    if (!customerEmail || customerEmail.toLowerCase().endsWith('@example.com') || customerEmail.toLowerCase().endsWith('@test.com')) {
-      customerEmail = 'customer@gmail.com';
-    }
-
-    const customerFirstName = (first_name || '').trim() || 'Valued';
-    const customerLastName = (last_name || '').trim() || customerFirstName;
-    
-    let customerPhone = (phone_number || '').trim().replace(/[\s-]/g, '');
-    if (!customerPhone || customerPhone.length < 9) {
-      customerPhone = '0912345678';
-    }
+    const customer = buildCustomer({ email, first_name, last_name, phone_number });
 
     const response = await axios.post(
       'https://api.chapa.co/v1/transaction/initialize',
       {
-        amount: parseFloat(amount).toFixed(2),
+        amount: totalAmount.toFixed(2),
         currency: 'ETB',
-        email: customerEmail,
-        first_name: customerFirstName,
-        last_name: customerLastName,
-        phone_number: customerPhone,
+        ...customer,
         tx_ref,
-        // Use dynamic URLs with proper formatting
+        // Chapa calls this (server to server) after payment
         callback_url: `${backend}/api/payments/callback`,
-        return_url: `${frontend}/order-success?tx_ref=${tx_ref}`,
+        // Customer comes back here; the backend creates the order, then
+        // redirects to the frontend success page.
+        return_url: `${backend}/api/payments/verify/${tx_ref}`,
         customization: {
-          title: "Maad Payment",
-          description: `Order Payment`
-        }
+          title: 'Maad Payment',
+          description: 'Order Payment',
+        },
       },
       {
         headers: {
@@ -118,43 +213,23 @@ const initializeChapaPaymentWithOrder = async (req, res) => {
       });
     }
 
-    res.status(400).json({
+    pendingOrders.delete(tx_ref);
+    return res.status(400).json({
       error: response.data?.message || 'Chapa initialization failed',
       details: response.data,
     });
   } catch (error) {
+    if (tx_ref) pendingOrders.delete(tx_ref);
     console.error('Chapa Initialization Error:', error.response?.data || error.message);
-    
-    let errMsg = 'Payment initialization failed.';
-    const responseMessage = error.response?.data?.message;
-
-    if (responseMessage) {
-      if (typeof responseMessage === 'string') {
-        errMsg = responseMessage;
-      } else if (typeof responseMessage === 'object') {
-        if (responseMessage.email) {
-          errMsg = 'Invalid email address provided for payment. Please use a valid email address (e.g. user@gmail.com).';
-        } else if (responseMessage.phone_number) {
-          errMsg = 'Invalid phone number provided for payment. Please use a valid Ethiopian phone number (e.g. 0912345678).';
-        } else {
-          errMsg = Object.values(responseMessage).flat().join(', ');
-        }
-      }
-    } else if (error.response?.data?.error) {
-      errMsg = typeof error.response.data.error === 'string' ? error.response.data.error : JSON.stringify(error.response.data.error);
-    } else if (error.message) {
-      errMsg = error.message;
-    }
-
-    const statusCode = error.response?.status && error.response.status >= 400 && error.response.status < 600
-      ? error.response.status
-      : 500;
-
-    res.status(statusCode).json({ error: errMsg });
+    const { errMsg, status } = describeChapaError(error);
+    return res.status(status).json({ error: errMsg });
   }
 };
 
-// Initialize standard Chapa Payment
+/* -------------------------------------------------------------------------- */
+/* Initialize standard payment (order already exists)                         */
+/* -------------------------------------------------------------------------- */
+
 const initializeChapaPayment = async (req, res) => {
   try {
     const { orderId, amount, email, first_name, last_name, phone_number } = req.body;
@@ -168,15 +243,13 @@ const initializeChapaPayment = async (req, res) => {
       return res.status(404).json({ error: 'Associated order not found.' });
     }
 
-    const tx_ref = `TX-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const secretKey = (process.env.CHAPA_SECRET_KEY || '').trim();
-
     if (!secretKey) {
       return res.status(400).json({ error: 'Chapa Secret Key is not configured on the server.' });
     }
 
-    // Get base URLs
-    const { backend, frontend } = getBaseUrls();
+    const tx_ref = `TX-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const { backend } = getBaseUrls();
 
     await prisma.payment.upsert({
       where: { orderId },
@@ -190,35 +263,21 @@ const initializeChapaPayment = async (req, res) => {
       },
     });
 
-    let customerEmail = (email || '').trim();
-    if (!customerEmail || customerEmail.toLowerCase().endsWith('@example.com') || customerEmail.toLowerCase().endsWith('@test.com')) {
-      customerEmail = 'customer@gmail.com';
-    }
-
-    const customerFirstName = (first_name || '').trim() || 'Valued';
-    const customerLastName = (last_name || '').trim() || customerFirstName;
-    
-    let customerPhone = (phone_number || '').trim().replace(/[\s-]/g, '');
-    if (!customerPhone || customerPhone.length < 9) {
-      customerPhone = '0912345678';
-    }
+    const customer = buildCustomer({ email, first_name, last_name, phone_number });
 
     const response = await axios.post(
       'https://api.chapa.co/v1/transaction/initialize',
       {
         amount: parseFloat(amount).toFixed(2),
         currency: 'ETB',
-        email: customerEmail,
-        first_name: customerFirstName,
-        last_name: customerLastName,
-        phone_number: customerPhone,
+        ...customer,
         tx_ref,
-        callback_url: `${process.env.BACKEND_URL || 'https://abdupower.com'}/api/payments/callback`,
-        return_url: `${process.env.FRONTEND_URL || 'https://maad.abdupower.com'}/order-success?tx_ref=${tx_ref}&orderId=${orderId}`,
+        callback_url: `${backend}/api/payments/callback`,
+        return_url: `${backend}/api/payments/verify/${tx_ref}`,
         customization: {
-          title: "Maad Payment",
-          description: `Order ${orderId}`
-        }
+          title: 'Maad Payment',
+          description: `Order ${orderId}`,
+        },
       },
       {
         headers: {
@@ -236,242 +295,258 @@ const initializeChapaPayment = async (req, res) => {
       });
     }
 
-    res.status(400).json({
+    return res.status(400).json({
       error: response.data?.message || 'Chapa initialization failed',
       details: response.data,
     });
   } catch (error) {
     console.error('Chapa Initialization Error:', error.response?.data || error.message);
-    let errMsg = error.response?.data?.message || error.message || 'Payment initialization failed.';
-    res.status(500).json({ error: typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg) });
+    const { errMsg, status } = describeChapaError(error);
+    return res.status(status).json({ error: errMsg });
   }
 };
 
-// Helper function to create order in DB after payment verification succeeds
+/* -------------------------------------------------------------------------- */
+/* Verify + finalize                                                          */
+/* -------------------------------------------------------------------------- */
+
+// Ask Chapa whether the payment really succeeded.
+// Only data.status counts. The top-level "status" just means the API call worked.
+const verifyWithChapa = async (tx_ref) => {
+  const secretKey = (process.env.CHAPA_SECRET_KEY || '').trim();
+  const response = await axios.get(
+    `https://api.chapa.co/v1/transaction/verify/${encodeURIComponent(tx_ref)}`,
+    { headers: { Authorization: `Bearer ${secretKey}` } }
+  );
+  const paid = response.data?.data?.status === 'success';
+  const amount = parseFloat(response.data?.data?.amount || 0);
+  return { paid, amount };
+};
+
+// Create the order from the pending data, together with its payment, in one
+// atomic write. Returns null if it cannot be created.
 const createOrderFromPendingData = async (tx_ref, verifiedAmount) => {
-  const orderPayload = pendingOrders.get(tx_ref);
-  console.log(`🔍 Debug: Attempting to create order for tx_ref: ${tx_ref}`);
-  console.log(`🔍 Debug: Order payload:`, orderPayload);
-  
-  if (!orderPayload) {
-    console.log(`❌ No order payload found for tx_ref: ${tx_ref}`);
+  const payload = pendingOrders.get(tx_ref);
+
+  if (!payload) {
+    console.error(`❌ No order payload found for tx_ref: ${tx_ref} (server restarted or payment never initialized here)`);
     return null;
   }
 
-  try {
-    // Validate required fields
-    if (!orderPayload.customerId) {
-      console.log(`❌ Missing customerId in order payload`);
-      return null;
-    }
-
-    if (!orderPayload.restaurantId) {
-      console.log(`❌ Missing restaurantId in order payload`);
-      return null;
-    }
-
-    if (!orderPayload.items || orderPayload.items.length === 0) {
-      console.log(`❌ Missing or empty items in order payload`);
-      return null;
-    }
-
-    // Calculate total amount from items and delivery
-    let calculatedTotal = 0;
-    orderPayload.items.forEach(item => {
-      calculatedTotal += (item.price || 0) * (item.quantity || 0);
+  if (!payload.customerId || !payload.restaurantId || !payload.items || payload.items.length === 0) {
+    console.error(`❌ Invalid pending order for tx_ref: ${tx_ref}`, {
+      customerId: payload.customerId,
+      restaurantId: payload.restaurantId,
+      itemCount: payload.items?.length || 0,
     });
-    calculatedTotal += (orderPayload.deliveryFee || 0);
+    pendingOrders.delete(tx_ref);
+    return null;
+  }
 
-    console.log(`🔍 Debug: Creating order with customerId: ${orderPayload.customerId}, restaurantId: ${orderPayload.restaurantId}`);
-    console.log(`🔍 Debug: Order items:`, orderPayload.items);
+  // Claim the payload so nothing else can create the same order
+  pendingOrders.delete(tx_ref);
 
-    // Create the order with status PENDING since it's a new order awaiting chef acceptance
+  try {
+    const subtotal = payload.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const calculatedTotal = Math.round((subtotal + (payload.deliveryFee || 0)) * 100) / 100;
+
+    if (verifiedAmount && Math.abs(verifiedAmount - calculatedTotal) > 0.01) {
+      console.warn(`⚠️ Paid amount ${verifiedAmount} differs from order total ${calculatedTotal} for ${tx_ref}`);
+    }
+
     const newOrder = await prisma.order.create({
       data: {
-        customerId: orderPayload.customerId,
-        restaurantId: orderPayload.restaurantId,
-        orderType: orderPayload.orderType || 'DELIVERY',
+        customerId: payload.customerId,
+        restaurantId: payload.restaurantId,
+        orderType: payload.orderType || 'DELIVERY',
         totalAmount: calculatedTotal,
-        deliveryFee: orderPayload.deliveryFee || 0,
-        discount: orderPayload.discount || 0,
-        specialInstructions: orderPayload.specialInstructions || null,
-        addressId: orderPayload.addressId || null,
-        deliveryAddress: orderPayload.deliveryAddress || null,
-        latitude: orderPayload.latitude ? parseFloat(orderPayload.latitude) : null,
-        longitude: orderPayload.longitude ? parseFloat(orderPayload.longitude) : null,
-        status: 'PENDING',  // Changed from CONFIRMED to PENDING for chef acceptance workflow
+        deliveryFee: payload.deliveryFee || 0,
+        discount: payload.discount || 0,
+        specialInstructions: payload.specialInstructions || null,
+        addressId: payload.addressId || null,
+        deliveryAddress: payload.deliveryAddress || null,
+        latitude: payload.latitude ? parseFloat(payload.latitude) : null,
+        longitude: payload.longitude ? parseFloat(payload.longitude) : null,
+        status: 'PENDING', // waits for chef acceptance
         items: {
-          create: orderPayload.items?.map(item => ({
+          create: payload.items.map((item) => ({
             foodId: item.foodId,
             quantity: item.quantity,
-            unitPrice: item.price,  // Make sure to use unitPrice field name
-          })) || []
-        }
+            unitPrice: item.price,
+          })),
+        },
+        payment: {
+          create: {
+            amount: verifiedAmount || calculatedTotal,
+            method: 'CHAPA',
+            status: 'COMPLETED',
+            transactionId: tx_ref,
+          },
+        },
       },
-      include: {
-        items: { include: { food: true } },
-        customer: { select: { name: true, phone: true, email: true } },
-        restaurant: true,
-        address: true,
-      },
+      include: ORDER_INCLUDE,
     });
 
-    console.log(`✅ Order created successfully with ID: ${newOrder.id}`);
-
-    // Create completed payment record linked to this order
-    await prisma.payment.create({
-      data: {
-        orderId: newOrder.id,
-        amount: verifiedAmount,
-        method: 'CHAPA',
-        status: 'COMPLETED',
-        transactionId: tx_ref,
-      }
-    });
-
-    console.log(`✅ Payment record created for order: ${newOrder.id}`);
-
-    // Clear from memory map
-    pendingOrders.delete(tx_ref);
+    console.log(`✅ Order created successfully with ID: ${newOrder.id} (tx_ref: ${tx_ref})`);
     return newOrder;
   } catch (err) {
-    console.error('❌ Error creating order from pending cache:', err);
-    console.error('❌ Error details:', err.message);
+    console.error('❌ Error creating order from pending data:', err.message);
+    // Nothing was written, so keep the payload so a retry can still work
+    pendingOrders.set(tx_ref, payload);
     return null;
   }
 };
 
-// Chapa Callback Handler
+// Shared by the callback and the return URL. Safe to call more than once for
+// the same tx_ref. Returns { order, isNew }.
+const finalizePayment = (tx_ref, verifiedAmount) => {
+  if (inflight.has(tx_ref)) return inflight.get(tx_ref);
+
+  const job = (async () => {
+    const paymentRecord = await prisma.payment.findFirst({ where: { transactionId: tx_ref } });
+
+    if (paymentRecord) {
+      if (paymentRecord.status === 'COMPLETED') {
+        const order = await prisma.order.findUnique({
+          where: { id: paymentRecord.orderId },
+          include: ORDER_INCLUDE,
+        });
+        return { order, isNew: false };
+      }
+
+      // Order existed already (standard flow); mark it paid
+      await prisma.payment.update({
+        where: { id: paymentRecord.id },
+        data: { status: 'COMPLETED', amount: verifiedAmount || paymentRecord.amount },
+      });
+      const order = await prisma.order.update({
+        where: { id: paymentRecord.orderId },
+        data: { status: 'PENDING' },
+        include: ORDER_INCLUDE,
+      });
+      return { order, isNew: true };
+    }
+
+    if (pendingOrders.has(tx_ref)) {
+      const order = await createOrderFromPendingData(tx_ref, verifiedAmount);
+      return { order, isNew: !!order };
+    }
+
+    return { order: null, isNew: false };
+  })().finally(() => inflight.delete(tx_ref));
+
+  inflight.set(tx_ref, job);
+  return job;
+};
+
+const emitNewOrder = (req, order) => {
+  const io = req.app.get('io');
+  if (io && order) {
+    io.to(order.restaurantId).emit('new_order', order);
+    io.to('admin_global').emit('new_order', order);
+  }
+};
+
+/* -------------------------------------------------------------------------- */
+/* Chapa callback (server to server). Chapa sends GET ?trx_ref=...            */
+/* -------------------------------------------------------------------------- */
+
 const handleChapaCallback = async (req, res) => {
   try {
-    const tx_ref = req.query.tx_ref || req.body?.tx_ref || req.params.tx_ref;
+    const raw =
+      req.query.tx_ref ||
+      req.query.trx_ref ||
+      req.body?.tx_ref ||
+      req.body?.trx_ref ||
+      req.params.tx_ref;
+    const tx_ref = raw ? String(raw).trim() : '';
+
     console.log(`📥 Chapa Callback received for tx_ref: ${tx_ref}`);
 
     if (!tx_ref) {
       return res.status(400).json({ success: false, error: 'Missing transaction reference' });
     }
 
-    const secretKey = (process.env.CHAPA_SECRET_KEY || '').trim();
-    const response = await axios.get(`https://api.chapa.co/v1/transaction/verify/${tx_ref}`, {
-      headers: { Authorization: `Bearer ${secretKey}` },
-    });
-
-    if (response.data.status === 'success' || response.data.data?.status === 'success') {
-      const verifiedAmount = parseFloat(response.data.data?.amount || 0);
-      
-      // Check if order already exists by payment tx_ref
-      let paymentRecord = await prisma.payment.findFirst({ where: { transactionId: tx_ref } });
-      let orderId = paymentRecord ? paymentRecord.orderId : null;
-      let updatedOrder = null;
-
-      if (!orderId && pendingOrders.has(tx_ref)) {
-        // Create the order now since payment passed!
-        updatedOrder = await createOrderFromPendingData(tx_ref, verifiedAmount);
-        orderId = updatedOrder?.id;
-      } else if (orderId) {
-        await prisma.payment.updateMany({
-          where: { orderId },
-          data: { status: 'COMPLETED', transactionId: tx_ref, amount: verifiedAmount },
-        });
-        updatedOrder = await prisma.order.update({
-          where: { id: orderId },
-          data: { status: 'PENDING' },  // Changed from CONFIRMED to PENDING for chef workflow
-          include: {
-            items: { include: { food: true } },
-            customer: { select: { name: true, phone: true, email: true } },
-            restaurant: true,
-            address: true,
-          },
-        });
-      }
-
-      const io = req.app.get('io');
-      if (io && updatedOrder) {
-        io.to(updatedOrder.restaurantId).emit('new_order', updatedOrder);
-        io.to('admin_global').emit('new_order', updatedOrder);
-      }
-
-      return res.status(200).json({ success: true, message: 'Payment processed successfully', tx_ref, orderId });
+    const { paid, amount } = await verifyWithChapa(tx_ref);
+    if (!paid) {
+      return res.status(400).json({ success: false, error: 'Payment not completed' });
     }
 
-    return res.status(400).json({ success: false, error: 'Payment verification failed' });
+    const { order, isNew } = await finalizePayment(tx_ref, amount);
+
+    if (!order) {
+      console.error(`❌ PAID BUT NO ORDER: tx_ref ${tx_ref}, amount ${amount}. Needs manual follow-up.`);
+    }
+    if (isNew) emitNewOrder(req, order);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Payment processed successfully',
+      tx_ref,
+      orderId: order?.id || null,
+    });
   } catch (error) {
     console.error('❌ Callback Error:', error.response?.data || error.message);
     return res.status(500).json({ success: false, error: 'Error processing payment callback' });
   }
 };
 
-// Verify Chapa Payment (Return URL endpoint)
+/* -------------------------------------------------------------------------- */
+/* Return URL: customer lands here after paying                               */
+/* -------------------------------------------------------------------------- */
+
 const verifyChapaPayment = async (req, res) => {
+  const tx_ref = String(req.params.tx_ref || '').trim();
+  const { frontend } = getBaseUrls();
+  const wantsJson = req.query.format === 'json' || req.headers.accept?.includes('application/json');
+
   try {
-    const { tx_ref } = req.params;
-    const wantsJson = req.query.format === 'json' || req.headers.accept?.includes('application/json');
+    const { paid, amount } = await verifyWithChapa(tx_ref);
 
-    const secretKey = (process.env.CHAPA_SECRET_KEY || '').trim();
-    const response = await axios.get(`https://api.chapa.co/v1/transaction/verify/${tx_ref}`, {
-      headers: { Authorization: `Bearer ${secretKey}` },
-    });
-
-    if (response.data.status === 'success' || response.data.data?.status === 'success') {
-      const verifiedAmount = parseFloat(response.data.data?.amount || 0);
-      let paymentRecord = await prisma.payment.findFirst({ where: { transactionId: tx_ref } });
-      let orderId = paymentRecord ? paymentRecord.orderId : null;
-      let updatedOrder = null;
-
-      if (!orderId && pendingOrders.has(tx_ref)) {
-        updatedOrder = await createOrderFromPendingData(tx_ref, verifiedAmount);
-        orderId = updatedOrder?.id;
-      } else if (orderId) {
-        await prisma.payment.updateMany({
-          where: { orderId },
-          data: { status: 'COMPLETED', transactionId: tx_ref, amount: verifiedAmount },
-        });
-        updatedOrder = await prisma.order.update({
-          where: { id: orderId },
-          data: { status: 'PENDING' },  // Changed from CONFIRMED to PENDING for chef workflow
-          include: {
-            items: { include: { food: true } },
-            customer: { select: { name: true, phone: true, email: true } },
-            restaurant: true,
-            address: true,
-          },
-        });
-      }
-
-      const io = req.app.get('io');
-      if (io && updatedOrder) {
-        io.to(updatedOrder.restaurantId).emit('new_order', updatedOrder);
-        io.to('admin_global').emit('new_order', updatedOrder);
-      }
-
-      const urls = getBaseUrls();
-      if (wantsJson) {
-        return res.status(200).json({ success: true, message: 'Payment verified', order: updatedOrder, tx_ref });
-      }
-      return res.redirect(`${urls.frontend}/order-success?status=success&tx_ref=${tx_ref}&orderId=${orderId || ''}`);
-    } else {
-      const urls = getBaseUrls();
+    if (!paid) {
       if (wantsJson) {
         return res.status(400).json({ success: false, error: 'Verification failed.' });
       }
-      return res.redirect(`${urls.frontend}/order-success?status=failed&tx_ref=${tx_ref}`);
+      return res.redirect(`${frontend}/order-success?status=failed&tx_ref=${encodeURIComponent(tx_ref)}`);
     }
+
+    const { order, isNew } = await finalizePayment(tx_ref, amount);
+
+    if (!order) {
+      console.error(`❌ PAID BUT NO ORDER: tx_ref ${tx_ref}, amount ${amount}. Needs manual follow-up.`);
+    }
+    if (isNew) emitNewOrder(req, order);
+
+    if (wantsJson) {
+      return res.status(200).json({ success: true, message: 'Payment verified', order, tx_ref });
+    }
+    return res.redirect(
+      `${frontend}/order-success?status=success&tx_ref=${encodeURIComponent(tx_ref)}&orderId=${order?.id || ''}`
+    );
   } catch (error) {
     console.error('Verification Error:', error.response?.data || error.message);
-    const urls = getBaseUrls();
-    if (req.headers.accept?.includes('application/json')) {
+    if (wantsJson) {
       return res.status(500).json({ success: false, error: 'Error verifying payment.' });
     }
-    return res.redirect(`${urls.frontend}/order-success?status=error&tx_ref=${req.params.tx_ref || ''}`);
+    return res.redirect(`${frontend}/order-success?status=error&tx_ref=${encodeURIComponent(tx_ref)}`);
   }
 };
 
+/* -------------------------------------------------------------------------- */
+/* Other payment endpoints                                                    */
+/* -------------------------------------------------------------------------- */
+
 const createPayment = async (req, res) => {
-  // standard fallback
   try {
     const { orderId, amount, method, transactionId } = req.body;
     const payment = await prisma.payment.create({
-      data: { orderId, amount: parseFloat(amount), method, status: 'COMPLETED', transactionId: transactionId || `TXN-${Date.now()}` },
+      data: {
+        orderId,
+        amount: parseFloat(amount),
+        method,
+        status: 'COMPLETED',
+        transactionId: transactionId || `TXN-${Date.now()}`,
+      },
     });
     res.status(201).json({ message: 'Payment recorded', payment });
   } catch (error) {
@@ -490,11 +565,11 @@ const getPaymentByOrderId = async (req, res) => {
   }
 };
 
-module.exports = { 
+module.exports = {
   initializeChapaPayment,
   initializeChapaPaymentWithOrder,
   handleChapaCallback,
-  verifyChapaPayment, 
-  createPayment, 
-  getPaymentByOrderId 
+  verifyChapaPayment,
+  createPayment,
+  getPaymentByOrderId,
 };

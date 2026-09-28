@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { 
-  createPayment, 
-  getPaymentByOrderId, 
+const {
+  createPayment,
+  getPaymentByOrderId,
   initializeChapaPayment,
   initializeChapaPaymentWithOrder,
-  handleChapaCallback, 
-  verifyChapaPayment 
+  handleChapaCallback,
+  verifyChapaPayment,
 } = require('../controllers/paymentController');
 const { verifyToken } = require('../middleware/auth');
 
@@ -14,14 +14,16 @@ const { verifyToken } = require('../middleware/auth');
 router.post('/initialize', verifyToken, initializeChapaPayment);
 router.post('/initialize-with-order', verifyToken, initializeChapaPaymentWithOrder);
 
-// Chapa Webhook Callbacks (Chapa posts to the clean base URL)
+// Chapa Callback (Chapa calls this with GET ?trx_ref=..., some setups use POST)
+router.get('/callback', handleChapaCallback);
 router.post('/callback', handleChapaCallback);
-router.post('/callback/:tx_ref', handleChapaCallback); // Optional fallback if tx_ref is in path
-router.get('/callback/:tx_ref', handleChapaCallback);  // Fallback GET callback
+router.get('/callback/:tx_ref', handleChapaCallback);
+router.post('/callback/:tx_ref', handleChapaCallback);
 
-router.get('/verify/:tx_ref', verifyChapaPayment);     // Manual verification or return URL
+// Return URL: verifies the payment, creates the order, redirects to the frontend
+router.get('/verify/:tx_ref', verifyChapaPayment);
 
-// Existing Payment Routes
+// Existing Payment Routes (keep these AFTER the fixed routes above)
 router.post('/', verifyToken, createPayment);
 router.get('/:orderId', verifyToken, getPaymentByOrderId);
 
