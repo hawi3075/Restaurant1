@@ -8,8 +8,8 @@ const cors = require('cors');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 // Import Google Gen AI SDK and initialize with explicit API key
-const { GoogleGenAI } = require('@google/genai');
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Prisma client for DB access in socket handlers
 const prisma = require('./config/prisma');
@@ -177,12 +177,12 @@ io.on('connection', (socket) => {
 
     if (data.useAi || data.recipientId === 'ai_support') {
       try {
+        console.log(`🤖 AI Request received: useAi=${data.useAi}, text="${data.text}"`);
         const userRole = data.userRole || 'Customer';
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: data.text || data.message || '',
-          config: {
-            systemInstruction: `You are Ma'ad Support, an intelligent, friendly AI assistant for "Ma'ad", a restaurant and food delivery platform based in Adama, Ethiopia. 
+        
+        const model = ai.getGenerativeModel({ 
+          model: 'gemini-pro',
+          systemInstruction: `You are Ma'ad Support, an intelligent, friendly AI assistant for "Ma'ad", a restaurant and food delivery platform based in Adama, Ethiopia. 
             Current User Role: ${userRole}.
             Adapt your response based on the user's role:
             - If Customer: Help with traditional Ethiopian foods (Doro Wot, Kitfo, Tibs, Shiro), order tracking, delivery fees (50 ETB), and Chapa payments.
@@ -190,23 +190,40 @@ io.on('connection', (socket) => {
             - If Chef: Provide kitchen operation guidance, order prep advice, Ethiopian recipe standard specs, kitchen workflows, and inventory tracking.
             - If Waiter: Assist with table service management, fast order status checks, customer menu suggestions, and billing guidance.
             - If Driver: Help with Adama delivery routes/navigation, order pickup procedures, 50 ETB delivery fee policy, and customer handoff tips.
-            Keep your answers concise, helpful, professional, and polite.`,
-            temperature: 0.7,
-          },
+            Keep your answers concise, helpful, professional, and polite.`
         });
+        
+        const response = await model.generateContent(data.text || data.message || 'Hello');
 
+        console.log(`✅ AI Response received:`, response);
+        
+        const responseText = response.response?.text?.() || 'I could not generate a response at this time.';
+        
         const botReply = {
           id: Date.now() + 1,
           sender: "Ma'ad Support",
           senderName: "Ma'ad AI Support",
-          text: response.text,
+          text: responseText,
           timestamp: new Date(),
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
 
+        console.log(`📤 Sending AI response to client:`, botReply);
         socket.emit('receive_message', botReply);
       } catch (error) {
-        console.error("Gemini AI Chat Error:", error);
+        console.error("❌ Gemini AI Chat Error:", error);
+        console.error("Error message:", error.message);
+        console.error("Error details:", error);
+        
+        // Send error message to user
+        socket.emit('receive_message', {
+          id: Date.now() + 1,
+          sender: "Ma'ad Support",
+          senderName: "Ma'ad AI Support",
+          text: `I encountered an error processing your request: ${error.message}. Please try again.`,
+          timestamp: new Date(),
+          isError: true
+        });
       }
     }
   });
