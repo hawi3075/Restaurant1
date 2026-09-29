@@ -519,11 +519,31 @@ export default function Navbar() {
       <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 shadow-sm transition-colors">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
 
+          {/* Browser Back/Forward Buttons */}
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={() => window.history.back()}
+              className="hidden sm:flex items-center justify-center w-9 h-9 text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-gray-800 rounded-lg transition cursor-pointer"
+              title="Go back"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => window.history.forward()}
+              className="hidden sm:flex items-center justify-center w-9 h-9 text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-gray-800 rounded-lg transition cursor-pointer"
+              title="Go forward"
+            >
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+
           {/* Brand Logo */}
           <Link to="/" className="flex items-center space-x-2.5">
-            <div className="bg-orange-600 text-white p-2 rounded-xl shadow-md">
-              <Utensils className="w-5 h-5" />
-            </div>
+            <img 
+              src="/favicon.svg" 
+              alt="Ma'ad Logo"
+              className="w-10 h-10 rounded-xl shadow-md"
+            />
             <span className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
               ማእድ <span className="text-orange-600 font-medium text-sm">Ma'ad</span>
             </span>

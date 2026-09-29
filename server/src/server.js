@@ -11,6 +11,9 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// Import RAG context
+const { siteContext } = require('./config/ragContext');
+
 // Prisma client for DB access in socket handlers
 const prisma = require('./config/prisma');
 
@@ -182,22 +185,27 @@ io.on('connection', (socket) => {
         
         const model = ai.getGenerativeModel({ 
           model: 'gemini-pro',
-          systemInstruction: `You are Ma'ad Support, an intelligent, friendly AI assistant for "Ma'ad", a restaurant and food delivery platform based in Adama, Ethiopia. 
-            Current User Role: ${userRole}.
-            Adapt your response based on the user's role:
-            - If Customer: Help with traditional Ethiopian foods (Doro Wot, Kitfo, Tibs, Shiro), order tracking, delivery fees (50 ETB), and Chapa payments.
-            - If Admin: Assist with restaurant administration, POS, order oversight, food catalog, employee roles, and system management.
-            - If Chef: Provide kitchen operation guidance, order prep advice, Ethiopian recipe standard specs, kitchen workflows, and inventory tracking.
-            - If Waiter: Assist with table service management, fast order status checks, customer menu suggestions, and billing guidance.
-            - If Driver: Help with Adama delivery routes/navigation, order pickup procedures, 50 ETB delivery fee policy, and customer handoff tips.
-            Keep your answers concise, helpful, professional, and polite.`
+          systemInstruction: `You are Ma'ad Support, an intelligent, friendly AI assistant for "Ma'ad", a restaurant and food delivery platform.
+          
+${siteContext}
+
+Current User Role: ${userRole}.
+
+Your Instructions:
+1. Answer questions about Ma'ad using the context provided above
+2. Be helpful, friendly, and professional
+3. If user asks about something not in the context, say "I don't have information about that, but our support team can help"
+4. Keep responses concise (2-3 sentences max)
+5. Adapt your response based on the user's role:
+   - For Customers: Help with menus, orders, delivery, payments
+   - For Admin/Staff: Assist with management, operations, system features`
         });
         
         const response = await model.generateContent(data.text || data.message || 'Hello');
 
-        console.log(`✅ AI Response received:`, response);
+        console.log(`✅ AI Response received`);
         
-        const responseText = response.response?.text?.() || 'I could not generate a response at this time.';
+        const responseText = response.response?.text?.() || 'I could not generate a response at this time. Please try again.';
         
         const botReply = {
           id: Date.now() + 1,
@@ -208,19 +216,17 @@ io.on('connection', (socket) => {
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
 
-        console.log(`📤 Sending AI response to client:`, botReply);
+        console.log(`📤 Sending AI response to client`);
         socket.emit('receive_message', botReply);
       } catch (error) {
-        console.error("❌ Gemini AI Chat Error:", error);
-        console.error("Error message:", error.message);
-        console.error("Error details:", error);
+        console.error("❌ Gemini AI Chat Error:", error.message);
         
         // Send error message to user
         socket.emit('receive_message', {
           id: Date.now() + 1,
           sender: "Ma'ad Support",
           senderName: "Ma'ad AI Support",
-          text: `I encountered an error processing your request: ${error.message}. Please try again.`,
+          text: `I'm experiencing a temporary issue. Please try again in a moment. Error: ${error.message.substring(0, 50)}`,
           timestamp: new Date(),
           isError: true
         });
