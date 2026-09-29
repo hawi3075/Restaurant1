@@ -124,7 +124,9 @@ export default function Chat() {
     if (socket) {
       socket.emit('send_message', {
         ...newMessage,
-        recipientId: 'support', // Route to AI support handler on server
+        recipientId: 'ai_support', // Route to AI support handler on server
+        useAi: true, // Mark as AI request
+        userRole: user.role || 'CUSTOMER'
       });
     }
   };
