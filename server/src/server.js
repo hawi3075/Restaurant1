@@ -125,6 +125,29 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'ROMS Server is running' });
 });
 
+// Test Gemini API endpoint for debugging
+app.get('/api/test-ai', async (req, res) => {
+  try {
+    console.log('🧪 Testing Gemini AI...');
+    const model = ai.getGenerativeModel({ model: 'gemini-pro' });
+    const result = await model.generateContent('Say hello in one word');
+    const text = result.response?.text?.();
+    res.json({ 
+      success: true, 
+      message: 'AI is working!',
+      response: text,
+      apiKeyLoaded: !!process.env.GEMINI_API_KEY
+    });
+  } catch (error) {
+    console.error('❌ AI Test Error:', error.message);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      apiKeyLoaded: !!process.env.GEMINI_API_KEY
+    });
+  }
+});
+
 // Socket.io Real-Time Event Handling for Staff Workflows & AI Chatbot
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
