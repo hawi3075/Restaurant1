@@ -29,6 +29,12 @@ export default function Chat() {
   useEffect(() => {
     if (user) {
       loadChatHistory();
+    } else {
+      // If not logged in, stop loading after 2 seconds
+      const timer = setTimeout(() => {
+        setLoading(false);
+      }, 2000);
+      return () => clearTimeout(timer);
     }
   }, [user]);
 
@@ -197,6 +203,15 @@ export default function Chat() {
             {loading ? (
               <div className="flex justify-center items-center h-full">
                 <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent"></div>
+              </div>
+            ) : !user ? (
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <MessageSquare className="w-20 h-20 text-gray-300 mb-4" />
+                <p className="text-gray-600 font-bold text-lg">Please log in to chat</p>
+                <p className="text-sm text-gray-500 mt-2">You need to be logged in to use our AI support chat</p>
+                <a href="/login" className="mt-4 px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition">
+                  Go to Login
+                </a>
               </div>
             ) : messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
