@@ -179,6 +179,8 @@ io.on('connection', (socket) => {
 
   // AI-Powered Chat message handler & Live Support
   socket.on('send_message', async (data) => {
+    console.log(`\n📨 MESSAGE RECEIVED: useAi=${data.useAi}, recipientId=${data.recipientId}, text="${data.text?.substring(0, 50)}..."`);
+    
     // Save non-AI messages (contact messages and admin responses) to database
     if (data.senderId && data.text && !data.useAi) {
       try {
@@ -198,17 +200,22 @@ io.on('connection', (socket) => {
       }
     }
 
-    if (data.recipientId) {
+    if (data.recipientId && data.recipientId !== 'ai_support') {
       io.to(data.recipientId).emit('receive_message', data);
     }
 
-    if (data.sender !== 'admin' && data.userRole !== 'ADMIN') {
+    if (data.sender !== 'admin' && data.userRole !== 'ADMIN' && !data.useAi) {
       io.to('admin_global').emit('receive_message', data);
     }
 
-    if (data.useAi || data.recipientId === 'ai_support') {
+    // Check for AI request - be explicit about this
+    const isAiRequest = data.useAi === true || data.recipientId === 'ai_support';
+    console.log(`🤔 Is AI Request: ${isAiRequest}`);
+    
+    if (isAiRequest) {
+      console.log(`✅ PROCESSING AI REQUEST!`);
       try {
-        console.log(`🤖 AI Request received: useAi=${data.useAi}, text="${data.text}", recipientId=${data.recipientId}`);
+        console.log(`🤖 AI Request received: useAi=${data.useAi}, text="${data.text}"`);
         console.log(`🔑 API Key available: ${process.env.GEMINI_API_KEY ? 'YES' : 'NO'}`);
         const userRole = data.userRole || 'Customer';
         
