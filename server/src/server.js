@@ -9,6 +9,11 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 // Import Google Gen AI SDK and initialize with explicit API key
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+// Debug: Check if API key is loaded
+console.log(`🔑 GEMINI_API_KEY loaded: ${process.env.GEMINI_API_KEY ? 'YES ✓' : 'NO ✗'}`);
+console.log(`🔑 GEMINI_API_KEY preview: ${process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 10) + '...' : 'MISSING'}`);
+
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Import RAG context
@@ -181,8 +186,15 @@ io.on('connection', (socket) => {
     if (data.useAi || data.recipientId === 'ai_support') {
       try {
         console.log(`🤖 AI Request received: useAi=${data.useAi}, text="${data.text}"`);
+        console.log(`🔑 API Key available: ${process.env.GEMINI_API_KEY ? 'YES' : 'NO'}`);
         const userRole = data.userRole || 'Customer';
         
+        // Create a timeout promise
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('AI response timeout after 8 seconds')), 8000)
+        );
+        
+        console.log(`📡 Initializing Gemini model...`);
         const model = ai.getGenerativeModel({ 
           model: 'gemini-pro',
           systemInstruction: `You are Ma'ad Support, an intelligent, friendly AI assistant for "Ma'ad", a restaurant and food delivery platform.
@@ -201,11 +213,15 @@ Your Instructions:
    - For Admin/Staff: Assist with management, operations, system features`
         });
         
-        const response = await model.generateContent(data.text || data.message || 'Hello');
+        console.log(`📤 Sending request to Gemini API...`);
+        const generatePromise = model.generateContent(data.text || data.message || 'Hello');
+        const response = await Promise.race([generatePromise, timeoutPromise]);
 
-        console.log(`✅ AI Response received`);
+        console.log(`✅ AI Response received from Gemini`);
         
         const responseText = response.response?.text?.() || 'I could not generate a response at this time. Please try again.';
+        
+        console.log(`📝 Response: "${responseText.substring(0, 100)}..."`);
         
         const botReply = {
           id: Date.now() + 1,
@@ -216,17 +232,29 @@ Your Instructions:
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
 
-        console.log(`📤 Sending AI response to client`);
+        console.log(`📤 Emitting response to client socket: ${socket.id}`);
         socket.emit('receive_message', botReply);
       } catch (error) {
         console.error("❌ Gemini AI Chat Error:", error.message);
+        console.error("❌ Error details:", error);
         
-        // Send error message to user
+        // Send helpful error message to user
+        let errorMessage = 'I apologize, but I\'m temporarily unavailable. Please try again in a moment or contact our support team.';
+        
+        if (error.message.includes('timeout')) {
+          errorMessage = 'I\'m taking longer than usual to respond. Please try again.';
+          console.error(`⏱️ TIMEOUT: Gemini took too long to respond`);
+        } else if (error.message.includes('API') || error.message.includes('401') || error.message.includes('403') || error.message.includes('UNAUTHENTICATED')) {
+          errorMessage = 'Our AI service is temporarily unavailable. Our support team is here to help - please use the contact form or call us.';
+          console.error(`🔑 API Authentication Error: ${error.message}`);
+        }
+        
+        console.log(`📨 Sending error message to client`);
         socket.emit('receive_message', {
           id: Date.now() + 1,
           sender: "Ma'ad Support",
           senderName: "Ma'ad AI Support",
-          text: `I'm experiencing a temporary issue. Please try again in a moment. Error: ${error.message.substring(0, 50)}`,
+          text: errorMessage,
           timestamp: new Date(),
           isError: true
         });
