@@ -185,15 +185,20 @@ io.on('connection', (socket) => {
 
     if (data.useAi || data.recipientId === 'ai_support') {
       try {
-        console.log(`🤖 AI Request received: useAi=${data.useAi}, text="${data.text}"`);
+        console.log(`🤖 AI Request received: useAi=${data.useAi}, text="${data.text}", recipientId=${data.recipientId}`);
         console.log(`🔑 API Key available: ${process.env.GEMINI_API_KEY ? 'YES' : 'NO'}`);
         const userRole = data.userRole || 'Customer';
         
-        // Create a timeout promise
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('AI response timeout after 8 seconds')), 8000)
-        );
-        
+        // Send immediate acknowledgment to client
+        socket.emit('receive_message', {
+          id: Date.now() + 0.5,
+          sender: "Ma'ad Support",
+          senderName: "Ma'ad AI Support",
+          text: '⏳ Processing your request...',
+          timestamp: new Date(),
+          isProcessing: true
+        });
+
         console.log(`📡 Initializing Gemini model...`);
         const model = ai.getGenerativeModel({ 
           model: 'gemini-pro',
@@ -215,6 +220,12 @@ Your Instructions:
         
         console.log(`📤 Sending request to Gemini API...`);
         const generatePromise = model.generateContent(data.text || data.message || 'Hello');
+        
+        // Create a timeout promise
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Gemini API timeout after 8 seconds')), 8000)
+        );
+        
         const response = await Promise.race([generatePromise, timeoutPromise]);
 
         console.log(`✅ AI Response received from Gemini`);
@@ -237,16 +248,20 @@ Your Instructions:
       } catch (error) {
         console.error("❌ Gemini AI Chat Error:", error.message);
         console.error("❌ Error details:", error);
+        console.error("❌ Error stack:", error.stack);
         
         // Send helpful error message to user
-        let errorMessage = 'I apologize, but I\'m temporarily unavailable. Please try again in a moment or contact our support team.';
+        let errorMessage = 'I apologize, but I\'m temporarily unavailable. Please try again in a moment.';
         
         if (error.message.includes('timeout')) {
           errorMessage = 'I\'m taking longer than usual to respond. Please try again.';
           console.error(`⏱️ TIMEOUT: Gemini took too long to respond`);
-        } else if (error.message.includes('API') || error.message.includes('401') || error.message.includes('403') || error.message.includes('UNAUTHENTICATED')) {
-          errorMessage = 'Our AI service is temporarily unavailable. Our support team is here to help - please use the contact form or call us.';
+        } else if (error.message.includes('API') || error.message.includes('401') || error.message.includes('403') || error.message.includes('UNAUTHENTICATED') || error.message.includes('PERMISSION_DENIED')) {
+          errorMessage = 'Our AI service encountered an authentication issue. Our support team is here to help.';
           console.error(`🔑 API Authentication Error: ${error.message}`);
+        } else if (error.message.includes('INVALID_ARGUMENT')) {
+          errorMessage = 'I encountered an issue processing your request. Please try asking something else.';
+          console.error(`⚠️ Invalid argument: ${error.message}`);
         }
         
         console.log(`📨 Sending error message to client`);
