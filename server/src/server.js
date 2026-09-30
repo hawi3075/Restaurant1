@@ -178,6 +178,51 @@ app.get('/api/test-ai', async (req, res) => {
   }
 });
 
+// Models to try in order. If the first is busy (503) or slow, the next one is used.
+// Override with GEMINI_MODEL and GEMINI_FALLBACK_MODELS (comma separated) in Render.
+const MODEL_CHAIN = [
+  GEMINI_MODEL,
+  ...(process.env.GEMINI_FALLBACK_MODELS || 'gemini-3.1-flash-lite,gemini-flash-latest').split(',')
+].map((m) => m.trim()).filter(Boolean).filter((m, i, a) => a.indexOf(m) === i);
+const PER_MODEL_TIMEOUT_MS = 12000;
+
+function isRetryable(error) {
+  const msg = String(error?.message || '');
+  const status = error?.status;
+  return (
+    msg.includes('timeout') ||
+    [404, 429, 500, 503].includes(status) ||
+    msg.includes('overloaded') ||
+    msg.includes('RESOURCE_EXHAUSTED')
+  );
+}
+
+async function generateWithFallback(text, systemInstruction) {
+  let lastError;
+  for (const name of MODEL_CHAIN) {
+    let timeoutId;
+    try {
+      console.log(`📡 Trying Gemini model: ${name}`);
+      const model = ai.getGenerativeModel({ model: name, systemInstruction });
+      const timeout = new Promise((_, reject) => {
+        timeoutId = setTimeout(
+          () => reject(new Error(`Gemini API timeout after ${PER_MODEL_TIMEOUT_MS / 1000} seconds`)),
+          PER_MODEL_TIMEOUT_MS
+        );
+      });
+      const result = await Promise.race([model.generateContent(text), timeout]);
+      return { result, modelUsed: name };
+    } catch (err) {
+      lastError = err;
+      console.error(`⚠️ Model ${name} failed (status ${err.status || 'n/a'}): ${err.message}`);
+      if (!isRetryable(err)) throw err;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+  throw lastError;
+}
+
 // Turn a Gemini error into a friendly message for the customer
 function getFriendlyAiError(error) {
   const msg = String(error?.message || '');
@@ -298,10 +343,7 @@ io.on('connection', (socket) => {
           isProcessing: true
         });
 
-        console.log(`📡 Initializing Gemini model (${GEMINI_MODEL})...`);
-        const model = ai.getGenerativeModel({
-          model: GEMINI_MODEL,
-          systemInstruction: `You are Ma'ad Support, an intelligent, friendly AI assistant for "Ma'ad", a restaurant and food delivery platform.
+        const systemInstruction = `You are Ma'ad Support, an intelligent, friendly AI assistant for "Ma'ad", a restaurant and food delivery platform.
 
 ${siteContext}
 
@@ -314,31 +356,15 @@ Your Instructions:
 4. Keep responses concise (2-3 sentences max)
 5. Adapt your response based on the user's role:
    - For Customers: Help with menus, orders, delivery, payments
-   - For Admin/Staff: Assist with management, operations, system features`
-        });
+   - For Admin/Staff: Assist with management, operations, system features`;
 
         console.log(`📤 Sending request to Gemini API...`);
-        const generatePromise = model.generateContent(data.text || data.message || 'Hello');
+        const { result: response, modelUsed } = await generateWithFallback(
+          data.text || data.message || 'Hello',
+          systemInstruction
+        );
 
-        // Timeout: 2.5 models can "think" before answering, and Render's free
-        // instance can be slow, so 8 seconds was too short.
-        const TIMEOUT_MS = 30000;
-        let timeoutId;
-        const timeoutPromise = new Promise((_, reject) => {
-          timeoutId = setTimeout(
-            () => reject(new Error(`Gemini API timeout after ${TIMEOUT_MS / 1000} seconds`)),
-            TIMEOUT_MS
-          );
-        });
-
-        let response;
-        try {
-          response = await Promise.race([generatePromise, timeoutPromise]);
-        } finally {
-          clearTimeout(timeoutId);
-        }
-
-        console.log(`✅ AI Response received from Gemini`);
+        console.log(`✅ AI Response received from Gemini (${modelUsed})`);
 
         const responseText = response.response?.text?.() || 'I could not generate a response at this time. Please try again.';
 
