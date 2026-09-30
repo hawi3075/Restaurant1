@@ -10,12 +10,14 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 // Import Google Gen AI SDK and initialize with explicit API key
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// Debug: Check if API key is loaded
-const apiKey = process.env.GEMINI_API_KEY;
+// Model name: set GEMINI_MODEL in Render to change it without editing code
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+
+// Debug: Check if API key is loaded (never print any part of the key)
+const apiKey = (process.env.GEMINI_API_KEY || '').trim();
 console.log(`🔑 GEMINI_API_KEY loaded: ${apiKey ? 'YES ✓' : 'NO ✗'}`);
-console.log(`🔑 GEMINI_API_KEY format: ${apiKey ? apiKey.substring(0, 15) + '...' : 'MISSING'}`);
-console.log(`🔑 GEMINI_API_KEY starts with AIzaSy: ${apiKey?.startsWith('AIzaSy') ? 'YES' : 'NO'}`);
-console.log(`🔑 GEMINI_API_KEY length: ${apiKey ? apiKey.length : 0}`);
+console.log(`🔑 GEMINI_API_KEY length: ${apiKey.length}`);
+console.log(`🤖 Gemini model: ${GEMINI_MODEL}`);
 
 let ai;
 try {
@@ -139,44 +141,68 @@ app.get('/api/health', (req, res) => {
 app.get('/api/test-ai', async (req, res) => {
   try {
     console.log('🧪 Testing Gemini AI...');
-    
+
     if (!ai) {
-      return res.status(500).json({ 
-        success: false, 
+      return res.status(500).json({
+        success: false,
         error: 'GoogleGenerativeAI not initialized',
-        apiKeyLoaded: !!process.env.GEMINI_API_KEY,
-        apiKeyFormat: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 20) : 'N/A'
+        apiKeyLoaded: !!apiKey
       });
     }
 
     console.log('🤖 Getting model...');
-    const model = ai.getGenerativeModel({ model: 'gemini-pro' });
-    
+    const model = ai.getGenerativeModel({ model: GEMINI_MODEL });
+
     console.log('📤 Sending test request...');
     const result = await model.generateContent('Say hello in one word');
-    
+
     const text = result.response?.text?.();
     console.log('✅ Got response:', text);
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       message: 'AI is working!',
+      model: GEMINI_MODEL,
       response: text,
-      apiKeyLoaded: !!process.env.GEMINI_API_KEY,
-      apiKeyStartsWithAIzaSy: process.env.GEMINI_API_KEY?.startsWith('AIzaSy') || false
+      apiKeyLoaded: !!apiKey
     });
   } catch (error) {
     console.error('❌ AI Test Error:', error.message);
-    console.error('❌ Error details:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
+      model: GEMINI_MODEL,
+      status: error.status || null,
       error: error.message,
-      errorType: error.constructor.name,
-      apiKeyLoaded: !!process.env.GEMINI_API_KEY,
-      apiKeyFormat: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 20) : 'N/A'
+      apiKeyLoaded: !!apiKey
     });
   }
 });
+
+// Turn a Gemini error into a friendly message for the customer
+function getFriendlyAiError(error) {
+  const msg = String(error?.message || '');
+  const status = error?.status;
+
+  if (msg.includes('timeout')) {
+    return { text: 'I\'m taking longer than usual to respond. Please try again.', reason: 'TIMEOUT' };
+  }
+  if (status === 404 || msg.includes('404')) {
+    return { text: 'Our AI assistant is being updated. Please try again shortly or contact support.', reason: 'MODEL NOT FOUND (check GEMINI_MODEL)' };
+  }
+  if (status === 429 || msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
+    return { text: 'Our AI assistant is very busy right now. Please try again in a minute.', reason: 'RATE LIMIT / QUOTA' };
+  }
+  if (status === 401 || status === 403 || msg.includes('API_KEY_INVALID') || msg.includes('API key not valid') || msg.includes('PERMISSION_DENIED') || msg.includes('UNAUTHENTICATED')) {
+    return { text: 'Our AI service encountered an authentication issue. Our support team is here to help.', reason: 'AUTHENTICATION / API KEY' };
+  }
+  if (status === 400 || msg.includes('INVALID_ARGUMENT')) {
+    return { text: 'I encountered an issue processing your request. Please try asking something else.', reason: 'INVALID ARGUMENT' };
+  }
+  if (status === 503 || msg.includes('503') || msg.includes('overloaded')) {
+    return { text: 'Our AI assistant is temporarily overloaded. Please try again in a moment.', reason: 'SERVICE OVERLOADED' };
+  }
+  return { text: 'I apologize, but I\'m temporarily unavailable. Please try again in a moment.', reason: 'UNKNOWN' };
+}
 
 // Socket.io Real-Time Event Handling for Staff Workflows & AI Chatbot
 io.on('connection', (socket) => {
@@ -210,7 +236,7 @@ io.on('connection', (socket) => {
   // AI-Powered Chat message handler & Live Support
   socket.on('send_message', async (data) => {
     console.log(`\n📨 MESSAGE RECEIVED: useAi=${data.useAi}, recipientId=${data.recipientId}, text="${data.text?.substring(0, 50)}..."`);
-    
+
     // Save non-AI messages (contact messages and admin responses) to database
     if (data.senderId && data.text && !data.useAi) {
       try {
@@ -241,10 +267,10 @@ io.on('connection', (socket) => {
     // Check for AI request - be explicit about this
     const isAiRequest = data.useAi === true || data.recipientId === 'ai_support';
     console.log(`🤔 Is AI Request: ${isAiRequest}`);
-    
+
     if (isAiRequest) {
       console.log(`✅ PROCESSING AI REQUEST!`);
-      
+
       if (!ai) {
         console.error(`❌ AI Handler Error: GoogleGenerativeAI not initialized`);
         socket.emit('receive_message', {
@@ -257,12 +283,11 @@ io.on('connection', (socket) => {
         });
         return;
       }
-      
+
       try {
         console.log(`🤖 AI Request received: useAi=${data.useAi}, text="${data.text}"`);
-        console.log(`🔑 API Key available: ${process.env.GEMINI_API_KEY ? 'YES' : 'NO'}`);
         const userRole = data.userRole || 'Customer';
-        
+
         // Send immediate acknowledgment to client
         socket.emit('receive_message', {
           id: Date.now() + 0.5,
@@ -273,11 +298,11 @@ io.on('connection', (socket) => {
           isProcessing: true
         });
 
-        console.log(`📡 Initializing Gemini model...`);
-        const model = ai.getGenerativeModel({ 
-          model: 'gemini-pro',
+        console.log(`📡 Initializing Gemini model (${GEMINI_MODEL})...`);
+        const model = ai.getGenerativeModel({
+          model: GEMINI_MODEL,
           systemInstruction: `You are Ma'ad Support, an intelligent, friendly AI assistant for "Ma'ad", a restaurant and food delivery platform.
-          
+
 ${siteContext}
 
 Current User Role: ${userRole}.
@@ -291,23 +316,34 @@ Your Instructions:
    - For Customers: Help with menus, orders, delivery, payments
    - For Admin/Staff: Assist with management, operations, system features`
         });
-        
+
         console.log(`📤 Sending request to Gemini API...`);
         const generatePromise = model.generateContent(data.text || data.message || 'Hello');
-        
-        // Create a timeout promise
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Gemini API timeout after 8 seconds')), 8000)
-        );
-        
-        const response = await Promise.race([generatePromise, timeoutPromise]);
+
+        // Timeout: 2.5 models can "think" before answering, and Render's free
+        // instance can be slow, so 8 seconds was too short.
+        const TIMEOUT_MS = 30000;
+        let timeoutId;
+        const timeoutPromise = new Promise((_, reject) => {
+          timeoutId = setTimeout(
+            () => reject(new Error(`Gemini API timeout after ${TIMEOUT_MS / 1000} seconds`)),
+            TIMEOUT_MS
+          );
+        });
+
+        let response;
+        try {
+          response = await Promise.race([generatePromise, timeoutPromise]);
+        } finally {
+          clearTimeout(timeoutId);
+        }
 
         console.log(`✅ AI Response received from Gemini`);
-        
+
         const responseText = response.response?.text?.() || 'I could not generate a response at this time. Please try again.';
-        
+
         console.log(`📝 Response: "${responseText.substring(0, 100)}..."`);
-        
+
         const botReply = {
           id: Date.now() + 1,
           sender: "Ma'ad Support",
@@ -321,29 +357,18 @@ Your Instructions:
         socket.emit('receive_message', botReply);
       } catch (error) {
         console.error("❌ Gemini AI Chat Error:", error.message);
-        console.error("❌ Error details:", error);
+        console.error("❌ Error status:", error.status, error.statusText);
         console.error("❌ Error stack:", error.stack);
-        
-        // Send helpful error message to user
-        let errorMessage = 'I apologize, but I\'m temporarily unavailable. Please try again in a moment.';
-        
-        if (error.message.includes('timeout')) {
-          errorMessage = 'I\'m taking longer than usual to respond. Please try again.';
-          console.error(`⏱️ TIMEOUT: Gemini took too long to respond`);
-        } else if (error.message.includes('API') || error.message.includes('401') || error.message.includes('403') || error.message.includes('UNAUTHENTICATED') || error.message.includes('PERMISSION_DENIED')) {
-          errorMessage = 'Our AI service encountered an authentication issue. Our support team is here to help.';
-          console.error(`🔑 API Authentication Error: ${error.message}`);
-        } else if (error.message.includes('INVALID_ARGUMENT')) {
-          errorMessage = 'I encountered an issue processing your request. Please try asking something else.';
-          console.error(`⚠️ Invalid argument: ${error.message}`);
-        }
-        
-        console.log(`📨 Sending final error message to client`);
+
+        const friendly = getFriendlyAiError(error);
+        console.error(`⚠️ AI failure reason: ${friendly.reason}`);
+
+        console.log(`📨 Sending error message to client`);
         socket.emit('receive_message', {
           id: Date.now() + 1,
           sender: "Ma'ad Support",
           senderName: "Ma'ad AI Support",
-          text: errorMessage + "\n\nPlease note: For immediate assistance, use the 'Contact Us' page to reach our support team.",
+          text: friendly.text,
           timestamp: new Date(),
           isError: true
         });
