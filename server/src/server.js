@@ -11,10 +11,20 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // Debug: Check if API key is loaded
-console.log(`🔑 GEMINI_API_KEY loaded: ${process.env.GEMINI_API_KEY ? 'YES ✓' : 'NO ✗'}`);
-console.log(`🔑 GEMINI_API_KEY preview: ${process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 10) + '...' : 'MISSING'}`);
+const apiKey = process.env.GEMINI_API_KEY;
+console.log(`🔑 GEMINI_API_KEY loaded: ${apiKey ? 'YES ✓' : 'NO ✗'}`);
+console.log(`🔑 GEMINI_API_KEY format: ${apiKey ? apiKey.substring(0, 15) + '...' : 'MISSING'}`);
+console.log(`🔑 GEMINI_API_KEY starts with AIzaSy: ${apiKey?.startsWith('AIzaSy') ? 'YES' : 'NO'}`);
+console.log(`🔑 GEMINI_API_KEY length: ${apiKey ? apiKey.length : 0}`);
 
-const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+let ai;
+try {
+  ai = new GoogleGenerativeAI(apiKey);
+  console.log(`✅ GoogleGenerativeAI initialized successfully`);
+} catch (error) {
+  console.error(`❌ Failed to initialize GoogleGenerativeAI:`, error.message);
+  ai = null;
+}
 
 // Import RAG context
 const { siteContext } = require('./config/ragContext');
@@ -129,21 +139,41 @@ app.get('/api/health', (req, res) => {
 app.get('/api/test-ai', async (req, res) => {
   try {
     console.log('🧪 Testing Gemini AI...');
+    
+    if (!ai) {
+      return res.status(500).json({ 
+        success: false, 
+        error: 'GoogleGenerativeAI not initialized',
+        apiKeyLoaded: !!process.env.GEMINI_API_KEY,
+        apiKeyFormat: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 20) : 'N/A'
+      });
+    }
+
+    console.log('🤖 Getting model...');
     const model = ai.getGenerativeModel({ model: 'gemini-pro' });
+    
+    console.log('📤 Sending test request...');
     const result = await model.generateContent('Say hello in one word');
+    
     const text = result.response?.text?.();
+    console.log('✅ Got response:', text);
+    
     res.json({ 
       success: true, 
       message: 'AI is working!',
       response: text,
-      apiKeyLoaded: !!process.env.GEMINI_API_KEY
+      apiKeyLoaded: !!process.env.GEMINI_API_KEY,
+      apiKeyStartsWithAIzaSy: process.env.GEMINI_API_KEY?.startsWith('AIzaSy') || false
     });
   } catch (error) {
     console.error('❌ AI Test Error:', error.message);
+    console.error('❌ Error details:', error);
     res.status(500).json({ 
       success: false, 
       error: error.message,
-      apiKeyLoaded: !!process.env.GEMINI_API_KEY
+      errorType: error.constructor.name,
+      apiKeyLoaded: !!process.env.GEMINI_API_KEY,
+      apiKeyFormat: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 20) : 'N/A'
     });
   }
 });
@@ -214,6 +244,20 @@ io.on('connection', (socket) => {
     
     if (isAiRequest) {
       console.log(`✅ PROCESSING AI REQUEST!`);
+      
+      if (!ai) {
+        console.error(`❌ AI Handler Error: GoogleGenerativeAI not initialized`);
+        socket.emit('receive_message', {
+          id: Date.now() + 1,
+          sender: "Ma'ad Support",
+          senderName: "Ma'ad AI Support",
+          text: 'Our AI service is temporarily unavailable due to configuration issues. Please try again later or contact support.',
+          timestamp: new Date(),
+          isError: true
+        });
+        return;
+      }
+      
       try {
         console.log(`🤖 AI Request received: useAi=${data.useAi}, text="${data.text}"`);
         console.log(`🔑 API Key available: ${process.env.GEMINI_API_KEY ? 'YES' : 'NO'}`);
