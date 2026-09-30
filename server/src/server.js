@@ -338,12 +338,12 @@ Your Instructions:
           console.error(`⚠️ Invalid argument: ${error.message}`);
         }
         
-        console.log(`📨 Sending error message to client`);
+        console.log(`📨 Sending final error message to client`);
         socket.emit('receive_message', {
           id: Date.now() + 1,
           sender: "Ma'ad Support",
           senderName: "Ma'ad AI Support",
-          text: errorMessage,
+          text: errorMessage + "\n\nPlease note: For immediate assistance, use the 'Contact Us' page to reach our support team.",
           timestamp: new Date(),
           isError: true
         });
