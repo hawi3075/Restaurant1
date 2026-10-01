@@ -309,7 +309,7 @@ io.on('connection', (socket) => {
       io.to('admin_global').emit('receive_message', data);
     }
 
-    // Check for AI request - be explicit about this
+    
     const isAiRequest = data.useAi === true || data.recipientId === 'ai_support';
     console.log(`🤔 Is AI Request: ${isAiRequest}`);
 
